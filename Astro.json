@@ -1,4 +1,12 @@
 [
-  { "username": "babi", "password": "gnteng" },
-  { "username": "rapip", "password": "satu23" }
+  {
+    "username": "rapip",
+    "password": "12345",
+    "expired": "2025-10-01"
+  },
+  {
+    "username": "user2",
+    "password": "abcde",
+    "expired": "2025-09-20"
+  }
 ]
