@@ -34,5 +34,11 @@
     "password": "123",
     "role": "Admin",
     "expired": "2025-10-09"
+  },
+  {
+    "username": "yop",
+    "password": "1",
+    "role": "Reseller VIP",
+    "expired": "2025-10-01"
   }
 ]
