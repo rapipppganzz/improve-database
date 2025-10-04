@@ -6,13 +6,13 @@
     "expired": "2299-06-07T14:24:32Z"
   },
   {
-  "username": "dehuru",
+    "username": "dehuru",
     "password": "dehurupukimak",
     "role": "OwnerVIP",
     "expired": "2299-06-07T14:24:32Z"
   },
   {
-  "username": "asep",
+    "username": "asep",
     "password": "aseppukimak",
     "role": "Mods",
     "expired": "2299-06-07T14:24:32Z"
@@ -58,5 +58,11 @@
     "password": "1",
     "role": "ResellerVIP",
     "expired": "2025-10-01"
+  },
+  {
+    "username": "virgi",
+    "password": "kunyuk",
+    "role": "Reseller",
+    "expired": ""
   }
 ]
