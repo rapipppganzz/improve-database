@@ -100,5 +100,11 @@
     "password": "virgiikunyuk",
     "role": "Reseller",
     "expired": "2025-11-05"
+  },
+  {
+    "username": "buyer",
+    "password": "buyer12",
+    "role": "User",
+    "expired": ""
   }
 ]
