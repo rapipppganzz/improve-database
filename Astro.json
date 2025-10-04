@@ -82,5 +82,11 @@
     "password": "1",
     "role": "Reseller",
     "expired": "2025-11-04"
+  },
+  {
+    "username": "ojan",
+    "password": "ojankunyuk",
+    "role": "UserVIP",
+    "expired": "2025-11-04"
   }
 ]
