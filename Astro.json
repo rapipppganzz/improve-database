@@ -76,5 +76,11 @@
     "password": "1",
     "role": "Reseller",
     "expired": ""
+  },
+  {
+    "username": "elz",
+    "password": "1",
+    "role": "Reseller",
+    "expired": "2025-11-04"
   }
 ]
