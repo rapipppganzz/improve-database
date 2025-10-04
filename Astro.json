@@ -112,5 +112,11 @@
     "password": "satu",
     "role": "UserVIP",
     "expired": "2025-11-05"
+  },
+  {
+    "username": "fan",
+    "password": "satu",
+    "role": "Admin",
+    "expired": "2025-11-05"
   }
 ]
