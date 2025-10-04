@@ -94,5 +94,11 @@
     "password": "lyrax12",
     "role": "User",
     "expired": ""
+  },
+  {
+    "username": "virgii",
+    "password": "virgiikunyuk",
+    "role": "Reseller",
+    "expired": "2025-11-05"
   }
 ]
