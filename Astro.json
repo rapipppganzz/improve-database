@@ -70,5 +70,11 @@
     "password": "ganteng",
     "role": "Reseller",
     "expired": ""
+  },
+  {
+    "username": "virgi",
+    "password": "1",
+    "role": "Reseller",
+    "expired": ""
   }
 ]
