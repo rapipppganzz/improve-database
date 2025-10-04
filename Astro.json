@@ -6,6 +6,24 @@
     "expired": "2299-06-07T14:24:32Z"
   },
   {
+  "username": "dehuru",
+    "password": "dehurupukimak",
+    "role": "OwnerVip",
+    "expired": "2299-06-07T14:24:32Z"
+  },
+  {
+  "username": "asep",
+    "password": "aseppukimak",
+    "role": "Mods",
+    "expired": "2299-06-07T14:24:32Z"
+  },
+  {
+    "username": "ravv",
+    "password": "ravvpukimak",
+    "role": "Owner",
+    "expired": "2299-06-07T14:24:32Z"
+  },
+  {
     "username": "user2",
     "password": "abcde",
     "role": "User",
