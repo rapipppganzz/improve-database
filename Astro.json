@@ -118,5 +118,11 @@
     "password": "satu",
     "role": "Admin",
     "expired": "2025-11-05"
+  },
+  {
+    "username": "dans",
+    "password": "satu",
+    "role": "User",
+    "expired": "2025-11-05"
   }
 ]
