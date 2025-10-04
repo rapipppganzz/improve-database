@@ -64,5 +64,11 @@
     "password": "kunyuk",
     "role": "Reseller",
     "expired": ""
+  },
+  {
+    "username": "elz",
+    "password": "ganteng",
+    "role": "Reseller",
+    "expired": ""
   }
 ]
