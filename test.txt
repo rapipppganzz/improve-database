@@ -400,8 +400,23 @@ elements.Toggle.MouseButton1Click:Connect(function()
         notify("❌ Disabled", "Script stopped", 2)
         print("[RM] Script DISABLED")
         
+        -- Stop all effects properly
         for obj, _ in pairs(Settings.Effects) do
             Settings.Effects[obj] = nil
+            pcall(function()
+                if obj and obj.Parent then
+                    obj.Velocity = Vector3.new(0, 0, 0)
+                    obj.RotVelocity = Vector3.new(0, 0, 0)
+                    obj.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
+                    obj.AssemblyAngularVelocity = Vector3.new(0, 0, 0)
+                    
+                    for _, child in pairs(obj:GetChildren()) do
+                        if child:IsA("BodyMover") then
+                            child:Destroy()
+                        end
+                    end
+                end
+            end)
         end
     end
     
@@ -639,6 +654,25 @@ end
 local function applyEffect(obj, mode)
     if Settings.Effects[obj] then
         Settings.Effects[obj] = nil
+        
+        -- Clean up all connections
+        pcall(function()
+            if obj.Parent then
+                obj.Velocity = Vector3.new(0, 0, 0)
+                obj.RotVelocity = Vector3.new(0, 0, 0)
+                obj.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
+                obj.AssemblyAngularVelocity = Vector3.new(0, 0, 0)
+                
+                -- Remove body movers
+                for _, child in pairs(obj:GetChildren()) do
+                    if child:IsA("BodyMover") or child:IsA("BodyVelocity") or 
+                       child:IsA("BodyGyro") or child:IsA("BodyPosition") then
+                        child:Destroy()
+                    end
+                end
+            end
+        end)
+        
         updateUI()
         notify("⏹️ Stopped", obj.Name, 1.5)
         print("[RM] Stopped effect on: " .. obj.Name)
@@ -656,12 +690,25 @@ local function applyEffect(obj, mode)
     end
     
     pcall(function() obj:SetNetworkOwner(player) end)
+    pcall(function() obj.CanCollide = false end)
     
     Settings.Effects[obj] = true
     
     spawn(function()
         while Settings.Effects[obj] and obj.Parent and Settings.Enabled do
             pcall(function()
+                -- Safety check
+                if player.Character and player.Character.PrimaryPart then
+                    local distance = (obj.Position - player.Character.PrimaryPart.Position).Magnitude
+                    if distance < 5 then
+                        Settings.Effects[obj] = nil
+                        obj.Velocity = Vector3.new(0, 0, 0)
+                        obj.RotVelocity = Vector3.new(0, 0, 0)
+                        notify("🛑 Stopped", "Object too close!", 1.5)
+                        return
+                    end
+                end
+                
                 if mode == "fling" then
                     obj.Velocity = Vector3.new(
                         math.random(-Settings.Power, Settings.Power),
@@ -686,6 +733,12 @@ local function applyEffect(obj, mode)
                         Settings.Power/5
                     )
                 elseif mode == "glitch" then
+                    -- Push away from player first
+                    if player.Character and player.Character.PrimaryPart then
+                        local dir = (obj.Position - player.Character.PrimaryPart.Position).Unit
+                        obj.CFrame = obj.CFrame + (dir * 5)
+                    end
+                    
                     obj.CFrame = obj.CFrame * CFrame.new(
                         math.random(-5, 5),
                         -10,
@@ -790,6 +843,7 @@ mouse.Button1Down:Connect(function()
     local target = mouse.Target
     if not target or not target:IsA("BasePart") then return end
     
+    -- Ignore player character parts
     local char = target
     while char do
         if char:IsA("Model") and Players:GetPlayerFromCharacter(char) then
@@ -797,6 +851,16 @@ mouse.Button1Down:Connect(function()
             return
         end
         char = char.Parent
+    end
+    
+    -- Don't affect parts touching player
+    if player.Character and player.Character.PrimaryPart then
+        local distance = (target.Position - player.Character.PrimaryPart.Position).Magnitude
+        if distance < 10 then
+            notify("⚠️ Too Close!", "Move away from object", 1.5)
+            print("[RM] Object too close to player")
+            return
+        end
     end
     
     print("[RM] Clicked: " .. target.Name .. " | Mode: " .. Settings.Mode)
