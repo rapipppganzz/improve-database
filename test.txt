@@ -443,6 +443,8 @@ end
 local function tryBypass(obj)
     Settings.Stats.attempts = Settings.Stats.attempts + 1
     
+    print("[RM] 🔥 Starting safe bypass...")
+    
     local methods = {
         -- Basic Bypass (1-5)
         function() 
@@ -452,6 +454,7 @@ local function tryBypass(obj)
         
         function() 
             pcall(function() obj:SetNetworkOwner(player) end)
+            wait(0.05)
             obj.Anchored = false 
             return not obj.Anchored 
         end,
@@ -476,13 +479,14 @@ local function tryBypass(obj)
         
         -- Physics Bypass (6-10)
         function() 
-            obj.AssemblyLinearVelocity = Vector3.new(0, 50, 0) 
+            obj.CustomPhysicalProperties = PhysicalProperties.new(0.01, 0, 0, 0, 0) 
             obj.Anchored = false 
             return not obj.Anchored 
         end,
         
         function() 
-            obj.CustomPhysicalProperties = PhysicalProperties.new(0.01, 0, 0, 0, 0) 
+            obj.AssemblyLinearVelocity = Vector3.new(0, 50, 0) 
+            wait(0.03)
             obj.Anchored = false 
             return not obj.Anchored 
         end,
@@ -494,158 +498,190 @@ local function tryBypass(obj)
         end,
         
         function() 
-            obj.AssemblyMass = 0.1 
+            obj.CFrame = obj.CFrame * CFrame.new(0, 0.1, 0) 
             obj.Anchored = false 
             return not obj.Anchored 
         end,
         
-        function() 
-            obj.CFrame = obj.CFrame * CFrame.new(0, 0.01, 0) 
-            obj.Anchored = false 
-            return not obj.Anchored 
-        end,
-        
-        -- Parent Manipulation Bypass (11-14)
+        -- Parent Manipulation Bypass (10-13) - SAFE VERSION
         function() 
             local p = obj.Parent 
+            local cf = obj.CFrame
             obj.Parent = nil 
+            wait(0.02)
             obj.Anchored = false 
-            obj.Parent = p 
-            return not obj.Anchored 
-        end,
-        
-        function() 
-            local p = obj.Parent 
-            obj.Parent = game.Lighting 
-            obj.Anchored = false 
-            obj.Parent = p 
-            return not obj.Anchored 
-        end,
-        
-        function() 
-            local p = obj.Parent 
-            obj.Parent = game.ReplicatedStorage 
-            obj.Anchored = false 
-            obj.Parent = p 
+            obj.Parent = p
+            obj.CFrame = cf
             return not obj.Anchored 
         end,
         
         function() 
             obj.Transparency = 1 
             obj.Anchored = false 
+            wait(0.02)
             obj.Transparency = 0 
             return not obj.Anchored 
         end,
         
-        -- BodyMover Bypass (15-18)
-        function() 
-            local bv = Instance.new("BodyVelocity", obj)
-            bv.Velocity = Vector3.new(0, 100, 0)
-            bv.MaxForce = Vector3.new(999999, 999999, 999999)
-            obj.Anchored = false
-            return not obj.Anchored
-        end,
-        
-        function() 
-            local bg = Instance.new("BodyGyro", obj)
-            bg.MaxTorque = Vector3.new(999999, 999999, 999999)
-            obj.Anchored = false
-            return not obj.Anchored
-        end,
-        
-        function() 
-            local bp = Instance.new("BodyPosition", obj)
-            bp.Position = obj.Position + Vector3.new(0, 50, 0)
-            bp.MaxForce = Vector3.new(999999, 999999, 999999)
-            obj.Anchored = false
-            return not obj.Anchored
-        end,
-        
-        function() 
-            local ba = Instance.new("BodyAngularVelocity", obj)
-            ba.AngularVelocity = Vector3.new(50, 50, 50)
-            ba.MaxTorque = Vector3.new(999999, 999999, 999999)
-            obj.Anchored = false
-            return not obj.Anchored
-        end,
-        
-        -- Advanced Bypass (19-23)
         function()
-            for i = 1, 5 do
-                pcall(function() obj:SetNetworkOwner(player) end)
-                obj.Anchored = false
-                if not obj.Anchored then return true end
-                wait(0.01)
-            end
-            return not obj.Anchored
-        end,
-        
-        function()
+            local cf = obj.CFrame
             obj.Size = obj.Size * 0.99
             obj.Anchored = false
             obj.Size = obj.Size / 0.99
+            obj.CFrame = cf
             return not obj.Anchored
         end,
         
-        function()
-            local m = obj.Material
-            obj.Material = Enum.Material.Air
+        -- BodyMover Bypass (13-16) - SAFE VERSION
+        function() 
+            local bv = Instance.new("BodyVelocity")
+            bv.Velocity = Vector3.new(0, 50, 0)
+            bv.MaxForce = Vector3.new(999999, 999999, 999999)
+            bv.Parent = obj
+            wait(0.02)
             obj.Anchored = false
-            obj.Material = m
-            return not obj.Anchored
-        end,
-        
-        function()
-            obj.CollisionGroupId = 999999
-            obj.Anchored = false
-            return not obj.Anchored
-        end,
-        
-        function()
-            if obj:FindFirstChild("Weld") then
-                obj.Weld:Destroy()
+            if not obj.Anchored then
+                bv:Destroy()
+                return true
             end
+            bv:Destroy()
+            return false
+        end,
+        
+        function() 
+            local bg = Instance.new("BodyGyro")
+            bg.MaxTorque = Vector3.new(999999, 999999, 999999)
+            bg.Parent = obj
             obj.Anchored = false
+            if not obj.Anchored then
+                bg:Destroy()
+                return true
+            end
+            bg:Destroy()
+            return false
+        end,
+        
+        function() 
+            local bp = Instance.new("BodyPosition")
+            bp.Position = obj.Position + Vector3.new(0, 5, 0)
+            bp.MaxForce = Vector3.new(999999, 999999, 999999)
+            bp.Parent = obj
+            obj.Anchored = false
+            if not obj.Anchored then
+                bp:Destroy()
+                return true
+            end
+            bp:Destroy()
+            return false
+        end,
+        
+        -- Advanced Multi-Attempt (16-18)
+        function()
+            for i = 1, 3 do
+                pcall(function() obj:SetNetworkOwner(player) end)
+                obj.Anchored = false
+                if not obj.Anchored then return true end
+                wait(0.05)
+            end
             return not obj.Anchored
         end,
         
-        -- Nuclear Bypass (24-25) - SUPER GACOR!
         function()
-            local clone = obj:Clone()
-            local pos = obj.CFrame
-            obj:Destroy()
-            clone.Anchored = false
-            clone.Parent = workspace
-            clone.CFrame = pos
-            pcall(function() clone:SetNetworkOwner(player) end)
-            return true
-        end,
-        
-        function()
-            -- Multi-layer bypass
-            pcall(function() obj:SetNetworkOwner(player) end)
             obj.Massless = true
             obj.CanCollide = false
+            pcall(function() obj:SetNetworkOwner(player) end)
             obj.CustomPhysicalProperties = PhysicalProperties.new(0.01, 0, 0, 0, 0)
-            local bv = Instance.new("BodyVelocity", obj)
+            wait(0.05)
+            obj.Anchored = false
+            return not obj.Anchored
+        end,
+        
+        function()
+            local cf = obj.CFrame
+            obj.CollisionGroupId = 999999
+            obj.CanCollide = false
+            obj.Anchored = false
+            obj.CFrame = cf
+            return not obj.Anchored
+        end,
+        
+        -- FINAL NUCLEAR (19-20) - SAFE VERSION
+        function()
+            -- Multi-property rapid fire
+            obj.Massless = true
+            obj.CanCollide = false
+            pcall(function() obj:SetNetworkOwner(player) end)
+            obj.CustomPhysicalProperties = PhysicalProperties.new(0.01, 0, 0, 0, 0)
+            obj.RootPriority = 127
+            
+            local bv = Instance.new("BodyVelocity")
             bv.Velocity = Vector3.new(0, 100, 0)
             bv.MaxForce = Vector3.new(999999, 999999, 999999)
+            bv.Parent = obj
+            
+            wait(0.05)
             obj.Anchored = false
+            
+            if not obj.Anchored then
+                wait(0.1)
+                pcall(function() bv:Destroy() end)
+                return true
+            end
+            
+            pcall(function() bv:Destroy() end)
+            return false
+        end,
+        
+        function()
+            -- Extreme force method
+            for i = 1, 5 do
+                pcall(function() obj:SetNetworkOwner(player) end)
+                obj.Massless = true
+                obj.CanCollide = false
+                obj.Anchored = false
+                
+                if not obj.Anchored then 
+                    print("[RM] ⚡ EXTREME METHOD SUCCESS!")
+                    return true 
+                end
+                wait(0.03)
+            end
             return not obj.Anchored
         end
     }
+    
+    print("[RM] 🔍 Testing " .. #methods .. " safe methods...")
     
     for i, method in ipairs(methods) do
         local success, result = pcall(method)
         if success and result then
             Settings.Stats.success = Settings.Stats.success + 1
             updateUI()
-            notify("✅ BYPASS!", "Method " .. i .. "/25 worked!", 2)
-            print("[RM] ✅ Method " .. i .. " SUCCESS - GACOR!")
+            notify("✅ BYPASS!", "Method " .. i .. "/" .. #methods .. " worked!", 2)
+            print("[RM] ✅ Method " .. i .. "/" .. #methods .. " SUCCESS!")
+            
+            -- Final safety check
+            pcall(function()
+                obj.CanCollide = false
+                if obj:FindFirstChildOfClass("BodyMover") then
+                    for _, child in pairs(obj:GetChildren()) do
+                        if child:IsA("BodyMover") then
+                            wait(0.2)
+                            child:Destroy()
+                        end
+                    end
+                end
+            end)
+            
             return true
+        else
+            if i % 5 == 0 then
+                print("[RM] ⚠️ Methods 1-" .. i .. " failed, continuing...")
+            end
         end
     end
     
+    print("[RM] ❌ All " .. #methods .. " methods failed")
     updateUI()
     return false
 end
@@ -679,18 +715,39 @@ local function applyEffect(obj, mode)
         return
     end
     
+    -- Check if object is networked properly
+    local canControl = false
+    pcall(function()
+        obj:SetNetworkOwner(player)
+        canControl = true
+    end)
+    
+    if not canControl then
+        notify("⚠️ Server Locked", "Can't control this object", 2)
+        print("[RM] ❌ Network ownership denied")
+        return
+    end
+    
     if obj.Anchored then
-        notify("🔧 Bypassing...", "Trying 25 methods", 1.5)
+        notify("🔧 Bypassing...", "Trying 20 methods", 1.5)
         print("[RM] Attempting bypass on: " .. obj.Name)
         if not tryBypass(obj) then
-            notify("❌ Failed", "All methods failed", 2)
-            print("[RM] ❌ Bypass failed on: " .. obj.Name)
+            notify("❌ Failed", "Object is server-locked", 2)
+            print("[RM] ❌ Bypass failed - server protection")
             return
         end
     end
     
-    pcall(function() obj:SetNetworkOwner(player) end)
-    pcall(function() obj.CanCollide = false end)
+    -- Ensure network ownership
+    pcall(function() 
+        obj:SetNetworkOwner(player)
+    end)
+    
+    -- Make object physics-enabled
+    pcall(function() 
+        obj.CanCollide = false
+        obj.Massless = false  -- Changed to false so it has real physics
+    end)
     
     Settings.Effects[obj] = true
     
@@ -709,44 +766,56 @@ local function applyEffect(obj, mode)
                     end
                 end
                 
+                -- Keep network ownership
+                pcall(function() obj:SetNetworkOwner(player) end)
+                
                 if mode == "fling" then
-                    obj.Velocity = Vector3.new(
+                    -- Use AssemblyVelocity for server-side sync
+                    obj.AssemblyLinearVelocity = Vector3.new(
                         math.random(-Settings.Power, Settings.Power),
                         math.random(Settings.Power/2, Settings.Power),
                         math.random(-Settings.Power, Settings.Power)
                     )
-                    obj.RotVelocity = Vector3.new(
-                        math.random(-30, 30),
-                        math.random(-30, 30),
-                        math.random(-30, 30)
+                    obj.AssemblyAngularVelocity = Vector3.new(
+                        math.random(-20, 20),
+                        math.random(-20, 20),
+                        math.random(-20, 20)
                     )
+                    
                 elseif mode == "shake" then
-                    obj.CFrame = obj.CFrame * CFrame.new(
-                        math.random(-3, 3),
-                        math.random(-3, 3),
-                        math.random(-3, 3)
+                    -- Use small CFrame changes for server sync
+                    local shake = CFrame.new(
+                        math.random(-2, 2),
+                        math.random(-2, 2),
+                        math.random(-2, 2)
                     )
+                    obj.CFrame = obj.CFrame * shake
+                    
                 elseif mode == "spin" then
-                    obj.RotVelocity = Vector3.new(
+                    -- Use AssemblyAngularVelocity for server-side spin
+                    obj.AssemblyAngularVelocity = Vector3.new(
                         Settings.Power/5,
                         Settings.Power/5,
                         Settings.Power/5
                     )
+                    
                 elseif mode == "glitch" then
                     -- Push away from player first
                     if player.Character and player.Character.PrimaryPart then
                         local dir = (obj.Position - player.Character.PrimaryPart.Position).Unit
-                        obj.CFrame = obj.CFrame + (dir * 5)
+                        obj.CFrame = obj.CFrame + (dir * 3)
                     end
                     
-                    obj.CFrame = obj.CFrame * CFrame.new(
-                        math.random(-5, 5),
-                        -10,
-                        math.random(-5, 5)
+                    -- Use AssemblyLinearVelocity instead of CFrame for better sync
+                    obj.AssemblyLinearVelocity = Vector3.new(
+                        math.random(-50, 50),
+                        -100,
+                        math.random(-50, 50)
                     )
-                    obj.Transparency = obj.Transparency + 0.05
                     
-                    if obj.Position.Y < -500 or obj.Transparency >= 0.95 then
+                    obj.Transparency = math.min(obj.Transparency + 0.05, 0.95)
+                    
+                    if obj.Position.Y < -500 or obj.Transparency >= 0.9 then
                         obj:Destroy()
                         Settings.Effects[obj] = nil
                         updateUI()
@@ -755,7 +824,7 @@ local function applyEffect(obj, mode)
                     end
                 end
             end)
-            wait(0.1)
+            wait(0.05)  -- Faster update for better sync
         end
     end)
     
