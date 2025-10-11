@@ -1,8 +1,8 @@
 -- ═══════════════════════════════════════════════════════════
 --     PHYSICS MANIPULATION SCRIPT (FE BYPASS)
 --     By: RapipppModss
---     Version: 2.0 - Physics Edition
---     REAL FE BYPASS - Semua Orang Bisa Lihat!
+--     Version: 3.0 - Continuous Effect Edition
+--     REAL FE BYPASS - Efek Terus Menerus!
 -- ═══════════════════════════════════════════════════════════
 
 local Players = game:GetService("Players")
@@ -12,30 +12,15 @@ local RunService = game:GetService("RunService")
 
 print("╔════════════════════════════════════╗")
 print("║  Physics Manipulator - RapipppModss ║")
-print("║       REAL FE BYPASS EDITION       ║")
+print("║     CONTINUOUS EFFECT EDITION      ║")
 print("╚════════════════════════════════════╝")
 
 -- Settings
-local currentMode = "fling" -- fling, shake, velocity, spin, freeze
+local currentMode = "fling"
 local isEnabled = false
 local power = 100
-local affectedObjects = 0
-
--- Modes explanation
-local modes = {
-    fling = "Lempar objek dengan kekuatan gila",
-    shake = "Goyangin objek kayak gempa",
-    velocity = "Kasih kecepatan super cepat",
-    spin = "Putar objek kayak tornado",
-    freeze = "Bekukan objek di tempat"
-}
-
--- Highlight
-local highlight = Instance.new("Highlight")
-highlight.FillColor = Color3.fromRGB(255, 100, 0)
-highlight.OutlineColor = Color3.fromRGB(255, 255, 0)
-highlight.FillTransparency = 0.5
-highlight.OutlineTransparency = 0
+local affectedObjects = {}
+local activeEffects = {}
 
 -- GUI
 local ScreenGui = Instance.new("ScreenGui")
@@ -43,27 +28,27 @@ ScreenGui.Name = "RapipppModss_Physics"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = player.PlayerGui
 
--- Main Frame
+-- Main Frame (Lebih kecil)
 local MainFrame = Instance.new("Frame")
-MainFrame.Size = UDim2.new(0, 300, 0, 280)
-MainFrame.Position = UDim2.new(0, 10, 0.5, -140)
+MainFrame.Size = UDim2.new(0, 220, 0, 200)
+MainFrame.Position = UDim2.new(0, 10, 0.5, -100)
 MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
 MainFrame.BorderSizePixel = 0
 MainFrame.Parent = ScreenGui
 
 local MainCorner = Instance.new("UICorner")
-MainCorner.CornerRadius = UDim.new(0, 12)
+MainCorner.CornerRadius = UDim.new(0, 10)
 MainCorner.Parent = MainFrame
 
--- Header
+-- Header dengan Logo
 local Header = Instance.new("Frame")
-Header.Size = UDim2.new(1, 0, 0, 60)
+Header.Size = UDim2.new(1, 0, 0, 50)
 Header.BackgroundColor3 = Color3.fromRGB(255, 100, 0)
 Header.BorderSizePixel = 0
 Header.Parent = MainFrame
 
 local HeaderCorner = Instance.new("UICorner")
-HeaderCorner.CornerRadius = UDim.new(0, 12)
+HeaderCorner.CornerRadius = UDim.new(0, 10)
 HeaderCorner.Parent = Header
 
 local HeaderGradient = Instance.new("UIGradient")
@@ -74,50 +59,83 @@ HeaderGradient.Color = ColorSequence.new{
 HeaderGradient.Rotation = 45
 HeaderGradient.Parent = Header
 
+-- Logo RapipppModss
+local Logo = Instance.new("TextLabel")
+Logo.Size = UDim2.new(0, 45, 0, 45)
+Logo.Position = UDim2.new(0, 5, 0, 2.5)
+Logo.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+Logo.Text = "RM"
+Logo.TextColor3 = Color3.fromRGB(255, 100, 0)
+Logo.TextSize = 20
+Logo.Font = Enum.Font.GothamBold
+Logo.Parent = Header
+
+local LogoCorner = Instance.new("UICorner")
+LogoCorner.CornerRadius = UDim.new(0, 8)
+LogoCorner.Parent = Logo
+
+-- Title
 local Title = Instance.new("TextLabel")
-Title.Size = UDim2.new(1, 0, 0, 35)
-Title.Position = UDim2.new(0, 0, 0, 5)
+Title.Size = UDim2.new(0, 120, 0, 25)
+Title.Position = UDim2.new(0, 55, 0, 5)
 Title.BackgroundTransparency = 1
-Title.Text = "⚡ PHYSICS MANIPULATOR"
+Title.Text = "RapipppModss"
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
-Title.TextSize = 17
+Title.TextSize = 14
 Title.Font = Enum.Font.GothamBold
+Title.TextXAlignment = Enum.TextXAlignment.Left
 Title.Parent = Header
 
-local Credit = Instance.new("TextLabel")
-Credit.Size = UDim2.new(1, 0, 0, 15)
-Credit.Position = UDim2.new(0, 0, 0, 40)
-Credit.BackgroundTransparency = 1
-Credit.Text = "By RapipppModss | FE Edition"
-Credit.TextColor3 = Color3.fromRGB(255, 255, 255)
-Credit.TextSize = 11
-Credit.Font = Enum.Font.Gotham
-Credit.TextTransparency = 0.3
-Credit.Parent = Header
+local Subtitle = Instance.new("TextLabel")
+Subtitle.Size = UDim2.new(0, 120, 0, 15)
+Subtitle.Position = UDim2.new(0, 55, 0, 28)
+Subtitle.BackgroundTransparency = 1
+Subtitle.Text = "Physics FE"
+Subtitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+Subtitle.TextSize = 10
+Subtitle.Font = Enum.Font.Gotham
+Subtitle.TextTransparency = 0.4
+Subtitle.TextXAlignment = Enum.TextXAlignment.Left
+Subtitle.Parent = Header
+
+-- Close Button (X)
+local CloseButton = Instance.new("TextButton")
+CloseButton.Size = UDim2.new(0, 30, 0, 30)
+CloseButton.Position = UDim2.new(1, -35, 0, 10)
+CloseButton.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
+CloseButton.Text = "✕"
+CloseButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+CloseButton.TextSize = 18
+CloseButton.Font = Enum.Font.GothamBold
+CloseButton.Parent = Header
+
+local CloseCorner = Instance.new("UICorner")
+CloseCorner.CornerRadius = UDim.new(0, 6)
+CloseCorner.Parent = CloseButton
 
 -- Status
 local StatusLabel = Instance.new("TextLabel")
-StatusLabel.Size = UDim2.new(1, -20, 0, 30)
-StatusLabel.Position = UDim2.new(0, 10, 0, 70)
+StatusLabel.Size = UDim2.new(1, -20, 0, 25)
+StatusLabel.Position = UDim2.new(0, 10, 0, 60)
 StatusLabel.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
-StatusLabel.Text = "🔴 OFF | Mode: FLING | Power: 100"
+StatusLabel.Text = "🔴 OFF | FLING"
 StatusLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
-StatusLabel.TextSize = 12
+StatusLabel.TextSize = 11
 StatusLabel.Font = Enum.Font.GothamBold
 StatusLabel.Parent = MainFrame
 
 local StatusCorner = Instance.new("UICorner")
-StatusCorner.CornerRadius = UDim.new(0, 8)
+StatusCorner.CornerRadius = UDim.new(0, 6)
 StatusCorner.Parent = StatusLabel
 
 -- Toggle Button
 local ToggleButton = Instance.new("TextButton")
-ToggleButton.Size = UDim2.new(1, -20, 0, 40)
-ToggleButton.Position = UDim2.new(0, 10, 0, 110)
+ToggleButton.Size = UDim2.new(1, -20, 0, 35)
+ToggleButton.Position = UDim2.new(0, 10, 0, 95)
 ToggleButton.BackgroundColor3 = Color3.fromRGB(220, 50, 50)
-ToggleButton.Text = "🔴 CLICK TO ENABLE"
+ToggleButton.Text = "🔴 ENABLE"
 ToggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-ToggleButton.TextSize = 15
+ToggleButton.TextSize = 14
 ToggleButton.Font = Enum.Font.GothamBold
 ToggleButton.Parent = MainFrame
 
@@ -125,26 +143,25 @@ local ToggleCorner = Instance.new("UICorner")
 ToggleCorner.CornerRadius = UDim.new(0, 8)
 ToggleCorner.Parent = ToggleButton
 
--- Mode Buttons Container
+-- Mode Buttons
 local ModesFrame = Instance.new("Frame")
-ModesFrame.Size = UDim2.new(1, -20, 0, 60)
-ModesFrame.Position = UDim2.new(0, 10, 0, 160)
+ModesFrame.Size = UDim2.new(1, -20, 0, 30)
+ModesFrame.Position = UDim2.new(0, 10, 0, 140)
 ModesFrame.BackgroundTransparency = 1
 ModesFrame.Parent = MainFrame
 
--- Mode Buttons
 local modeButtons = {}
-local modeNames = {"fling", "shake", "velocity", "spin", "freeze"}
-local modeIcons = {"💥", "📳", "⚡", "🌀", "❄️"}
+local modeNames = {"fling", "shake", "spin"}
+local modeIcons = {"💥", "📳", "🌀"}
 
 for i, modeName in ipairs(modeNames) do
     local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(0.18, 0, 0, 25)
-    btn.Position = UDim2.new((i-1) * 0.2 + 0.01, 0, 0, 0)
+    btn.Size = UDim2.new(0.31, 0, 0, 30)
+    btn.Position = UDim2.new((i-1) * 0.33 + 0.01, 0, 0, 0)
     btn.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
-    btn.Text = modeIcons[i]
+    btn.Text = modeIcons[i] .. "\n" .. modeName:upper()
     btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    btn.TextSize = 16
+    btn.TextSize = 9
     btn.Font = Enum.Font.GothamBold
     btn.Parent = ModesFrame
     
@@ -157,92 +174,53 @@ for i, modeName in ipairs(modeNames) do
     btn.MouseButton1Click:Connect(function()
         currentMode = modeName
         
-        -- Reset all buttons
         for _, button in pairs(modeButtons) do
             button.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
         end
         
-        -- Highlight selected
         btn.BackgroundColor3 = Color3.fromRGB(255, 100, 0)
-        
-        StatusLabel.Text = (isEnabled and "🟢 ON" or "🔴 OFF") .. " | Mode: " .. modeName:upper() .. " | Power: " .. power
-        print("[RapipppModss] Mode changed to: " .. modeName)
+        StatusLabel.Text = (isEnabled and "🟢 ON" or "🔴 OFF") .. " | " .. modeName:upper()
     end)
 end
 
--- Mode description
-local ModeDesc = Instance.new("TextLabel")
-ModeDesc.Size = UDim2.new(1, -20, 0, 25)
-ModeDesc.Position = UDim2.new(0, 10, 0, 190)
-ModeDesc.BackgroundTransparency = 1
-ModeDesc.Text = modes[currentMode]
-ModeDesc.TextColor3 = Color3.fromRGB(200, 200, 200)
-ModeDesc.TextSize = 10
-ModeDesc.Font = Enum.Font.Gotham
-ModeDesc.TextWrapped = true
-ModeDesc.Parent = MainFrame
-
--- Power Slider
-local PowerLabel = Instance.new("TextLabel")
-PowerLabel.Size = UDim2.new(0.3, 0, 0, 25)
-PowerLabel.Position = UDim2.new(0, 10, 0, 225)
-PowerLabel.BackgroundTransparency = 1
-PowerLabel.Text = "Power:"
-PowerLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-PowerLabel.TextSize = 12
-PowerLabel.Font = Enum.Font.Gotham
-PowerLabel.TextXAlignment = Enum.TextXAlignment.Left
-PowerLabel.Parent = MainFrame
-
-local PowerSlider = Instance.new("TextButton")
-PowerSlider.Size = UDim2.new(0.65, 0, 0, 25)
-PowerSlider.Position = UDim2.new(0.35, 0, 0, 225)
-PowerSlider.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
-PowerSlider.Text = "100"
-PowerSlider.TextColor3 = Color3.fromRGB(255, 255, 255)
-PowerSlider.TextSize = 12
-PowerSlider.Font = Enum.Font.GothamBold
-PowerSlider.Parent = MainFrame
-
-local SliderCorner = Instance.new("UICorner")
-SliderCorner.CornerRadius = UDim.new(0, 6)
-SliderCorner.Parent = PowerSlider
+modeButtons[currentMode].BackgroundColor3 = Color3.fromRGB(255, 100, 0)
 
 -- Counter
 local CounterLabel = Instance.new("TextLabel")
-CounterLabel.Size = UDim2.new(1, -20, 0, 20)
-CounterLabel.Position = UDim2.new(0, 10, 0, 255)
+CounterLabel.Size = UDim2.new(1, -20, 0, 18)
+CounterLabel.Position = UDim2.new(0, 10, 0, 177)
 CounterLabel.BackgroundTransparency = 1
-CounterLabel.Text = "Objects affected: 0"
+CounterLabel.Text = "Active: 0 objects"
 CounterLabel.TextColor3 = Color3.fromRGB(150, 150, 150)
-CounterLabel.TextSize = 11
+CounterLabel.TextSize = 10
 CounterLabel.Font = Enum.Font.Gotham
 CounterLabel.Parent = MainFrame
 
--- Power slider functionality
-PowerSlider.MouseButton1Click:Connect(function()
-    local powers = {50, 100, 200, 500, 1000}
-    local currentIndex = table.find(powers, power) or 2
-    currentIndex = (currentIndex % #powers) + 1
-    power = powers[currentIndex]
-    PowerSlider.Text = tostring(power)
-    StatusLabel.Text = (isEnabled and "🟢 ON" or "🔴 OFF") .. " | Mode: " .. currentMode:upper() .. " | Power: " .. power
+-- Close button function
+CloseButton.MouseButton1Click:Connect(function()
+    -- Stop all effects
+    for obj, _ in pairs(activeEffects) do
+        activeEffects[obj] = nil
+    end
+    ScreenGui:Destroy()
+    print("[RapipppModss] GUI closed!")
 end)
-
--- Highlight selected mode
-modeButtons[currentMode].BackgroundColor3 = Color3.fromRGB(255, 100, 0)
 
 -- Update status
 local function updateStatus()
     if isEnabled then
-        StatusLabel.Text = "🟢 ON | Mode: " .. currentMode:upper() .. " | Power: " .. power
+        StatusLabel.Text = "🟢 ON | " .. currentMode:upper()
         StatusLabel.TextColor3 = Color3.fromRGB(100, 255, 100)
     else
-        StatusLabel.Text = "🔴 OFF | Mode: " .. currentMode:upper() .. " | Power: " .. power
+        StatusLabel.Text = "🔴 OFF | " .. currentMode:upper()
         StatusLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
     end
-    CounterLabel.Text = "Objects affected: " .. affectedObjects
-    ModeDesc.Text = modes[currentMode]
+    
+    local activeCount = 0
+    for _ in pairs(activeEffects) do
+        activeCount = activeCount + 1
+    end
+    CounterLabel.Text = "Active: " .. activeCount .. " objects"
 end
 
 -- Toggle
@@ -250,17 +228,17 @@ ToggleButton.MouseButton1Click:Connect(function()
     isEnabled = not isEnabled
     
     if isEnabled then
-        ToggleButton.Text = "🟢 ENABLED - Click Objects!"
+        ToggleButton.Text = "🟢 ENABLED"
         ToggleButton.BackgroundColor3 = Color3.fromRGB(50, 220, 50)
     else
-        ToggleButton.Text = "🔴 CLICK TO ENABLE"
+        ToggleButton.Text = "🔴 ENABLE"
         ToggleButton.BackgroundColor3 = Color3.fromRGB(220, 50, 50)
     end
     
     updateStatus()
 end)
 
--- Physics manipulation functions
+-- Physics functions
 local function takeOwnership(obj)
     if obj:IsA("BasePart") and not obj.Anchored then
         pcall(function()
@@ -271,90 +249,50 @@ local function takeOwnership(obj)
     return false
 end
 
-local function flingObject(obj)
-    if takeOwnership(obj) then
-        obj.Velocity = Vector3.new(
-            math.random(-power, power),
-            math.random(power/2, power),
-            math.random(-power, power)
-        )
-        obj.RotVelocity = Vector3.new(
-            math.random(-20, 20),
-            math.random(-20, 20),
-            math.random(-20, 20)
-        )
+-- Continuous effects
+local function startContinuousEffect(obj, mode)
+    if activeEffects[obj] then
+        -- Already has effect, stop it
+        activeEffects[obj] = nil
+        updateStatus()
+        return
     end
-end
-
-local function shakeObject(obj)
-    if takeOwnership(obj) then
-        local originalCF = obj.CFrame
-        spawn(function()
-            for i = 1, 30 do
-                if obj and obj.Parent then
-                    obj.CFrame = originalCF * CFrame.new(
-                        math.random(-2, 2),
-                        math.random(-2, 2),
-                        math.random(-2, 2)
+    
+    if not takeOwnership(obj) then return end
+    
+    activeEffects[obj] = true
+    
+    spawn(function()
+        while activeEffects[obj] and obj.Parent do
+            pcall(function()
+                if mode == "fling" then
+                    obj.Velocity = Vector3.new(
+                        math.random(-power, power),
+                        math.random(power/2, power),
+                        math.random(-power, power)
                     )
-                    wait(0.05)
+                    obj.RotVelocity = Vector3.new(
+                        math.random(-30, 30),
+                        math.random(-30, 30),
+                        math.random(-30, 30)
+                    )
+                elseif mode == "shake" then
+                    local offset = CFrame.new(
+                        math.random(-3, 3),
+                        math.random(-3, 3),
+                        math.random(-3, 3)
+                    )
+                    obj.CFrame = obj.CFrame * offset
+                elseif mode == "spin" then
+                    obj.RotVelocity = Vector3.new(power/5, power/5, power/5)
                 end
-            end
-        end)
-    end
-end
-
-local function velocityObject(obj)
-    if takeOwnership(obj) then
-        local direction = (mouse.Hit.Position - obj.Position).Unit
-        obj.Velocity = direction * power
-    end
-end
-
-local function spinObject(obj)
-    if takeOwnership(obj) then
-        obj.RotVelocity = Vector3.new(power/10, power/10, power/10)
-    end
-end
-
-local function freezeObject(obj)
-    if takeOwnership(obj) then
-        obj.Velocity = Vector3.new(0, 0, 0)
-        obj.RotVelocity = Vector3.new(0, 0, 0)
-        obj.Anchored = true
-        wait(0.1)
-        obj.Anchored = false
-    end
-end
-
--- Highlight hover
-RunService.RenderStepped:Connect(function()
-    if isEnabled and mouse.Target then
-        local target = mouse.Target
-        
-        if target:IsA("BasePart") and not target.Anchored then
-            local isPlayerPart = false
-            local ancestor = target
-            while ancestor do
-                if ancestor:IsA("Model") and Players:GetPlayerFromCharacter(ancestor) then
-                    isPlayerPart = true
-                    break
-                end
-                ancestor = ancestor.Parent
-            end
-            
-            if not isPlayerPart then
-                highlight.Parent = target
-            else
-                highlight.Parent = nil
-            end
-        else
-            highlight.Parent = nil
+            end)
+            wait(0.1)
         end
-    else
-        highlight.Parent = nil
-    end
-end)
+    end)
+    
+    updateStatus()
+end
 
 -- Click handler
 mouse.Button1Down:Connect(function()
@@ -375,31 +313,11 @@ mouse.Button1Down:Connect(function()
         end
         
         if not isPlayerPart then
-            local objName = target.Name
+            startContinuousEffect(target, currentMode)
             
-            if currentMode == "fling" then
-                flingObject(target)
-            elseif currentMode == "shake" then
-                shakeObject(target)
-            elseif currentMode == "velocity" then
-                velocityObject(target)
-            elseif currentMode == "spin" then
-                spinObject(target)
-            elseif currentMode == "freeze" then
-                freezeObject(target)
-            end
-            
-            affectedObjects = affectedObjects + 1
-            updateStatus()
-            
-            print("[RapipppModss] " .. currentMode:upper() .. " applied to: " .. objName)
+            local status = activeEffects[target] and "STARTED" or "STOPPED"
+            print("[RapipppModss] " .. status .. " " .. currentMode .. " on: " .. target.Name)
         end
-    elseif target and target.Anchored then
-        game.StarterGui:SetCore("SendNotification", {
-            Title = "⚠️ Cannot Manipulate";
-            Text = "Object is anchored!";
-            Duration = 2;
-        })
     end
 end)
 
@@ -440,5 +358,5 @@ end)
 
 print("✅ Physics Manipulator loaded!")
 print("📝 Created by: RapipppModss")
-print("⚡ THIS IS REAL FE BYPASS - Everyone will see it!")
+print("⚡ CONTINUOUS EFFECT - Click once to start, click again to stop!")
 print("💡 Only works on UNANCHORED objects!")
