@@ -1,15 +1,14 @@
 {
-  "tokens": [
-    "7847232794:AAG8VxhKoHxeV7iTlp4lXS93P8vXvYkSZL8",
-    "7448435457:AAE707In25R8a3t1Mkuqp8WhSnUinvrBes0",
-    "7847232794:AAGRVwFfaXDCI0NMQvu0p_y0-gfbZzcnJhc",
-    "7847232794:AAGDTBz3X9fRgDNzjYVMw6a8UkWFvvKvXBs",
-    "7673584651:AAF2e-U3MLvTA3Mnprr1orxFW87dR_6SxTo",
-    "7184535875:AAENtVJmZT17g3Sbdr2aGUtQjSJ6PPo_0Ys",
-    "7830462774:AAHRCF0BhmSWwHjCwxY55ERKSKzv4GdWToU",
-    "7909494740:AAHzWc29zmkqKIsXltu2GEN0GKsRnwkMoJM",
-    "8069781958:AAFHJBwmZ3EeByYeLpXNTCMrSKEebsi-ti4",
-    "8084232921:AAEg4QqhRQTKhjCgpsM--wEoVK6CnElCx5s",
-    "7610855748:AAEQLDN3PViDVxjjo4d_73XKcb6r1G6FSfM"
-  ]
+  "version": "1.0",
+  "last_update": "2025-01-11T00:00:00Z",
+  "allowed_hwid": [
+    "a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6",
+    "x9y8z7w6-v5u4-t3s2-r1q0-p9o8n7m6l5k4"
+  ],
+  "blocked_hwid": [
+    "banned-hwid-1",
+    "banned-hwid-2"
+  ],
+  "max_connections": 100,
+  "check_interval": 300000
 }
