@@ -1,7 +1,7 @@
 -- ═══════════════════════════════════════════════════════════
---     DELTA OPTIMIZED - PHYSICS MANIPULATION
---     By: RapipppModss - Version: Delta Edition
---     15 BYPASS METHODS - OPTIMIZED FOR DELTA EXECUTOR
+--     FIXED DELTA EDITION - NO MORE BUGS!
+--     By: RapipppModss - Version: Fixed 1.0
+--     15 BYPASS METHODS - BUG FREE!
 -- ═══════════════════════════════════════════════════════════
 
 repeat wait() until game:IsLoaded()
@@ -19,10 +19,11 @@ wait(1)
 local Players = game:GetService("Players")
 local player = Players.LocalPlayer
 local mouse = player:GetMouse()
+local UIS = game:GetService("UserInputService")
 
 print("╔═══════════════════════════════════╗")
-print("║   RapipppModss - Delta Edition    ║")
-print("║   15 Bypass Methods + FE Support  ║")
+print("║   RapipppModss - FIXED Edition    ║")
+print("║        NO MORE BUGS! 🔥           ║")
 print("╚═══════════════════════════════════╝")
 
 -- Settings
@@ -31,7 +32,8 @@ local Settings = {
     Enabled = false,
     Power = 100,
     Effects = {},
-    Stats = {attempts = 0, success = 0}
+    Stats = {attempts = 0, success = 0},
+    IsDragging = false  -- FIX: Flag untuk drag
 }
 
 -- Create GUI
@@ -56,15 +58,17 @@ local function createGUI()
     main.Position = UDim2.new(0, 10, 0.5, -125)
     main.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
     main.BorderSizePixel = 0
+    main.Active = true  -- FIX: Prevent click through
     main.Parent = sg
     
     Instance.new("UICorner", main).CornerRadius = UDim.new(0, 10)
     
-    -- Header
+    -- Header (untuk drag)
     local header = Instance.new("Frame", main)
     header.Size = UDim2.new(1, 0, 0, 50)
     header.BackgroundColor3 = Color3.fromRGB(255, 100, 0)
     header.BorderSizePixel = 0
+    header.Active = true
     
     Instance.new("UICorner", header).CornerRadius = UDim.new(0, 10)
     
@@ -89,7 +93,7 @@ local function createGUI()
     
     -- Title
     local title = Instance.new("TextLabel", header)
-    title.Size = UDim2.new(0, 140, 0, 25)
+    title.Size = UDim2.new(0, 100, 0, 25)
     title.Position = UDim2.new(0, 55, 0, 5)
     title.BackgroundTransparency = 1
     title.Text = "RapipppModss"
@@ -99,29 +103,32 @@ local function createGUI()
     title.TextXAlignment = Enum.TextXAlignment.Left
     
     local subtitle = Instance.new("TextLabel", header)
-    subtitle.Size = UDim2.new(0, 140, 0, 15)
+    subtitle.Size = UDim2.new(0, 100, 0, 15)
     subtitle.Position = UDim2.new(0, 55, 0, 28)
     subtitle.BackgroundTransparency = 1
-    subtitle.Text = "Delta Edition"
+    subtitle.Text = "Fixed Edition"
     subtitle.TextColor3 = Color3.fromRGB(255, 255, 255)
     subtitle.TextSize = 10
     subtitle.Font = Enum.Font.Gotham
     subtitle.TextTransparency = 0.4
     subtitle.TextXAlignment = Enum.TextXAlignment.Left
     
-    -- Close Button
+    -- Close Button (FIX: Tombol X yang berfungsi!)
     local closeBtn = Instance.new("TextButton", header)
     closeBtn.Size = UDim2.new(0, 30, 0, 30)
     closeBtn.Position = UDim2.new(1, -35, 0, 10)
-    closeBtn.BackgroundColor3 = Color3.fromRGB(255, 150, 0)
+    closeBtn.BackgroundColor3 = Color3.fromRGB(220, 50, 50)
     closeBtn.Text = "X"
     closeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    closeBtn.TextSize = 20
+    closeBtn.TextSize = 18
     closeBtn.Font = Enum.Font.GothamBold
+    closeBtn.ZIndex = 10
     
     Instance.new("UICorner", closeBtn).CornerRadius = UDim.new(0, 6)
     
     closeBtn.MouseButton1Click:Connect(function()
+        print("[RM] GUI Closed by user")
+        Settings.Enabled = false
         sg:Destroy()
     end)
     
@@ -206,31 +213,38 @@ local function createGUI()
     info.Size = UDim2.new(1, -20, 0, 22)
     info.Position = UDim2.new(0, 10, 0, 223)
     info.BackgroundTransparency = 1
-    info.Text = "⚠️ Click objects to apply effects"
+    info.Text = "⚠️ Drag header to move, click X to close"
     info.TextColor3 = Color3.fromRGB(255, 200, 0)
     info.TextSize = 8
     info.Font = Enum.Font.Gotham
     info.TextWrapped = true
     
-    -- Dragging
-    local dragging, dragInput, dragStart, startPos
+    -- FIX: Dragging yang benar (hanya header)
+    local dragging = false
+    local dragStart, startPos
     
-    main.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+    header.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or 
+           input.UserInputType == Enum.UserInputType.Touch then
+            Settings.IsDragging = true
             dragging = true
             dragStart = input.Position
             startPos = main.Position
         end
     end)
     
-    main.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+    header.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or 
+           input.UserInputType == Enum.UserInputType.Touch then
             dragging = false
+            wait(0.1)  -- Delay sebelum allow click
+            Settings.IsDragging = false
         end
     end)
     
-    game:GetService("UserInputService").InputChanged:Connect(function(input)
-        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+    UIS.InputChanged:Connect(function(input)
+        if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or 
+           input.UserInputType == Enum.UserInputType.Touch) then
             local delta = input.Position - dragStart
             main.Position = UDim2.new(
                 startPos.X.Scale, startPos.X.Offset + delta.X,
@@ -282,18 +296,25 @@ local function updateUI()
     end
 end
 
--- Toggle
+-- Toggle (FIX: Clear function)
 elements.Toggle.MouseButton1Click:Connect(function()
     Settings.Enabled = not Settings.Enabled
     
     if Settings.Enabled then
-        elements.Toggle.Text = "🟢 ENABLED"
+        elements.Toggle.Text = "🟢 DISABLE"
         elements.Toggle.BackgroundColor3 = Color3.fromRGB(50, 220, 50)
-        notify("✅ Enabled", "Click objects to apply effects!")
+        notify("✅ Enabled", "Click objects in game!", 2)
+        print("[RM] Script ENABLED")
     else
         elements.Toggle.Text = "🔴 ENABLE"
         elements.Toggle.BackgroundColor3 = Color3.fromRGB(220, 50, 50)
-        notify("❌ Disabled", "Script stopped")
+        notify("❌ Disabled", "Script stopped", 2)
+        print("[RM] Script DISABLED")
+        
+        -- Stop all effects
+        for obj, _ in pairs(Settings.Effects) do
+            Settings.Effects[obj] = nil
+        end
     end
     
     updateUI()
@@ -311,6 +332,7 @@ for mode, btn in pairs(elements.Modes) do
         btn.BackgroundColor3 = Color3.fromRGB(255, 100, 0)
         updateUI()
         notify("Mode", mode:upper() .. " selected", 1.5)
+        print("[RM] Mode: " .. mode:upper())
     end)
 end
 
@@ -390,13 +412,16 @@ local function applyEffect(obj, mode)
         Settings.Effects[obj] = nil
         updateUI()
         notify("⏹️ Stopped", obj.Name, 1.5)
+        print("[RM] Stopped effect on: " .. obj.Name)
         return
     end
     
     if obj.Anchored then
         notify("🔧 Bypassing...", "Trying 15 methods", 1.5)
+        print("[RM] Attempting bypass on: " .. obj.Name)
         if not tryBypass(obj) then
             notify("❌ Failed", "All methods failed", 2)
+            print("[RM] ❌ Bypass failed on: " .. obj.Name)
             return
         end
     end
@@ -406,7 +431,7 @@ local function applyEffect(obj, mode)
     Settings.Effects[obj] = true
     
     spawn(function()
-        while Settings.Effects[obj] and obj.Parent do
+        while Settings.Effects[obj] and obj.Parent and Settings.Enabled do
             pcall(function()
                 if mode == "fling" then
                     obj.Velocity = Vector3.new(
@@ -444,6 +469,7 @@ local function applyEffect(obj, mode)
                         Settings.Effects[obj] = nil
                         updateUI()
                         notify("👻 Glitched!", "Sent to void!", 2)
+                        print("[RM] Object sent to void!")
                     end
                 end
             end)
@@ -453,27 +479,41 @@ local function applyEffect(obj, mode)
     
     updateUI()
     notify("✅ Applied!", mode:upper() .. " on " .. obj.Name, 2)
+    print("[RM] Applied " .. mode .. " to: " .. obj.Name)
 end
 
--- Mouse click
+-- FIX: Mouse click yang benar!
 mouse.Button1Down:Connect(function()
+    -- Jangan jalankan kalau lagi drag!
+    if Settings.IsDragging then 
+        print("[RM] Ignoring click (dragging)")
+        return 
+    end
+    
     if not Settings.Enabled then return end
     
     local target = mouse.Target
     if not target or not target:IsA("BasePart") then return end
     
+    -- Check if player part
     local char = target
     while char do
         if char:IsA("Model") and Players:GetPlayerFromCharacter(char) then
+            print("[RM] Ignoring player part")
             return
         end
         char = char.Parent
     end
     
+    print("[RM] Clicked: " .. target.Name)
     applyEffect(target, Settings.Mode)
 end)
 
-print("✅ RapipppModss Delta Edition loaded!")
-print("📱 Optimized for Delta Executor")
-print("🔧 15 bypass methods ready")
-print("💪 Click objects to apply effects!")
+print("✅ RapipppModss Fixed Edition loaded!")
+print("🔧 BUG FIXES:")
+print("   - Tombol X sekarang berfungsi!")
+print("   - Drag tidak bentrok dengan click")
+print("   - No more random teleport")
+print("   - Disable button stops all effects")
+print("💪 15 bypass methods ready!")
+print("📱 Click objects to apply effects!")
