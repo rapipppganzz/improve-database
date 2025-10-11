@@ -1,0 +1,162 @@
+-- Script Penghapus Objek Roblox (Dengan GUI Sederhana)
+-- Toggle ON/OFF untuk menghapus objek
+
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+
+print("=== Object Remover Script Started ===")
+
+-- Daftar nama objek yang akan dihapus
+local objectsToRemove = {
+    "TrussPart",  -- Tangga
+    "Ladder",     -- Tangga
+    "Stairs",     -- Tangga
+    "Stair",      -- Tangga
+    "Steps",      -- Tangga
+    "Barrier",    -- Penghalang
+    "Wall",       -- Dinding
+    "Fence",      -- Pagar
+    "Gate",       -- Gerbang
+    "Door",       -- Pintu
+}
+
+local isEnabled = false
+local removedCount = 0
+
+-- Fungsi untuk menghapus objek
+local function removeObjects()
+    local workspace = game:GetService("Workspace")
+    removedCount = 0
+    
+    local function scanAndRemove(parent)
+        for _, obj in pairs(parent:GetChildren()) do
+            local shouldRemove = false
+            
+            for _, keyword in pairs(objectsToRemove) do
+                if string.find(string.lower(obj.Name), string.lower(keyword)) then
+                    shouldRemove = true
+                    break
+                end
+            end
+            
+            if obj:IsA("TrussPart") then
+                shouldRemove = true
+            end
+            
+            if shouldRemove then
+                pcall(function()
+                    obj:Destroy()
+                    removedCount = removedCount + 1
+                end)
+            end
+            
+            if #obj:GetChildren() > 0 then
+                scanAndRemove(obj)
+            end
+        end
+    end
+    
+    scanAndRemove(workspace)
+    print("Total objek dihapus: " .. removedCount)
+end
+
+-- Buat GUI
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "ObjectRemoverGUI"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.Parent = player.PlayerGui
+
+local Frame = Instance.new("Frame")
+Frame.Size = UDim2.new(0, 200, 0, 80)
+Frame.Position = UDim2.new(0, 10, 0.5, -40)
+Frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+Frame.BorderSizePixel = 0
+Frame.Parent = ScreenGui
+
+local UICorner = Instance.new("UICorner")
+UICorner.CornerRadius = UDim.new(0, 8)
+UICorner.Parent = Frame
+
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(1, 0, 0, 30)
+Title.BackgroundTransparency = 1
+Title.Text = "Object Remover"
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.TextSize = 14
+Title.Font = Enum.Font.GothamBold
+Title.Parent = Frame
+
+local ToggleButton = Instance.new("TextButton")
+ToggleButton.Size = UDim2.new(0, 180, 0, 35)
+ToggleButton.Position = UDim2.new(0, 10, 0, 40)
+ToggleButton.BackgroundColor3 = Color3.fromRGB(220, 50, 50)
+ToggleButton.Text = "OFF"
+ToggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+ToggleButton.TextSize = 16
+ToggleButton.Font = Enum.Font.GothamBold
+ToggleButton.Parent = Frame
+
+local ButtonCorner = Instance.new("UICorner")
+ButtonCorner.CornerRadius = UDim.new(0, 6)
+ButtonCorner.Parent = ToggleButton
+
+-- Toggle function
+ToggleButton.MouseButton1Click:Connect(function()
+    isEnabled = not isEnabled
+    
+    if isEnabled then
+        ToggleButton.Text = "ON"
+        ToggleButton.BackgroundColor3 = Color3.fromRGB(50, 220, 50)
+        removeObjects()
+        game.StarterGui:SetCore("SendNotification", {
+            Title = "Object Remover";
+            Text = "Dihapus " .. removedCount .. " objek!";
+            Duration = 3;
+        })
+    else
+        ToggleButton.Text = "OFF"
+        ToggleButton.BackgroundColor3 = Color3.fromRGB(220, 50, 50)
+        game.StarterGui:SetCore("SendNotification", {
+            Title = "Object Remover";
+            Text = "Dinonaktifkan";
+            Duration = 2;
+        })
+    end
+end)
+
+-- Draggable
+local dragging, dragInput, dragStart, startPos
+
+Frame.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = true
+        dragStart = input.Position
+        startPos = Frame.Position
+    end
+end)
+
+Frame.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement then
+        dragInput = input
+    end
+end)
+
+Frame.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = false
+    end
+end)
+
+game:GetService("UserInputService").InputChanged:Connect(function(input)
+    if input == dragInput and dragging then
+        local delta = input.Position - dragStart
+        Frame.Position = UDim2.new(
+            startPos.X.Scale,
+            startPos.X.Offset + delta.X,
+            startPos.Y.Scale,
+            startPos.Y.Offset + delta.Y
+        )
+    end
+end)
+
+print("GUI loaded! Klik tombol untuk toggle ON/OFF")
