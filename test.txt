@@ -609,60 +609,6 @@ local function tryBypass(obj)
     updateUI()
     return false
 end
-
--- Apply effect (WORKS ON CLIENT-SIDE IF SERVER LOCKED)
-local function applyEffect(obj, mode)
-    if Settings.Effects[obj] then
-        Settings.Effects[obj] = nil
-        
-        pcall(function()
-            if obj.Parent then
-                obj.Velocity = Vector3.new(0, 0, 0)
-                obj.RotVelocity = Vector3.new(0, 0, 0)
-                obj.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
-                obj.AssemblyAngularVelocity = Vector3.new(0, 0, 0)
-                
-                for _, child in pairs(obj:GetChildren()) do
-                    if child:IsA("BodyMover") then
-                        child:Destroy()
-                    end
-                end
-            end
-        end)
-        
-        updateUI()
-        notify("⏹️ Stopped", obj.Name, 1.5)
-        return
-    end
-    
-    -- Try to get network ownership
-    local hasOwnership = false
-    pcall(function()
-        obj:SetNetworkOwner(player)
-        hasOwnership = true
-    end)
-    
-    -- If object is anchored, try bypass
-    if obj.Anchored then
-        notify("🔧 Bypassing...", "15 methods", 1.5)
-        local bypassed = tryBypass(obj)
-        
-        if not bypassed then
-            -- If bypass failed, try CLIENT-SIDE effect
-            notify("⚠️ Client-Side", "Effect visible to you only", 2)
-            print("[RM] ⚠️ Running client-side mode")
-        end
-    end
-    
-    -- Make object responsive
-    pcall(function() 
-        obj.CanCollide = false
-        if not obj.Anchored then
-            obj:SetNetworkOwner(player)
-        end
-    end)
-    
-
 -- Apply effect
 local function applyEffect(obj, mode)
     if Settings.Effects[obj] then
@@ -726,98 +672,96 @@ local function applyEffect(obj, mode)
         obj.Massless = false  -- Changed to false so it has real physics
     end)
     
-    Settings.Effects[obj] = true
-    
-        spawn(function()
-        while Settings.Effects[obj] and obj.Parent and Settings.Enabled do
-            pcall(function()
-                -- Safety distance check
+Settings.Effects[obj] = true
+spawn(function()
+    while Settings.Effects[obj] and obj.Parent and Settings.Enabled do
+        pcall(function()
+            -- Safety distance check
+            if player.Character and player.Character.PrimaryPart then
+                local distance = (obj.Position - player.Character.PrimaryPart.Position).Magnitude
+                if distance < 5 then
+                    Settings.Effects[obj] = nil
+                    obj.Velocity = Vector3.new(0, 0, 0)
+                    notify("🛑 Stopped", "Too close!", 1.5)
+                    return
+                end
+            end
+            
+            -- Try to maintain network ownership
+            if not obj.Anchored then
+                pcall(function() obj:SetNetworkOwner(player) end)
+            end
+            
+            if mode == "fling" then
+                if obj.Anchored then
+                    -- Client-side visual (at least YOU see it)
+                    obj.CFrame = obj.CFrame * CFrame.new(
+                        math.random(-2, 2),
+                        math.random(-2, 2),
+                        math.random(-2, 2)
+                    )
+                else
+                    -- Server-side if unanchored
+                    obj.AssemblyLinearVelocity = Vector3.new(
+                        math.random(-Settings.Power, Settings.Power),
+                        math.random(Settings.Power/2, Settings.Power),
+                        math.random(-Settings.Power, Settings.Power)
+                    )
+                    obj.AssemblyAngularVelocity = Vector3.new(
+                        math.random(-20, 20),
+                        math.random(-20, 20),
+                        math.random(-20, 20)
+                    )
+                end
+                
+            elseif mode == "shake" then
+                obj.CFrame = obj.CFrame * CFrame.new(
+                    math.random(-3, 3),
+                    math.random(-3, 3),
+                    math.random(-3, 3)
+                )
+                
+            elseif mode == "spin" then
+                if obj.Anchored then
+                    obj.CFrame = obj.CFrame * CFrame.Angles(0.1, 0.1, 0.1)
+                else
+                    obj.AssemblyAngularVelocity = Vector3.new(
+                        Settings.Power/5,
+                        Settings.Power/5,
+                        Settings.Power/5
+                    )
+                end
+                
+            elseif mode == "glitch" then
                 if player.Character and player.Character.PrimaryPart then
-                    local distance = (obj.Position - player.Character.PrimaryPart.Position).Magnitude
-                    if distance < 5 then
-                        Settings.Effects[obj] = nil
-                        obj.Velocity = Vector3.new(0, 0, 0)
-                        notify("🛑 Stopped", "Too close!", 1.5)
-                        return
-                    end
+                    local dir = (obj.Position - player.Character.PrimaryPart.Position).Unit
+                    obj.CFrame = obj.CFrame + (dir * 3)
                 end
                 
-                -- Try to maintain network ownership
-                if not obj.Anchored then
-                    pcall(function() obj:SetNetworkOwner(player) end)
-                end
+                obj.CFrame = obj.CFrame * CFrame.new(
+                    math.random(-5, 5),
+                    -5,
+                    math.random(-5, 5)
+                )
                 
-                if mode == "fling" then
-                    if obj.Anchored then
-                        -- Client-side visual (at least YOU see it)
-                        obj.CFrame = obj.CFrame * CFrame.new(
-                            math.random(-2, 2),
-                            math.random(-2, 2),
-                            math.random(-2, 2)
-                        )
-                    else
-                        -- Server-side if unanchored
-                        obj.AssemblyLinearVelocity = Vector3.new(
-                            math.random(-Settings.Power, Settings.Power),
-                            math.random(Settings.Power/2, Settings.Power),
-                            math.random(-Settings.Power, Settings.Power)
-                        )
-                        obj.AssemblyAngularVelocity = Vector3.new(
-                            math.random(-20, 20),
-                            math.random(-20, 20),
-                            math.random(-20, 20)
-                        )
-                    end
-                    
-                elseif mode == "shake" then
-                    obj.CFrame = obj.CFrame * CFrame.new(
-                        math.random(-3, 3),
-                        math.random(-3, 3),
-                        math.random(-3, 3)
-                    )
-                    
-                elseif mode == "spin" then
-                    if obj.Anchored then
-                        obj.CFrame = obj.CFrame * CFrame.Angles(0.1, 0.1, 0.1)
-                    else
-                        obj.AssemblyAngularVelocity = Vector3.new(
-                            Settings.Power/5,
-                            Settings.Power/5,
-                            Settings.Power/5
-                        )
-                    end
-                    
-                elseif mode == "glitch" then
-                    if player.Character and player.Character.PrimaryPart then
-                        local dir = (obj.Position - player.Character.PrimaryPart.Position).Unit
-                        obj.CFrame = obj.CFrame + (dir * 3)
-                    end
-                    
-                    obj.CFrame = obj.CFrame * CFrame.new(
-                        math.random(-5, 5),
-                        -5,
-                        math.random(-5, 5)
-                    )
-                    
-                    obj.Transparency = math.min(obj.Transparency + 0.05, 0.95)
-                    
-                    if obj.Position.Y < -500 or obj.Transparency >= 0.9 then
-                        pcall(function() obj:Destroy() end)
-                        Settings.Effects[obj] = nil
-                        updateUI()
-                        notify("👻 Glitched!", "Sent to void!", 2)
-                    end
+                obj.Transparency = math.min(obj.Transparency + 0.05, 0.95)
+                
+                if obj.Position.Y < -500 or obj.Transparency >= 0.9 then
+                    pcall(function() obj:Destroy() end)
+                    Settings.Effects[obj] = nil
+                    updateUI()
+                    notify("👻 Glitched!", "Sent to void!", 2)
                 end
-            end)
-            wait(0.08)
-        end
-    end)
-    
-    updateUI()
-    notify("✅ Applied!", mode:upper() .. " mode", 2)
-    print("[RM] Effect applied: " .. mode)
-end
+            end
+        end)
+        wait(0.08)
+    end
+end)
 
+updateUI()
+notify("✅ Applied!", mode:upper() .. " mode", 2)
+print("[RM] Effect applied: " .. mode)
+end
 
 -- Dragging system
 local dragging = false
