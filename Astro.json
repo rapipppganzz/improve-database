@@ -2,19 +2,25 @@
   {
     "username": "rapip",
     "password": "12345",
-    "role": "Developer",
-    "expired": "2299-06-07T14:24:32Z"
+    "role": "owner",
+    "expired": "",
+    "createdAt": "2024-01-01T00:00:00.000Z",
+    "createdBy": "system"
   },
   {
     "username": "user_admin",
-    "password": "admin_pass",
+    "password": "pass_admin",
     "role": "admin",
-    "expired": ""
+    "expired": "2025-12-31T23:59:59.000Z",
+    "createdAt": "2024-03-15T10:30:00.000Z",
+    "createdBy": "user_rapip"
   },
   {
     "username": "user_reseller",
-    "password": "reseller_pass",
+    "password": "reseller_1",
     "role": "reseller",
-    "expired": "2025-12-31T23:59:59Z"
+    "expired": "",
+    "createdAt": "2024-05-20T15:00:00.000Z",
+    "createdBy": "user_admin"
   }
 ]
