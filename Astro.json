@@ -22,5 +22,13 @@
     "expired": "",
     "createdAt": "2024-05-20T15:00:00.000Z",
     "createdBy": "user_admin"
+  },
+  {
+    "username": "ayam",
+    "password": "77",
+    "role": "admin",
+    "expired": "",
+    "createdBy": "rapip",
+    "createdAt": "2025-10-13T06:00:53.148Z"
   }
 ]
