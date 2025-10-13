@@ -6,129 +6,15 @@
     "expired": "2299-06-07T14:24:32Z"
   },
   {
-    "username": "dehuru",
-    "password": "dehurupukimak",
-    "role": "OwnerVIP",
-    "expired": "2299-06-07T14:24:32Z"
+    "username": "user_admin",
+    "password": "admin_pass",
+    "role": "admin",
+    "expired": ""
   },
   {
-    "username": "asep",
-    "password": "aseppukimak",
-    "role": "Mods",
-    "expired": "2299-06-07T14:24:32Z"
-  },
-  {
-    "username": "ravv",
-    "password": "ravvpukimak",
-    "role": "Owner",
-    "expired": "2299-06-07T14:24:32Z"
-  },
-  {
-    "username": "user2",
-    "password": "abcde",
-    "role": "User",
-    "expired": "2025-09-20T12:00:00Z"
-  },
-  {
-    "username": "demo",
-    "password": "demo123",
-    "role": "User",
+    "username": "user_reseller",
+    "password": "reseller_pass",
+    "role": "reseller",
     "expired": "2025-12-31T23:59:59Z"
-  },
-  {
-    "username": "ayam",
-    "password": "1",
-    "role": "Owner",
-    "expired": "2025-09-27"
-  },
-  {
-    "username": "percobaan",
-    "password": "12",
-    "role": "Admin",
-    "expired": "2025-10-01"
-  },
-  {
-    "username": "rapip20",
-    "password": "123",
-    "role": "Admin",
-    "expired": "2025-10-09"
-  },
-  {
-    "username": "yop",
-    "password": "1",
-    "role": "ResellerVIP",
-    "expired": "2025-10-01"
-  },
-  {
-    "username": "virgi",
-    "password": "kunyuk",
-    "role": "Reseller",
-    "expired": ""
-  },
-  {
-    "username": "elz",
-    "password": "ganteng",
-    "role": "Reseller",
-    "expired": ""
-  },
-  {
-    "username": "virgi",
-    "password": "1",
-    "role": "Reseller",
-    "expired": ""
-  },
-  {
-    "username": "elz",
-    "password": "1",
-    "role": "Reseller",
-    "expired": "2025-11-04"
-  },
-  {
-    "username": "ojan",
-    "password": "ojankunyuk",
-    "role": "UserVIP",
-    "expired": "2025-11-04"
-  },
-  {
-    "username": "lyrax",
-    "password": "lyrax12",
-    "role": "User",
-    "expired": ""
-  },
-  {
-    "username": "virgii",
-    "password": "virgiikunyuk",
-    "role": "Reseller",
-    "expired": "2025-11-05"
-  },
-  {
-    "username": "buyer",
-    "password": "buyer12",
-    "role": "User",
-    "expired": ""
-  },
-  {
-    "username": "bangke",
-    "password": "satu",
-    "role": "UserVIP",
-    "expired": "2025-11-05"
-  },
-  {
-    "username": "fan",
-    "password": "satu",
-    "role": "Admin",
-    "expired": "2025-11-05"
-  },
-  {
-    "username": "hakim",
-    "password": "satu",
-    "role": "Admin",
-    "expired": "2025-11-05"
-  },
-  {
-    "username": "kimm",
-    "password": "kimjawa",
-    "role": "User",
-    "expired": ""
   }
 ]
