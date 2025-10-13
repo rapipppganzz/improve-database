@@ -1,6 +1,18 @@
-{
-  "tokens": [
-    "7752399769:AAED784gsW3wqGBio9XsECTY-Wx_TJuSBt8",
-    "7673116033:AAFM3bM-phhJKBVq4OsLCnkPGDuqjcaRW2c"
-  ]
-}
+[
+  {
+    "id": "1",
+    "name": "Bot 1",
+    "token": "7752399769:AAED784gsW3wqGBio9XsECTY-Wx_TJuSBt8",
+    "addedBy": "system",
+    "addedAt": "2024-01-01T00:00:00.000Z",
+    "status": "active"
+  },
+  {
+    "id": "2",
+    "name": "Bot 2",
+    "token": "7673116033:AAFM3bM-phhJKBVq4OsLCnkPGDuqjcaRW2c",
+    "addedBy": "system",
+    "addedAt": "2024-01-01T00:00:00.000Z",
+    "status": "active"
+  }
+]
