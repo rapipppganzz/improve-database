@@ -1,12 +1,13 @@
 {
   "version": "1.0",
-  "last_update": "2025-10-13T16:47:22.121Z",
+  "last_update": "2025-10-16T09:50:00.227Z",
   "allowed_hwid": [
     "62aa56852bd52e82b28fdc3b68ec4ca5",
     "x9y8z7w6-v5u4-t3s2-r1q0-p9o8n7m6l5k4",
     "62aa56852bd52e82b28fdc3b68ec4ca5u",
     "2f8c1290943f4961cf5fb8bf607b2460d33043710a053507081d197b1d6a2307",
-    "96ca740790754d4bf0fbe0bc447a008d8f689fe7267fc398f3820710fbdd532b"
+    "96ca740790754d4bf0fbe0bc447a008d8f689fe7267fc398f3820710fbdd532b",
+    "8e4e2b67ae72ec4e10348bfe43995d05d9625f2bb532b267521f5bc854216cf5"
   ],
   "blocked_hwid": [
     "banned-hwid-1",
