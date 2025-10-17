@@ -56,5 +56,12 @@
     "active": true,
     "createdBy": "michael",
     "createdAt": "2025-10-17T15:15:34.132Z"
+  },
+  {
+    "name": "Chrulz",
+    "token": "100",
+    "active": true,
+    "createdBy": "chrulz",
+    "createdAt": "2025-10-17T19:00:07.916Z"
   }
 ]
