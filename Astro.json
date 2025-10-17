@@ -30,5 +30,13 @@
     "expired": "",
     "createdBy": "rapip",
     "createdAt": "2025-10-13T06:00:53.148Z"
+  },
+  {
+    "username": "asep",
+    "password": "9090",
+    "role": "admin",
+    "expired": "9090-12-30",
+    "createdBy": "rapip",
+    "createdAt": "2025-10-17T07:30:42.319Z"
   }
 ]
