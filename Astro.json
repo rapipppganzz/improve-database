@@ -54,5 +54,13 @@
     "expired": "9090-12-31",
     "createdBy": "rapip",
     "createdAt": "2025-10-17T08:02:43.530Z"
+  },
+  {
+    "username": "ropz",
+    "password": "jembud",
+    "role": "admin",
+    "expired": "9090-12-31",
+    "createdBy": "rapip",
+    "createdAt": "2025-10-17T08:08:28.135Z"
   }
 ]
