@@ -46,5 +46,13 @@
     "expired": "9090-12-31",
     "createdBy": "rapip",
     "createdAt": "2025-10-17T07:35:55.231Z"
+  },
+  {
+    "username": "xyroo",
+    "password": "123661",
+    "role": "admin",
+    "expired": "9090-12-31",
+    "createdBy": "rapip",
+    "createdAt": "2025-10-17T08:02:43.530Z"
   }
 ]
