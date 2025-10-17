@@ -70,5 +70,13 @@
     "expired": "7808-12-21",
     "createdBy": "rapip",
     "createdAt": "2025-10-17T08:13:46.666Z"
+  },
+  {
+    "username": "ropz",
+    "password": "jembud",
+    "role": "admin",
+    "expired": "7808-12-21",
+    "createdBy": "rapip",
+    "createdAt": "2025-10-17T08:19:41.623Z"
   }
 ]
