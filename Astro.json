@@ -86,5 +86,13 @@
     "expired": "2025-12-19",
     "createdBy": "asep",
     "createdAt": "2025-10-17T08:40:18.660Z"
+  },
+  {
+    "username": "xyraboti",
+    "password": "xyraboticuy",
+    "role": "admin",
+    "expired": "6666-12-21",
+    "createdBy": "rapip",
+    "createdAt": "2025-10-17T09:58:04.123Z"
   }
 ]
