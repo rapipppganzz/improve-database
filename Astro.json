@@ -102,5 +102,13 @@
     "expired": "2025-12-8",
     "createdBy": "asep",
     "createdAt": "2025-10-17T11:33:03.667Z"
+  },
+  {
+    "username": "ditzzy",
+    "password": "0098",
+    "role": "admin",
+    "expired": "9999-12-21",
+    "createdBy": "rapip",
+    "createdAt": "2025-10-17T15:02:22.329Z"
   }
 ]
