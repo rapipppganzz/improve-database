@@ -110,5 +110,13 @@
     "expired": "9099-12-21",
     "createdBy": "rapip",
     "createdAt": "2025-10-17T15:05:21.242Z"
+  },
+  {
+    "username": "Adhit",
+    "password": "69",
+    "role": "reseller",
+    "expired": "2029-12-30",
+    "createdBy": "chrulz",
+    "createdAt": "2025-10-18T08:50:27.719Z"
   }
 ]
