@@ -2,413 +2,259 @@
     ╦═╗╔═╗╔═╗╦╔═╗╔╦╗╔═╗╔╦╗╔═╗
     ║╔╝╠═╣╠═╝║╠═╝║║║║ ║ ║║╚═╗
     ╩ ╩╩ ╩╩  ╩╩  ╩ ╩╚═╝═╩╝╚═╝
-    Universal Mountain Auto Walk
-    Coded by: RAPIPMODS
+    Delta Android Compatible
 ]]
 
+-- Services
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
-local UserInputService = game:GetService("UserInputService")
-local TweenService = game:GetService("TweenService")
 
 local player = Players.LocalPlayer
+wait(1)
 local character = player.Character or player.CharacterAdded:Wait()
 local humanoid = character:WaitForChild("Humanoid")
 local rootPart = character:WaitForChild("HumanoidRootPart")
 
--- ========== CONFIG ==========
-local Config = {
+-- Config
+_G.Config = _G.Config or {
     AutoWalk = false,
     WalkSpeed = 20,
     AutoJump = true,
     AntiVoid = true,
-    SmartPathfinding = true,
-    VoidHeight = -50, -- Kalau Y position di bawah ini = void
 }
 
--- ========== GUI CREATION ==========
+-- ========== MOBILE GUI ==========
 local ScreenGui = Instance.new("ScreenGui")
-local MainFrame = Instance.new("Frame")
-local Title = Instance.new("TextLabel")
-local AutoWalkToggle = Instance.new("TextButton")
-local SpeedSlider = Instance.new("Frame")
-local SpeedLabel = Instance.new("TextLabel")
-local SpeedButton = Instance.new("TextButton")
-local AutoJumpToggle = Instance.new("TextButton")
-local AntiVoidToggle = Instance.new("TextButton")
-local StatusLabel = Instance.new("TextLabel")
-local CloseButton = Instance.new("TextButton")
-local Credits = Instance.new("TextLabel")
+ScreenGui.Name = "RapipModsMobile"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.IgnoreGuiInset = true
 
--- ScreenGui
-ScreenGui.Name = "RapipModsGUI"
-ScreenGui.Parent = game.CoreGui
-ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+-- Use parent yang work di Android
+pcall(function()
+    ScreenGui.Parent = game:GetService("CoreGui")
+end)
 
--- Main Frame
-MainFrame.Name = "MainFrame"
-MainFrame.Parent = ScreenGui
-MainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-MainFrame.BorderColor3 = Color3.fromRGB(255, 0, 0)
-MainFrame.BorderSizePixel = 3
-MainFrame.Position = UDim2.new(0.35, 0, 0.25, 0)
-MainFrame.Size = UDim2.new(0, 350, 0, 400)
-MainFrame.Active = true
-MainFrame.Draggable = true
+if not ScreenGui.Parent then
+    ScreenGui.Parent = player.PlayerGui
+end
 
--- Add rounded corners
-local Corner = Instance.new("UICorner")
-Corner.CornerRadius = UDim.new(0, 12)
-Corner.Parent = MainFrame
+-- Main Frame (Lebih kecil untuk mobile)
+local Main = Instance.new("Frame")
+Main.Name = "Main"
+Main.Parent = ScreenGui
+Main.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+Main.BackgroundTransparency = 0.1
+Main.BorderColor3 = Color3.fromRGB(255, 0, 0)
+Main.BorderSizePixel = 2
+Main.Position = UDim2.new(0.05, 0, 0.3, 0)
+Main.Size = UDim2.new(0, 280, 0, 320)
+Main.Active = true
+Main.Draggable = true
 
 -- Title
-Title.Name = "Title"
-Title.Parent = MainFrame
+local Title = Instance.new("TextLabel")
+Title.Parent = Main
 Title.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
-Title.Size = UDim2.new(1, 0, 0, 50)
+Title.Size = UDim2.new(1, 0, 0, 45)
 Title.Font = Enum.Font.GothamBold
 Title.Text = "🔥 RAPIPMODS 🔥"
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
-Title.TextSize = 24
-Title.TextStrokeTransparency = 0.5
+Title.TextSize = 20
 
-local TitleCorner = Instance.new("UICorner")
-TitleCorner.CornerRadius = UDim.new(0, 12)
-TitleCorner.Parent = Title
+-- Function: Create Button (Mobile optimized)
+local function createBtn(name, text, yPos, color)
+    local btn = Instance.new("TextButton")
+    btn.Name = name
+    btn.Parent = Main
+    btn.BackgroundColor3 = color or Color3.fromRGB(50, 50, 50)
+    btn.BorderSizePixel = 1
+    btn.BorderColor3 = Color3.fromRGB(80, 80, 80)
+    btn.Position = UDim2.new(0.05, 0, yPos, 0)
+    btn.Size = UDim2.new(0.9, 0, 0, 38)
+    btn.Font = Enum.Font.Gotham
+    btn.Text = text
+    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    btn.TextSize = 14
+    btn.TextWrapped = true
+    
+    return btn
+end
 
--- Auto Walk Toggle
-AutoWalkToggle.Name = "AutoWalkToggle"
-AutoWalkToggle.Parent = MainFrame
-AutoWalkToggle.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-AutoWalkToggle.BorderColor3 = Color3.fromRGB(255, 255, 255)
-AutoWalkToggle.BorderSizePixel = 2
-AutoWalkToggle.Position = UDim2.new(0.1, 0, 0.18, 0)
-AutoWalkToggle.Size = UDim2.new(0.8, 0, 0, 45)
-AutoWalkToggle.Font = Enum.Font.GothamBold
-AutoWalkToggle.Text = "🚶 Auto Walk: OFF"
-AutoWalkToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
-AutoWalkToggle.TextSize = 18
+-- Auto Walk Button
+local walkBtn = createBtn("Walk", "🚶 Auto Walk: OFF", 0.16)
+walkBtn.MouseButton1Click:Connect(function()
+    _G.Config.AutoWalk = not _G.Config.AutoWalk
+    
+    if _G.Config.AutoWalk then
+        walkBtn.Text = "🚶 Auto Walk: ON"
+        walkBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 0)
+        print("[RAPIPMODS] Walk: ON")
+    else
+        walkBtn.Text = "🚶 Auto Walk: OFF"
+        walkBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+        print("[RAPIPMODS] Walk: OFF")
+    end
+end)
 
-local ToggleCorner = Instance.new("UICorner")
-ToggleCorner.CornerRadius = UDim.new(0, 8)
-ToggleCorner.Parent = AutoWalkToggle
+-- Speed Label
+local speedLbl = Instance.new("TextLabel")
+speedLbl.Parent = Main
+speedLbl.BackgroundTransparency = 1
+speedLbl.Position = UDim2.new(0.05, 0, 0.3, 0)
+speedLbl.Size = UDim2.new(0.9, 0, 0, 20)
+speedLbl.Font = Enum.Font.Gotham
+speedLbl.Text = "⚡ Speed: 20"
+speedLbl.TextColor3 = Color3.fromRGB(255, 255, 0)
+speedLbl.TextSize = 13
 
--- Speed Slider
-SpeedLabel.Name = "SpeedLabel"
-SpeedLabel.Parent = MainFrame
-SpeedLabel.BackgroundTransparency = 1
-SpeedLabel.Position = UDim2.new(0.1, 0, 0.32, 0)
-SpeedLabel.Size = UDim2.new(0.8, 0, 0, 25)
-SpeedLabel.Font = Enum.Font.Gotham
-SpeedLabel.Text = "⚡ Speed: 20"
-SpeedLabel.TextColor3 = Color3.fromRGB(255, 255, 0)
-SpeedLabel.TextSize = 16
+-- Speed Buttons (+ dan -)
+local speedDown = createBtn("SpeedDown", "➖ Speed", 0.38)
+speedDown.Size = UDim2.new(0.43, 0, 0, 35)
 
-SpeedButton.Name = "SpeedButton"
-SpeedButton.Parent = MainFrame
-SpeedButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-SpeedButton.BorderSizePixel = 2
-SpeedButton.BorderColor3 = Color3.fromRGB(255, 255, 255)
-SpeedButton.Position = UDim2.new(0.1, 0, 0.39, 0)
-SpeedButton.Size = UDim2.new(0.8, 0, 0, 35)
-SpeedButton.Font = Enum.Font.Gotham
-SpeedButton.Text = "Click to Change Speed"
-SpeedButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-SpeedButton.TextSize = 14
+local speedUp = createBtn("SpeedUp", "➕ Speed", 0.38)
+speedUp.Position = UDim2.new(0.52, 0, 0.38, 0)
+speedUp.Size = UDim2.new(0.43, 0, 0, 35)
 
-local SpeedCorner = Instance.new("UICorner")
-SpeedCorner.CornerRadius = UDim.new(0, 8)
-SpeedCorner.Parent = SpeedButton
+speedDown.MouseButton1Click:Connect(function()
+    _G.Config.WalkSpeed = math.max(16, _G.Config.WalkSpeed - 5)
+    speedLbl.Text = "⚡ Speed: " .. _G.Config.WalkSpeed
+    humanoid.WalkSpeed = _G.Config.WalkSpeed
+end)
 
--- Auto Jump Toggle
-AutoJumpToggle.Name = "AutoJumpToggle"
-AutoJumpToggle.Parent = MainFrame
-AutoJumpToggle.BackgroundColor3 = Color3.fromRGB(0, 150, 0)
-AutoJumpToggle.BorderSizePixel = 2
-AutoJumpToggle.BorderColor3 = Color3.fromRGB(255, 255, 255)
-AutoJumpToggle.Position = UDim2.new(0.1, 0, 0.52, 0)
-AutoJumpToggle.Size = UDim2.new(0.8, 0, 0, 35)
-AutoJumpToggle.Font = Enum.Font.Gotham
-AutoJumpToggle.Text = "✅ Auto Jump: ON"
-AutoJumpToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
-AutoJumpToggle.TextSize = 14
+speedUp.MouseButton1Click:Connect(function()
+    _G.Config.WalkSpeed = math.min(100, _G.Config.WalkSpeed + 5)
+    speedLbl.Text = "⚡ Speed: " .. _G.Config.WalkSpeed
+    humanoid.WalkSpeed = _G.Config.WalkSpeed
+end)
 
-local JumpCorner = Instance.new("UICorner")
-JumpCorner.CornerRadius = UDim.new(0, 8)
-JumpCorner.Parent = AutoJumpToggle
+-- Auto Jump Button
+local jumpBtn = createBtn("Jump", "✅ Auto Jump: ON", 0.53, Color3.fromRGB(0, 140, 0))
+jumpBtn.MouseButton1Click:Connect(function()
+    _G.Config.AutoJump = not _G.Config.AutoJump
+    
+    if _G.Config.AutoJump then
+        jumpBtn.Text = "✅ Auto Jump: ON"
+        jumpBtn.BackgroundColor3 = Color3.fromRGB(0, 140, 0)
+    else
+        jumpBtn.Text = "❌ Auto Jump: OFF"
+        jumpBtn.BackgroundColor3 = Color3.fromRGB(140, 0, 0)
+    end
+end)
 
--- Anti Void Toggle
-AntiVoidToggle.Name = "AntiVoidToggle"
-AntiVoidToggle.Parent = MainFrame
-AntiVoidToggle.BackgroundColor3 = Color3.fromRGB(0, 150, 0)
-AntiVoidToggle.BorderSizePixel = 2
-AntiVoidToggle.BorderColor3 = Color3.fromRGB(255, 255, 255)
-AntiVoidToggle.Position = UDim2.new(0.1, 0, 0.62, 0)
-AntiVoidToggle.Size = UDim2.new(0.8, 0, 0, 35)
-AntiVoidToggle.Font = Enum.Font.Gotham
-AntiVoidToggle.Text = "✅ Anti Void: ON"
-AntiVoidToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
-AntiVoidToggle.TextSize = 14
+-- Anti Void Button
+local voidBtn = createBtn("Void", "✅ Anti Void: ON", 0.66, Color3.fromRGB(0, 140, 0))
+voidBtn.MouseButton1Click:Connect(function()
+    _G.Config.AntiVoid = not _G.Config.AntiVoid
+    
+    if _G.Config.AntiVoid then
+        voidBtn.Text = "✅ Anti Void: ON"
+        voidBtn.BackgroundColor3 = Color3.fromRGB(0, 140, 0)
+    else
+        voidBtn.Text = "❌ Anti Void: OFF"
+        voidBtn.BackgroundColor3 = Color3.fromRGB(140, 0, 0)
+    end
+end)
 
-local VoidCorner = Instance.new("UICorner")
-VoidCorner.CornerRadius = UDim.new(0, 8)
-VoidCorner.Parent = AntiVoidToggle
-
--- Status Label
-StatusLabel.Name = "StatusLabel"
-StatusLabel.Parent = MainFrame
-StatusLabel.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
-StatusLabel.BorderSizePixel = 0
-StatusLabel.Position = UDim2.new(0.1, 0, 0.73, 0)
-StatusLabel.Size = UDim2.new(0.8, 0, 0, 50)
-StatusLabel.Font = Enum.Font.Gotham
-StatusLabel.Text = "📊 Status: Idle\n🎯 Height: 0m"
-StatusLabel.TextColor3 = Color3.fromRGB(0, 255, 150)
-StatusLabel.TextSize = 13
-StatusLabel.TextYAlignment = Enum.TextYAlignment.Center
-
-local StatusCorner = Instance.new("UICorner")
-StatusCorner.CornerRadius = UDim.new(0, 8)
-StatusCorner.Parent = StatusLabel
+-- Status
+local status = Instance.new("TextLabel")
+status.Parent = Main
+status.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+status.BorderSizePixel = 0
+status.Position = UDim2.new(0.05, 0, 0.78, 0)
+status.Size = UDim2.new(0.9, 0, 0, 42)
+status.Font = Enum.Font.Gotham
+status.Text = "📊 Idle | 🎯 0m"
+status.TextColor3 = Color3.fromRGB(0, 255, 150)
+status.TextSize = 12
+status.TextWrapped = true
 
 -- Close Button
-CloseButton.Name = "CloseButton"
-CloseButton.Parent = MainFrame
-CloseButton.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
-CloseButton.Position = UDim2.new(0.9, 0, 0, 5)
-CloseButton.Size = UDim2.new(0, 30, 0, 30)
-CloseButton.Font = Enum.Font.GothamBold
-CloseButton.Text = "X"
-CloseButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-CloseButton.TextSize = 18
+local closeBtn = Instance.new("TextButton")
+closeBtn.Parent = Main
+closeBtn.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
+closeBtn.BorderSizePixel = 0
+closeBtn.Position = UDim2.new(0.88, 0, 0.01, 0)
+closeBtn.Size = UDim2.new(0, 30, 0, 30)
+closeBtn.Font = Enum.Font.GothamBold
+closeBtn.Text = "X"
+closeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+closeBtn.TextSize = 16
 
-local CloseCorner = Instance.new("UICorner")
-CloseCorner.CornerRadius = UDim.new(0, 8)
-CloseCorner.Parent = CloseButton
-
--- Credits
-Credits.Name = "Credits"
-Credits.Parent = MainFrame
-Credits.BackgroundTransparency = 1
-Credits.Position = UDim2.new(0, 0, 0.9, 0)
-Credits.Size = UDim2.new(1, 0, 0, 30)
-Credits.Font = Enum.Font.GothamItalic
-Credits.Text = "Made with 🔥 by RAPIPMODS"
-Credits.TextColor3 = Color3.fromRGB(150, 150, 150)
-Credits.TextSize = 12
-
--- ========== FUNCTIONS ==========
-
-local autoWalkConnection
-
--- Check if void below
-local function isVoidBelow()
-    if rootPart.Position.Y < Config.VoidHeight then
-        return true
-    end
-    return false
-end
-
--- Check obstacle ahead
-local function checkObstacle()
-    local direction = humanoid.MoveDirection
-    if direction.Magnitude == 0 then
-        direction = rootPart.CFrame.LookVector
-    end
-    
-    local ray = Ray.new(rootPart.Position, direction * 3)
-    local hit, position = workspace:FindPartOnRayWithIgnoreList(ray, {character})
-    
-    return hit, position
-end
-
--- Smart pathfinding
-local lastStuckTime = 0
-local lastPosition = Vector3.new()
-
-local function smartMove()
-    -- Check if stuck
-    local currentPos = rootPart.Position
-    if (currentPos - lastPosition).Magnitude < 1 then
-        if tick() - lastStuckTime > 3 then
-            -- Stuck! Try jump or turn
-            humanoid.Jump = true
-            wait(0.2)
-            -- Turn random direction
-            rootPart.CFrame = rootPart.CFrame * CFrame.Angles(0, math.rad(math.random(-45, 45)), 0)
-            lastStuckTime = tick()
-        end
-    else
-        lastStuckTime = tick()
-    end
-    lastPosition = currentPos
-end
-
--- Start Auto Walk
-local function startAutoWalk()
-    autoWalkConnection = RunService.Heartbeat:Connect(function()
-        if not Config.AutoWalk then return end
-        
-        -- Update references
-        character = player.Character
-        if not character then return end
-        humanoid = character:FindFirstChild("Humanoid")
-        rootPart = character:FindFirstChild("HumanoidRootPart")
-        if not humanoid or not rootPart then return end
-        
-        -- Set speed
-        humanoid.WalkSpeed = Config.WalkSpeed
-        
-        -- Anti void check
-        if Config.AntiVoid and isVoidBelow() then
-            humanoid.Jump = true
-            -- Try move back
-            humanoid:Move(-humanoid.MoveDirection)
-            wait(0.2)
-            return
-        end
-        
-        -- Auto jump
-        if Config.AutoJump then
-            local obstacle, pos = checkObstacle()
-            if obstacle then
-                humanoid.Jump = true
-            end
-        end
-        
-        -- Smart pathfinding
-        if Config.SmartPathfinding then
-            smartMove()
-        end
-        
-        -- Move forward
-        local direction = rootPart.CFrame.LookVector
-        humanoid:Move(direction)
-        
-        -- Update status
-        StatusLabel.Text = string.format(
-            "📊 Status: Walking\n🎯 Height: %.1fm",
-            rootPart.Position.Y
-        )
-    end)
-end
-
--- Stop Auto Walk
-local function stopAutoWalk()
-    if autoWalkConnection then
-        autoWalkConnection:Disconnect()
-        autoWalkConnection = nil
-    end
-    if humanoid then
-        humanoid:Move(Vector3.new(0, 0, 0))
-    end
-    StatusLabel.Text = "📊 Status: Idle\n🎯 Height: 0m"
-end
-
--- ========== BUTTON FUNCTIONS ==========
-
--- Auto Walk Toggle
-AutoWalkToggle.MouseButton1Click:Connect(function()
-    Config.AutoWalk = not Config.AutoWalk
-    
-    if Config.AutoWalk then
-        AutoWalkToggle.Text = "🚶 Auto Walk: ON"
-        AutoWalkToggle.BackgroundColor3 = Color3.fromRGB(0, 200, 0)
-        startAutoWalk()
-    else
-        AutoWalkToggle.Text = "🚶 Auto Walk: OFF"
-        AutoWalkToggle.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-        stopAutoWalk()
-    end
-end)
-
--- Speed Button
-local speedOptions = {16, 20, 25, 30, 40, 50}
-local currentSpeedIndex = 2
-
-SpeedButton.MouseButton1Click:Connect(function()
-    currentSpeedIndex = currentSpeedIndex + 1
-    if currentSpeedIndex > #speedOptions then
-        currentSpeedIndex = 1
-    end
-    
-    Config.WalkSpeed = speedOptions[currentSpeedIndex]
-    SpeedLabel.Text = "⚡ Speed: " .. Config.WalkSpeed
-    
-    if humanoid then
-        humanoid.WalkSpeed = Config.WalkSpeed
-    end
-end)
-
--- Auto Jump Toggle
-AutoJumpToggle.MouseButton1Click:Connect(function()
-    Config.AutoJump = not Config.AutoJump
-    
-    if Config.AutoJump then
-        AutoJumpToggle.Text = "✅ Auto Jump: ON"
-        AutoJumpToggle.BackgroundColor3 = Color3.fromRGB(0, 150, 0)
-    else
-        AutoJumpToggle.Text = "❌ Auto Jump: OFF"
-        AutoJumpToggle.BackgroundColor3 = Color3.fromRGB(150, 0, 0)
-    end
-end)
-
--- Anti Void Toggle
-AntiVoidToggle.MouseButton1Click:Connect(function()
-    Config.AntiVoid = not Config.AntiVoid
-    
-    if Config.AntiVoid then
-        AntiVoidToggle.Text = "✅ Anti Void: ON"
-        AntiVoidToggle.BackgroundColor3 = Color3.fromRGB(0, 150, 0)
-    else
-        AntiVoidToggle.Text = "❌ Anti Void: OFF"
-        AntiVoidToggle.BackgroundColor3 = Color3.fromRGB(150, 0, 0)
-    end
-end)
-
--- Close Button
-CloseButton.MouseButton1Click:Connect(function()
-    stopAutoWalk()
+closeBtn.MouseButton1Click:Connect(function()
+    _G.Config.AutoWalk = false
     ScreenGui:Destroy()
+    print("[RAPIPMODS] Closed")
 end)
 
--- ========== KEYBOARD SHORTCUTS ==========
-UserInputService.InputBegan:Connect(function(input, gameProcessed)
-    if gameProcessed then return end
-    
-    -- Press "E" to toggle auto walk
-    if input.KeyCode == Enum.KeyCode.E then
-        AutoWalkToggle.MouseButton1Click:Fire()
-    end
-    
-    -- Press "R" to toggle GUI
-    if input.KeyCode == Enum.KeyCode.R then
-        MainFrame.Visible = not MainFrame.Visible
+-- ========== AUTO WALK LOOP ==========
+local function checkObstacle()
+    local ray = Ray.new(
+        rootPart.Position,
+        rootPart.CFrame.LookVector * 3
+    )
+    local hit = workspace:FindPartOnRayWithIgnoreList(ray, {character})
+    return hit
+end
+
+-- Main loop
+task.spawn(function()
+    while task.wait(0.1) do
+        pcall(function()
+            if _G.Config.AutoWalk then
+                -- Update character
+                if not character or not character.Parent then
+                    character = player.Character
+                end
+                
+                if character then
+                    humanoid = character:FindFirstChild("Humanoid")
+                    rootPart = character:FindFirstChild("HumanoidRootPart")
+                    
+                    if humanoid and rootPart then
+                        -- Set speed
+                        humanoid.WalkSpeed = _G.Config.WalkSpeed
+                        
+                        -- Anti void
+                        if _G.Config.AntiVoid and rootPart.Position.Y < -50 then
+                            humanoid.Jump = true
+                            task.wait(0.2)
+                        end
+                        
+                        -- Auto jump
+                        if _G.Config.AutoJump and checkObstacle() then
+                            humanoid.Jump = true
+                        end
+                        
+                        -- Move forward
+                        humanoid:Move(rootPart.CFrame.LookVector)
+                        
+                        -- Update status
+                        local height = math.floor(rootPart.Position.Y)
+                        status.Text = "📊 Walking | 🎯 " .. height .. "m"
+                    end
+                end
+            else
+                -- Idle
+                if humanoid then
+                    humanoid:Move(Vector3.new(0,0,0))
+                end
+                status.Text = "📊 Idle | 🎯 0m"
+            end
+        end)
     end
 end)
 
--- ========== HANDLE RESPAWN ==========
-player.CharacterAdded:Connect(function(newCharacter)
-    character = newCharacter
-    humanoid = character:WaitForChild("Humanoid")
-    rootPart = character:WaitForChild("HumanoidRootPart")
-    
-    if Config.AutoWalk then
-        stopAutoWalk()
-        wait(1)
-        startAutoWalk()
-    end
+-- ========== RESPAWN HANDLER ==========
+player.CharacterAdded:Connect(function(char)
+    task.wait(1)
+    character = char
+    humanoid = char:WaitForChild("Humanoid")
+    rootPart = char:WaitForChild("HumanoidRootPart")
+    print("[RAPIPMODS] Character respawned")
 end)
 
--- ========== STARTUP NOTIFICATION ==========
-game.StarterGui:SetCore("SendNotification", {
-    Title = "🔥 RAPIPMODS";
-    Text = "Auto Walk loaded!\nPress E to toggle\nPress R to hide GUI";
-    Duration = 5;
-})
-
+-- ========== NOTIFICATION ==========
 print("========================================")
-print("🔥 RAPIPMODS - Mountain Auto Walk 🔥")
-print("Press E: Toggle Auto Walk")
-print("Press R: Toggle GUI")
+print("🔥 RAPIPMODS - Delta Android")
+print("GUI Loaded! Touch buttons to use")
 print("========================================")
