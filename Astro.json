@@ -118,5 +118,13 @@
     "expired": "2029-12-30",
     "createdBy": "chrulz",
     "createdAt": "2025-10-18T08:50:27.719Z"
+  },
+  {
+    "username": "hamz",
+    "password": "717171",
+    "role": "admin",
+    "expired": "",
+    "createdBy": "rapip",
+    "createdAt": "2025-10-19T13:09:34.669Z"
   }
 ]
