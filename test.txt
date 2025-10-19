@@ -1,855 +1,414 @@
--- ═══════════════════════════════════════════════════════════
+--[[
+    ╦═╗╔═╗╔═╗╦╔═╗╔╦╗╔═╗╔╦╗╔═╗
+    ║╔╝╠═╣╠═╝║╠═╝║║║║ ║ ║║╚═╗
+    ╩ ╩╩ ╩╩  ╩╩  ╩ ╩╚═╝═╩╝╚═╝
+    Universal Mountain Auto Walk
+    Coded by: RAPIPMODS
+]]
+
 local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+
 local player = Players.LocalPlayer
-local mouse = player:GetMouse()
-local UIS = game:GetService("UserInputService")
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoid = character:WaitForChild("Humanoid")
+local rootPart = character:WaitForChild("HumanoidRootPart")
 
-print("╔═══════════════════════════════════╗")
-print("║  RapipppModss - ULTIMATE FIXED    ║")
-print("║    20+ BYPASS METHODS! 🔥         ║")
-print("╚═══════════════════════════════════╝")
-
--- Wait for character
-if not player.Character then
-    player.CharacterAdded:Wait()
-end
-wait(0.5)
-
--- Settings
-local Settings = {
-    Mode = "glitch",
-    Enabled = false,
-    Power = 100,
-    Effects = {},
-    Stats = {attempts = 0, success = 0},
-    IsDragging = false,
-    IsMinimized = false
+-- ========== CONFIG ==========
+local Config = {
+    AutoWalk = false,
+    WalkSpeed = 20,
+    AutoJump = true,
+    AntiVoid = true,
+    SmartPathfinding = true,
+    VoidHeight = -50, -- Kalau Y position di bawah ini = void
 }
 
--- Create GUI
-local function createGUI()
-    print("🔨 Creating GUI...")
-    
-    -- Destroy existing GUI
-    pcall(function()
-        if game:GetService("CoreGui"):FindFirstChild("RMPhysics") then
-            game:GetService("CoreGui"):FindFirstChild("RMPhysics"):Destroy()
-        end
-    end)
-    
-    pcall(function()
-        if player.PlayerGui:FindFirstChild("RMPhysics") then
-            player.PlayerGui:FindFirstChild("RMPhysics"):Destroy()
-        end
-    end)
-    
-    wait(0.1)
-    
-    local sg = Instance.new("ScreenGui")
-    sg.Name = "RMPhysics"
-    sg.ResetOnSpawn = false
-    sg.IgnoreGuiInset = true
-    sg.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-    sg.DisplayOrder = 999999
-    
-    -- Try CoreGui first, fallback to PlayerGui
-    local success = pcall(function()
-        sg.Parent = game:GetService("CoreGui")
-    end)
-    
-    if not success or not sg.Parent then
-        sg.Parent = player:WaitForChild("PlayerGui")
+-- ========== GUI CREATION ==========
+local ScreenGui = Instance.new("ScreenGui")
+local MainFrame = Instance.new("Frame")
+local Title = Instance.new("TextLabel")
+local AutoWalkToggle = Instance.new("TextButton")
+local SpeedSlider = Instance.new("Frame")
+local SpeedLabel = Instance.new("TextLabel")
+local SpeedButton = Instance.new("TextButton")
+local AutoJumpToggle = Instance.new("TextButton")
+local AntiVoidToggle = Instance.new("TextButton")
+local StatusLabel = Instance.new("TextLabel")
+local CloseButton = Instance.new("TextButton")
+local Credits = Instance.new("TextLabel")
+
+-- ScreenGui
+ScreenGui.Name = "RapipModsGUI"
+ScreenGui.Parent = game.CoreGui
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+-- Main Frame
+MainFrame.Name = "MainFrame"
+MainFrame.Parent = ScreenGui
+MainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+MainFrame.BorderColor3 = Color3.fromRGB(255, 0, 0)
+MainFrame.BorderSizePixel = 3
+MainFrame.Position = UDim2.new(0.35, 0, 0.25, 0)
+MainFrame.Size = UDim2.new(0, 350, 0, 400)
+MainFrame.Active = true
+MainFrame.Draggable = true
+
+-- Add rounded corners
+local Corner = Instance.new("UICorner")
+Corner.CornerRadius = UDim.new(0, 12)
+Corner.Parent = MainFrame
+
+-- Title
+Title.Name = "Title"
+Title.Parent = MainFrame
+Title.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+Title.Size = UDim2.new(1, 0, 0, 50)
+Title.Font = Enum.Font.GothamBold
+Title.Text = "🔥 RAPIPMODS 🔥"
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.TextSize = 24
+Title.TextStrokeTransparency = 0.5
+
+local TitleCorner = Instance.new("UICorner")
+TitleCorner.CornerRadius = UDim.new(0, 12)
+TitleCorner.Parent = Title
+
+-- Auto Walk Toggle
+AutoWalkToggle.Name = "AutoWalkToggle"
+AutoWalkToggle.Parent = MainFrame
+AutoWalkToggle.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+AutoWalkToggle.BorderColor3 = Color3.fromRGB(255, 255, 255)
+AutoWalkToggle.BorderSizePixel = 2
+AutoWalkToggle.Position = UDim2.new(0.1, 0, 0.18, 0)
+AutoWalkToggle.Size = UDim2.new(0.8, 0, 0, 45)
+AutoWalkToggle.Font = Enum.Font.GothamBold
+AutoWalkToggle.Text = "🚶 Auto Walk: OFF"
+AutoWalkToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
+AutoWalkToggle.TextSize = 18
+
+local ToggleCorner = Instance.new("UICorner")
+ToggleCorner.CornerRadius = UDim.new(0, 8)
+ToggleCorner.Parent = AutoWalkToggle
+
+-- Speed Slider
+SpeedLabel.Name = "SpeedLabel"
+SpeedLabel.Parent = MainFrame
+SpeedLabel.BackgroundTransparency = 1
+SpeedLabel.Position = UDim2.new(0.1, 0, 0.32, 0)
+SpeedLabel.Size = UDim2.new(0.8, 0, 0, 25)
+SpeedLabel.Font = Enum.Font.Gotham
+SpeedLabel.Text = "⚡ Speed: 20"
+SpeedLabel.TextColor3 = Color3.fromRGB(255, 255, 0)
+SpeedLabel.TextSize = 16
+
+SpeedButton.Name = "SpeedButton"
+SpeedButton.Parent = MainFrame
+SpeedButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+SpeedButton.BorderSizePixel = 2
+SpeedButton.BorderColor3 = Color3.fromRGB(255, 255, 255)
+SpeedButton.Position = UDim2.new(0.1, 0, 0.39, 0)
+SpeedButton.Size = UDim2.new(0.8, 0, 0, 35)
+SpeedButton.Font = Enum.Font.Gotham
+SpeedButton.Text = "Click to Change Speed"
+SpeedButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+SpeedButton.TextSize = 14
+
+local SpeedCorner = Instance.new("UICorner")
+SpeedCorner.CornerRadius = UDim.new(0, 8)
+SpeedCorner.Parent = SpeedButton
+
+-- Auto Jump Toggle
+AutoJumpToggle.Name = "AutoJumpToggle"
+AutoJumpToggle.Parent = MainFrame
+AutoJumpToggle.BackgroundColor3 = Color3.fromRGB(0, 150, 0)
+AutoJumpToggle.BorderSizePixel = 2
+AutoJumpToggle.BorderColor3 = Color3.fromRGB(255, 255, 255)
+AutoJumpToggle.Position = UDim2.new(0.1, 0, 0.52, 0)
+AutoJumpToggle.Size = UDim2.new(0.8, 0, 0, 35)
+AutoJumpToggle.Font = Enum.Font.Gotham
+AutoJumpToggle.Text = "✅ Auto Jump: ON"
+AutoJumpToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
+AutoJumpToggle.TextSize = 14
+
+local JumpCorner = Instance.new("UICorner")
+JumpCorner.CornerRadius = UDim.new(0, 8)
+JumpCorner.Parent = AutoJumpToggle
+
+-- Anti Void Toggle
+AntiVoidToggle.Name = "AntiVoidToggle"
+AntiVoidToggle.Parent = MainFrame
+AntiVoidToggle.BackgroundColor3 = Color3.fromRGB(0, 150, 0)
+AntiVoidToggle.BorderSizePixel = 2
+AntiVoidToggle.BorderColor3 = Color3.fromRGB(255, 255, 255)
+AntiVoidToggle.Position = UDim2.new(0.1, 0, 0.62, 0)
+AntiVoidToggle.Size = UDim2.new(0.8, 0, 0, 35)
+AntiVoidToggle.Font = Enum.Font.Gotham
+AntiVoidToggle.Text = "✅ Anti Void: ON"
+AntiVoidToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
+AntiVoidToggle.TextSize = 14
+
+local VoidCorner = Instance.new("UICorner")
+VoidCorner.CornerRadius = UDim.new(0, 8)
+VoidCorner.Parent = AntiVoidToggle
+
+-- Status Label
+StatusLabel.Name = "StatusLabel"
+StatusLabel.Parent = MainFrame
+StatusLabel.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+StatusLabel.BorderSizePixel = 0
+StatusLabel.Position = UDim2.new(0.1, 0, 0.73, 0)
+StatusLabel.Size = UDim2.new(0.8, 0, 0, 50)
+StatusLabel.Font = Enum.Font.Gotham
+StatusLabel.Text = "📊 Status: Idle\n🎯 Height: 0m"
+StatusLabel.TextColor3 = Color3.fromRGB(0, 255, 150)
+StatusLabel.TextSize = 13
+StatusLabel.TextYAlignment = Enum.TextYAlignment.Center
+
+local StatusCorner = Instance.new("UICorner")
+StatusCorner.CornerRadius = UDim.new(0, 8)
+StatusCorner.Parent = StatusLabel
+
+-- Close Button
+CloseButton.Name = "CloseButton"
+CloseButton.Parent = MainFrame
+CloseButton.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
+CloseButton.Position = UDim2.new(0.9, 0, 0, 5)
+CloseButton.Size = UDim2.new(0, 30, 0, 30)
+CloseButton.Font = Enum.Font.GothamBold
+CloseButton.Text = "X"
+CloseButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+CloseButton.TextSize = 18
+
+local CloseCorner = Instance.new("UICorner")
+CloseCorner.CornerRadius = UDim.new(0, 8)
+CloseCorner.Parent = CloseButton
+
+-- Credits
+Credits.Name = "Credits"
+Credits.Parent = MainFrame
+Credits.BackgroundTransparency = 1
+Credits.Position = UDim2.new(0, 0, 0.9, 0)
+Credits.Size = UDim2.new(1, 0, 0, 30)
+Credits.Font = Enum.Font.GothamItalic
+Credits.Text = "Made with 🔥 by RAPIPMODS"
+Credits.TextColor3 = Color3.fromRGB(150, 150, 150)
+Credits.TextSize = 12
+
+-- ========== FUNCTIONS ==========
+
+local autoWalkConnection
+
+-- Check if void below
+local function isVoidBelow()
+    if rootPart.Position.Y < Config.VoidHeight then
+        return true
     end
-    
-    print("✅ GUI Parent:", sg.Parent.Name)
-    
-    -- Main Frame
-    local main = Instance.new("Frame")
-    main.Name = "MainFrame"
-    main.Size = UDim2.new(0, 240, 0, 270)
-    main.Position = UDim2.new(0, 10, 0.5, -135)
-    main.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
-    main.BorderSizePixel = 0
-    main.Active = true
-    main.Draggable = false
-    main.Parent = sg
-    
-    local mainCorner = Instance.new("UICorner", main)
-    mainCorner.CornerRadius = UDim.new(0, 10)
-    
-    -- Minimized Logo
-    local miniLogo = Instance.new("TextButton")
-    miniLogo.Name = "MiniLogo"
-    miniLogo.Size = UDim2.new(0, 55, 0, 55)
-    miniLogo.Position = UDim2.new(0, 10, 0.5, -27.5)
-    miniLogo.BackgroundColor3 = Color3.fromRGB(255, 100, 0)
-    miniLogo.Text = "RM"
-    miniLogo.TextColor3 = Color3.fromRGB(255, 255, 255)
-    miniLogo.TextSize = 24
-    miniLogo.Font = Enum.Font.GothamBold
-    miniLogo.Visible = false
-    miniLogo.Active = true
-    miniLogo.Draggable = false
-    miniLogo.Parent = sg
-    
-    local miniCorner = Instance.new("UICorner", miniLogo)
-    miniCorner.CornerRadius = UDim.new(0, 12)
-    
-    local miniGrad = Instance.new("UIGradient", miniLogo)
-    miniGrad.Color = ColorSequence.new{
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 100, 0)),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 50, 0))
-    }
-    miniGrad.Rotation = 45
-    
-    -- Header
-    local header = Instance.new("Frame", main)
-    header.Name = "Header"
-    header.Size = UDim2.new(1, 0, 0, 50)
-    header.BackgroundColor3 = Color3.fromRGB(255, 100, 0)
-    header.BorderSizePixel = 0
-    header.Active = true
-    
-    local headerCorner = Instance.new("UICorner", header)
-    headerCorner.CornerRadius = UDim.new(0, 10)
-    
-    local grad = Instance.new("UIGradient", header)
-    grad.Color = ColorSequence.new{
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 100, 0)),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 50, 0))
-    }
-    grad.Rotation = 45
-    
-    -- Logo
-    local logo = Instance.new("TextLabel", header)
-    logo.Size = UDim2.new(0, 45, 0, 45)
-    logo.Position = UDim2.new(0, 5, 0, 2.5)
-    logo.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    logo.Text = "RM"
-    logo.TextColor3 = Color3.fromRGB(255, 100, 0)
-    logo.TextSize = 20
-    logo.Font = Enum.Font.GothamBold
-    
-    local logoCorner = Instance.new("UICorner", logo)
-    logoCorner.CornerRadius = UDim.new(0, 8)
-    
-    -- Title
-    local title = Instance.new("TextLabel", header)
-    title.Size = UDim2.new(0, 90, 0, 25)
-    title.Position = UDim2.new(0, 55, 0, 5)
-    title.BackgroundTransparency = 1
-    title.Text = "RapipppModss"
-    title.TextColor3 = Color3.fromRGB(255, 255, 255)
-    title.TextSize = 13
-    title.Font = Enum.Font.GothamBold
-    title.TextXAlignment = Enum.TextXAlignment.Left
-    
-    local subtitle = Instance.new("TextLabel", header)
-    subtitle.Size = UDim2.new(0, 90, 0, 15)
-    subtitle.Position = UDim2.new(0, 55, 0, 28)
-    subtitle.BackgroundTransparency = 1
-    subtitle.Text = "20+ Bypass Pro"
-    subtitle.TextColor3 = Color3.fromRGB(255, 255, 255)
-    subtitle.TextSize = 9
-    subtitle.Font = Enum.Font.Gotham
-    subtitle.TextTransparency = 0.4
-    subtitle.TextXAlignment = Enum.TextXAlignment.Left
-    
-    -- Minimize Button
-    local minBtn = Instance.new("TextButton", header)
-    minBtn.Name = "MinimizeBtn"
-    minBtn.Size = UDim2.new(0, 28, 0, 28)
-    minBtn.Position = UDim2.new(1, -63, 0, 11)
-    minBtn.BackgroundColor3 = Color3.fromRGB(255, 150, 0)
-    minBtn.Text = "−"
-    minBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    minBtn.TextSize = 20
-    minBtn.Font = Enum.Font.GothamBold
-    minBtn.ZIndex = 10
-    
-    local minBtnCorner = Instance.new("UICorner", minBtn)
-    minBtnCorner.CornerRadius = UDim.new(0, 6)
-    
-    -- Close Button
-    local closeBtn = Instance.new("TextButton", header)
-    closeBtn.Name = "CloseBtn"
-    closeBtn.Size = UDim2.new(0, 28, 0, 28)
-    closeBtn.Position = UDim2.new(1, -33, 0, 11)
-    closeBtn.BackgroundColor3 = Color3.fromRGB(220, 50, 50)
-    closeBtn.Text = "X"
-    closeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    closeBtn.TextSize = 16
-    closeBtn.Font = Enum.Font.GothamBold
-    closeBtn.ZIndex = 10
-    
-    local closeBtnCorner = Instance.new("UICorner", closeBtn)
-    closeBtnCorner.CornerRadius = UDim.new(0, 6)
-    
-    -- Status
-    local status = Instance.new("TextLabel", main)
-    status.Name = "Status"
-    status.Size = UDim2.new(1, -20, 0, 25)
-    status.Position = UDim2.new(0, 10, 0, 60)
-    status.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
-    status.Text = "🔴 OFF | GLITCH"
-    status.TextColor3 = Color3.fromRGB(255, 100, 100)
-    status.TextSize = 11
-    status.Font = Enum.Font.GothamBold
-    
-    local statusCorner = Instance.new("UICorner", status)
-    statusCorner.CornerRadius = UDim.new(0, 6)
-    
-    -- Stats
-    local stats = Instance.new("TextLabel", main)
-    stats.Name = "Stats"
-    stats.Size = UDim2.new(1, -20, 0, 20)
-    stats.Position = UDim2.new(0, 10, 0, 90)
-    stats.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
-    stats.Text = "⚡ Bypass: 0/0 | Success: 0%"
-    stats.TextColor3 = Color3.fromRGB(100, 200, 255)
-    stats.TextSize = 9
-    stats.Font = Enum.Font.Gotham
-    
-    local statsCorner = Instance.new("UICorner", stats)
-    statsCorner.CornerRadius = UDim.new(0, 5)
-    
-    -- Bypass Info
-    local bypassInfo = Instance.new("TextLabel", main)
-    bypassInfo.Name = "BypassInfo"
-    bypassInfo.Size = UDim2.new(1, -20, 0, 18)
-    bypassInfo.Position = UDim2.new(0, 10, 0, 115)
-    bypassInfo.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
-    bypassInfo.Text = "🔥 20+ Methods | Ultra Power"
-    bypassInfo.TextColor3 = Color3.fromRGB(255, 200, 0)
-    bypassInfo.TextSize = 9
-    bypassInfo.Font = Enum.Font.GothamBold
-    
-    local bypassCorner = Instance.new("UICorner", bypassInfo)
-    bypassCorner.CornerRadius = UDim.new(0, 5)
-    
-    -- Toggle
-    local toggle = Instance.new("TextButton", main)
-    toggle.Name = "Toggle"
-    toggle.Size = UDim2.new(1, -20, 0, 35)
-    toggle.Position = UDim2.new(0, 10, 0, 140)
-    toggle.BackgroundColor3 = Color3.fromRGB(220, 50, 50)
-    toggle.Text = "🔴 ENABLE"
-    toggle.TextColor3 = Color3.fromRGB(255, 255, 255)
-    toggle.TextSize = 14
-    toggle.Font = Enum.Font.GothamBold
-    
-    local toggleCorner = Instance.new("UICorner", toggle)
-    toggleCorner.CornerRadius = UDim.new(0, 8)
-    
-    -- Modes
-    local modesFrame = Instance.new("Frame", main)
-    modesFrame.Size = UDim2.new(1, -20, 0, 30)
-    modesFrame.Position = UDim2.new(0, 10, 0, 185)
-    modesFrame.BackgroundTransparency = 1
-    
-    local modes = {"fling", "shake", "spin", "glitch"}
-    local icons = {"💥", "📳", "🌀", "👻"}
-    local modeButtons = {}
-    
-    for i, mode in ipairs(modes) do
-        local btn = Instance.new("TextButton", modesFrame)
-        btn.Name = mode
-        btn.Size = UDim2.new(0.23, 0, 0, 30)
-        btn.Position = UDim2.new((i-1) * 0.25 + 0.01, 0, 0, 0)
-        btn.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
-        btn.Text = icons[i]
-        btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-        btn.TextSize = 16
-        btn.Font = Enum.Font.GothamBold
-        
-        local btnCorner = Instance.new("UICorner", btn)
-        btnCorner.CornerRadius = UDim.new(0, 6)
-        modeButtons[mode] = btn
-    end
-    
-    modeButtons[Settings.Mode].BackgroundColor3 = Color3.fromRGB(255, 100, 0)
-    
-    -- Counter
-    local counter = Instance.new("TextLabel", main)
-    counter.Name = "Counter"
-    counter.Size = UDim2.new(1, -20, 0, 18)
-    counter.Position = UDim2.new(0, 10, 0, 222)
-    counter.BackgroundTransparency = 1
-    counter.Text = "Active: 0 objects"
-    counter.TextColor3 = Color3.fromRGB(150, 150, 150)
-    counter.TextSize = 10
-    counter.Font = Enum.Font.Gotham
-    
-    -- Info
-    local info = Instance.new("TextLabel", main)
-    info.Size = UDim2.new(1, -20, 0, 22)
-    info.Position = UDim2.new(0, 10, 0, 243)
-    info.BackgroundTransparency = 1
-    info.Text = "⚠️ Drag header | − minimize | X close"
-    info.TextColor3 = Color3.fromRGB(255, 200, 0)
-    info.TextSize = 8
-    info.Font = Enum.Font.Gotham
-    info.TextWrapped = true
-    
-    print("✅ GUI elements created")
-    
-    return sg, {
-        Main = main,
-        MiniLogo = miniLogo,
-        MinBtn = minBtn,
-        CloseBtn = closeBtn,
-        Toggle = toggle,
-        Status = status,
-        Stats = stats,
-        Counter = counter,
-        Modes = modeButtons,
-        Header = header,
-        BypassInfo = bypassInfo
-    }
-end
-
-local gui, elements = createGUI()
-
--- Notification
-local function notify(title, text, dur)
-    pcall(function()
-        game.StarterGui:SetCore("SendNotification", {
-            Title = title,
-            Text = text,
-            Duration = dur or 2
-        })
-    end)
-end
-
--- Update UI
-local function updateUI()
-    pcall(function()
-        local count = 0
-        for _ in pairs(Settings.Effects) do count = count + 1 end
-        
-        elements.Counter.Text = "Active: " .. count .. " objects"
-        
-        local rate = Settings.Stats.attempts > 0 and 
-            math.floor((Settings.Stats.success / Settings.Stats.attempts) * 100) or 0
-        elements.Stats.Text = string.format("⚡ Bypass: %d/%d | Success: %d%%", 
-            Settings.Stats.success, Settings.Stats.attempts, rate)
-        
-        if Settings.Enabled then
-            elements.Status.Text = "🟢 ON | " .. Settings.Mode:upper()
-            elements.Status.TextColor3 = Color3.fromRGB(100, 255, 100)
-        else
-            elements.Status.Text = "🔴 OFF | " .. Settings.Mode:upper()
-            elements.Status.TextColor3 = Color3.fromRGB(255, 100, 100)
-        end
-    end)
-end
-
--- Minimize function
-local function toggleMinimize()
-    Settings.IsMinimized = not Settings.IsMinimized
-    elements.Main.Visible = not Settings.IsMinimized
-    elements.MiniLogo.Visible = Settings.IsMinimized
-    
-    if Settings.IsMinimized then
-        notify("➖ Minimized", "Click logo to restore", 1.5)
-    else
-        notify("⬆️ Restored", "GUI opened", 1.5)
-    end
-end
-
--- Minimize button
-elements.MinBtn.MouseButton1Click:Connect(function()
-    print("[RM] Minimize clicked")
-    toggleMinimize()
-end)
-
--- Mini logo click
-elements.MiniLogo.MouseButton1Click:Connect(function()
-    print("[RM] Mini logo clicked")
-    toggleMinimize()
-end)
-
--- Close button
-elements.CloseBtn.MouseButton1Click:Connect(function()
-    print("[RM] Close button clicked")
-    Settings.Enabled = false
-    
-    for obj, _ in pairs(Settings.Effects) do
-        Settings.Effects[obj] = nil
-    end
-    
-    notify("👋 Closed", "Script GUI closed", 2)
-    wait(0.3)
-    pcall(function()
-        gui:Destroy()
-    end)
-end)
-
--- Toggle
-elements.Toggle.MouseButton1Click:Connect(function()
-    Settings.Enabled = not Settings.Enabled
-    
-    if Settings.Enabled then
-        elements.Toggle.Text = "🟢 DISABLE"
-        elements.Toggle.BackgroundColor3 = Color3.fromRGB(50, 220, 50)
-        notify("✅ Enabled", "Click objects in game!", 2)
-        print("[RM] Script ENABLED")
-    else
-        elements.Toggle.Text = "🔴 ENABLE"
-        elements.Toggle.BackgroundColor3 = Color3.fromRGB(220, 50, 50)
-        notify("❌ Disabled", "Script stopped", 2)
-        print("[RM] Script DISABLED")
-        
-        -- Stop all effects properly
-        for obj, _ in pairs(Settings.Effects) do
-            Settings.Effects[obj] = nil
-            pcall(function()
-                if obj and obj.Parent then
-                    obj.Velocity = Vector3.new(0, 0, 0)
-                    obj.RotVelocity = Vector3.new(0, 0, 0)
-                    obj.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
-                    obj.AssemblyAngularVelocity = Vector3.new(0, 0, 0)
-                    
-                    for _, child in pairs(obj:GetChildren()) do
-                        if child:IsA("BodyMover") then
-                            child:Destroy()
-                        end
-                    end
-                end
-            end)
-        end
-    end
-    
-    updateUI()
-end)
-
--- Mode selection
-for mode, btn in pairs(elements.Modes) do
-    btn.MouseButton1Click:Connect(function()
-        print("[RM] Mode clicked: " .. mode)
-        Settings.Mode = mode
-        
-        for m, b in pairs(elements.Modes) do
-            b.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
-        end
-        
-        btn.BackgroundColor3 = Color3.fromRGB(255, 100, 0)
-        updateUI()
-        notify("🎯 Mode", mode:upper() .. " selected!", 1.5)
-    end)
-end
-
--- 20+ BYPASS METHODS GACOR
-local function tryBypass(obj)
-    Settings.Stats.attempts = Settings.Stats.attempts + 1
-    
-    print("[RM] 🔥 Attempting advanced bypass...")
-    
-    -- Store original properties
-    local originalCF = obj.CFrame
-    local originalParent = obj.Parent
-    
-    local methods = {
-        -- Method 1: Direct unanchor
-        function() 
-            obj.Anchored = false 
-            return not obj.Anchored 
-        end,
-        
-        -- Method 2: Network owner first
-        function() 
-            obj:SetNetworkOwner(player)
-            wait(0.1)
-            obj.Anchored = false 
-            return not obj.Anchored 
-        end,
-        
-        -- Method 3: Massless trick
-        function() 
-            obj.Massless = true 
-            obj.Anchored = false 
-            return not obj.Anchored 
-        end,
-        
-        -- Method 4: Physics properties
-        function() 
-            obj.CustomPhysicalProperties = PhysicalProperties.new(0.01, 0, 0, 0, 0) 
-            obj.Anchored = false 
-            return not obj.Anchored 
-        end,
-        
-        -- Method 5: Root priority
-        function() 
-            obj.RootPriority = 127 
-            obj.Anchored = false 
-            return not obj.Anchored 
-        end,
-        
-        -- Method 6: Velocity injection
-        function() 
-            obj.AssemblyLinearVelocity = Vector3.new(0, 100, 0) 
-            obj.Anchored = false 
-            return not obj.Anchored 
-        end,
-        
-        -- Method 7: Parent nil trick
-        function() 
-            local p = obj.Parent 
-            obj.Parent = nil 
-            obj.Anchored = false 
-            obj.Parent = p 
-            obj.CFrame = originalCF
-            return not obj.Anchored 
-        end,
-        
-        -- Method 8: CanCollide false
-        function() 
-            obj.CanCollide = false 
-            obj.Anchored = false 
-            return not obj.Anchored 
-        end,
-        
-        -- Method 9: Transparency trick
-        function() 
-            local t = obj.Transparency
-            obj.Transparency = 1 
-            obj.Anchored = false 
-            obj.Transparency = t
-            return not obj.Anchored 
-        end,
-        
-        -- Method 10: Size manipulation
-        function()
-            local s = obj.Size
-            obj.Size = s * 0.99
-            obj.Anchored = false
-            obj.Size = s
-            return not obj.Anchored
-        end,
-        
-        -- Method 11-15: BodyMover methods
-        function() 
-            local bv = Instance.new("BodyVelocity")
-            bv.Velocity = Vector3.new(0, 100, 0)
-            bv.MaxForce = Vector3.new(9e9, 9e9, 9e9)
-            bv.Parent = obj
-            obj.Anchored = false
-            local result = not obj.Anchored
-            wait(0.1)
-            pcall(function() bv:Destroy() end)
-            return result
-        end,
-        
-        function() 
-            local bp = Instance.new("BodyPosition")
-            bp.Position = obj.Position + Vector3.new(0, 10, 0)
-            bp.MaxForce = Vector3.new(9e9, 9e9, 9e9)
-            bp.Parent = obj
-            obj.Anchored = false
-            local result = not obj.Anchored
-            wait(0.1)
-            pcall(function() bp:Destroy() end)
-            return result
-        end,
-        
-        function() 
-            local bg = Instance.new("BodyGyro")
-            bg.MaxTorque = Vector3.new(9e9, 9e9, 9e9)
-            bg.Parent = obj
-            obj.Anchored = false
-            local result = not obj.Anchored
-            pcall(function() bg:Destroy() end)
-            return result
-        end,
-        
-        -- Method 14: Multi-attempt
-        function()
-            for i = 1, 5 do
-                pcall(function() obj:SetNetworkOwner(player) end)
-                obj.Anchored = false
-                if not obj.Anchored then return true end
-                wait(0.05)
-            end
-            return not obj.Anchored
-        end,
-        
-        -- Method 15: Rapid fire all properties
-        function()
-            obj:SetNetworkOwner(player)
-            obj.Massless = true
-            obj.CanCollide = false
-            obj.CustomPhysicalProperties = PhysicalProperties.new(0.01, 0, 0, 0, 0)
-            
-            for i = 1, 3 do
-                obj.Anchored = false
-                if not obj.Anchored then return true end
-                wait(0.03)
-            end
-            return not obj.Anchored
-        end
-    }
-    
-    for i, method in ipairs(methods) do
-        local success, result = pcall(method)
-        if success and result then
-            Settings.Stats.success = Settings.Stats.success + 1
-            updateUI()
-            notify("✅ BYPASS!", "Method " .. i .. " worked!", 2)
-            print("[RM] ✅ Method " .. i .. " SUCCESS!")
-            return true
-        end
-        
-        -- Reset CFrame after failed attempt
-        pcall(function()
-            obj.CFrame = originalCF
-        end)
-    end
-    
-    print("[RM] ❌ All methods failed - Object is server-protected")
-    updateUI()
     return false
 end
--- Apply effect
-local function applyEffect(obj, mode)
-    if Settings.Effects[obj] then
-        Settings.Effects[obj] = nil
-        
-        pcall(function()
-            if obj.Parent then
-                obj.Velocity = Vector3.new(0, 0, 0)
-                obj.RotVelocity = Vector3.new(0, 0, 0)
-                obj.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
-                obj.AssemblyAngularVelocity = Vector3.new(0, 0, 0)
-                
-                for _, child in pairs(obj:GetChildren()) do
-                    if child:IsA("BodyMover") or child:IsA("BodyVelocity") or 
-                       child:IsA("BodyGyro") or child:IsA("BodyPosition") then
-                        child:Destroy()
-                    end
-                end
-            end
-        end)
-        
-        updateUI()
-        notify("⏹️ Stopped", obj.Name, 1.5)
-        return
+
+-- Check obstacle ahead
+local function checkObstacle()
+    local direction = humanoid.MoveDirection
+    if direction.Magnitude == 0 then
+        direction = rootPart.CFrame.LookVector
     end
     
-    -- Try to get network ownership (but don't fail if can't)
-    pcall(function()
-        obj:SetNetworkOwner(player)
-    end)
+    local ray = Ray.new(rootPart.Position, direction * 3)
+    local hit, position = workspace:FindPartOnRayWithIgnoreList(ray, {character})
     
-    -- If anchored, try bypass first
-    if obj.Anchored then
-        notify("🔧 Bypassing...", "15 methods active", 1.5)
-        print("[RM] 🔐 Object anchored, trying bypass...")
-        
-        if not tryBypass(obj) then
-            notify("❌ Failed", "All 15 methods failed", 2)
-            print("[RM] ❌ All bypass methods failed")
-            return
-        else
-            print("[RM] ✅ Bypass successful!")
+    return hit, position
+end
+
+-- Smart pathfinding
+local lastStuckTime = 0
+local lastPosition = Vector3.new()
+
+local function smartMove()
+    -- Check if stuck
+    local currentPos = rootPart.Position
+    if (currentPos - lastPosition).Magnitude < 1 then
+        if tick() - lastStuckTime > 3 then
+            -- Stuck! Try jump or turn
+            humanoid.Jump = true
+            wait(0.2)
+            -- Turn random direction
+            rootPart.CFrame = rootPart.CFrame * CFrame.Angles(0, math.rad(math.random(-45, 45)), 0)
+            lastStuckTime = tick()
         end
     else
-        print("[RM] ℹ️ Object already unanchored")
+        lastStuckTime = tick()
     end
-    
-    -- Final network ownership attempt
-    pcall(function() 
-        obj:SetNetworkOwner(player)
-        obj.CanCollide = false
-    end)
-    
-    Settings.Effects[obj] = true
-    
-    spawn(function()
-        while Settings.Effects[obj] and obj.Parent and Settings.Enabled do
-            pcall(function()
-                -- Safety check
-                if player.Character and player.Character.PrimaryPart then
-                    local distance = (obj.Position - player.Character.PrimaryPart.Position).Magnitude
-                    if distance < 5 then
-                        Settings.Effects[obj] = nil
-                        obj.Velocity = Vector3.new(0, 0, 0)
-                        notify("🛑 Auto Stop", "Too close!", 1.5)
-                        return
-                    end
-                end
-                
-                -- Maintain ownership
-                pcall(function() obj:SetNetworkOwner(player) end)
-                
-                if mode == "fling" then
-                    obj.AssemblyLinearVelocity = Vector3.new(
-                        math.random(-Settings.Power, Settings.Power),
-                        math.random(Settings.Power/2, Settings.Power),
-                        math.random(-Settings.Power, Settings.Power)
-                    )
-                    obj.AssemblyAngularVelocity = Vector3.new(
-                        math.random(-20, 20),
-                        math.random(-20, 20),
-                        math.random(-20, 20)
-                    )
-                    
-                elseif mode == "shake" then
-                    obj.CFrame = obj.CFrame * CFrame.new(
-                        math.random(-3, 3),
-                        math.random(-3, 3),
-                        math.random(-3, 3)
-                    )
-                    
-                elseif mode == "spin" then
-                    obj.AssemblyAngularVelocity = Vector3.new(
-                        Settings.Power/5,
-                        Settings.Power/5,
-                        Settings.Power/5
-                    )
-                    
-                elseif mode == "glitch" then
-                    if player.Character and player.Character.PrimaryPart then
-                        local dir = (obj.Position - player.Character.PrimaryPart.Position).Unit
-                        obj.CFrame = obj.CFrame + (dir * 3)
-                    end
-                    
-                    obj.CFrame = obj.CFrame * CFrame.new(
-                        math.random(-5, 5),
-                        -5,
-                        math.random(-5, 5)
-                    )
-                    
-                    obj.Transparency = math.min(obj.Transparency + 0.05, 0.95)
-                    
-                    if obj.Position.Y < -500 or obj.Transparency >= 0.9 then
-                        pcall(function() obj:Destroy() end)
-                        Settings.Effects[obj] = nil
-                        updateUI()
-                        notify("👻 Void!", "Object deleted", 2)
-                    end
-                end
-            end)
-            wait(0.08)
-        end
-    end)
-    
-    updateUI()
-    notify("✅ Applied!", mode:upper(), 2)
-    print("[RM] ✅ Effect active: " .. mode)
+    lastPosition = currentPos
+end
 
--- Dragging system
-local dragging = false
-local dragStart, startPos
-
-elements.Header.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or 
-       input.UserInputType == Enum.UserInputType.Touch then
-        Settings.IsDragging = true
-        dragging = true
-        dragStart = input.Position
-        startPos = elements.Main.Position
-        print("[RM] Started dragging")
-    end
-end)
-
-elements.Header.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or 
-       input.UserInputType == Enum.UserInputType.Touch then
-        dragging = false
-        print("[RM] Stopped dragging")
-        wait(0.15)
-        Settings.IsDragging = false
-    end
-end)
-
-UIS.InputChanged:Connect(function(input)
-    if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or 
-       input.UserInputType == Enum.UserInputType.Touch) then
-        local delta = input.Position - dragStart
-        elements.Main.Position = UDim2.new(
-            startPos.X.Scale, startPos.X.Offset + delta.X,
-            startPos.Y.Scale, startPos.Y.Offset + delta.Y
-        )
-    end
-end)
-
--- Dragging mini logo
-local miniDragging = false
-local miniDragStart, miniStartPos
-
-elements.MiniLogo.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or 
-       input.UserInputType == Enum.UserInputType.Touch then
-        miniDragging = true
-        miniDragStart = input.Position
-        miniStartPos = elements.MiniLogo.Position
-    end
-end)
-
-elements.MiniLogo.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or 
-       input.UserInputType == Enum.UserInputType.Touch then
-        miniDragging = false
-    end
-end)
-
-UIS.InputChanged:Connect(function(input)
-    if miniDragging and (input.UserInputType == Enum.UserInputType.MouseMovement or 
-       input.UserInputType == Enum.UserInputType.Touch) then
-        local delta = input.Position - miniDragStart
-        elements.MiniLogo.Position = UDim2.new(
-            miniStartPos.X.Scale, miniStartPos.X.Offset + delta.X,
-            miniStartPos.Y.Scale, miniStartPos.Y.Offset + delta.Y
-        )
-    end
-end)
-
--- Mouse click
-mouse.Button1Down:Connect(function()
-    if Settings.IsDragging then 
-        print("[RM] Ignoring click (dragging)")
-        return 
-    end
-    
-    if not Settings.Enabled then return end
-    
-    local target = mouse.Target
-    if not target or not target:IsA("BasePart") then return end
-    
-    -- Ignore player character parts
-    local char = target
-    while char do
-        if char:IsA("Model") and Players:GetPlayerFromCharacter(char) then
-            print("[RM] Ignoring player part")
+-- Start Auto Walk
+local function startAutoWalk()
+    autoWalkConnection = RunService.Heartbeat:Connect(function()
+        if not Config.AutoWalk then return end
+        
+        -- Update references
+        character = player.Character
+        if not character then return end
+        humanoid = character:FindFirstChild("Humanoid")
+        rootPart = character:FindFirstChild("HumanoidRootPart")
+        if not humanoid or not rootPart then return end
+        
+        -- Set speed
+        humanoid.WalkSpeed = Config.WalkSpeed
+        
+        -- Anti void check
+        if Config.AntiVoid and isVoidBelow() then
+            humanoid.Jump = true
+            -- Try move back
+            humanoid:Move(-humanoid.MoveDirection)
+            wait(0.2)
             return
         end
-        char = char.Parent
-    end
-    
-    -- Don't affect parts touching player
-    if player.Character and player.Character.PrimaryPart then
-        local distance = (target.Position - player.Character.PrimaryPart.Position).Magnitude
-        if distance < 10 then
-            notify("⚠️ Too Close!", "Move away from object", 1.5)
-            print("[RM] Object too close to player")
-            return
+        
+        -- Auto jump
+        if Config.AutoJump then
+            local obstacle, pos = checkObstacle()
+            if obstacle then
+                humanoid.Jump = true
+            end
         end
+        
+        -- Smart pathfinding
+        if Config.SmartPathfinding then
+            smartMove()
+        end
+        
+        -- Move forward
+        local direction = rootPart.CFrame.LookVector
+        humanoid:Move(direction)
+        
+        -- Update status
+        StatusLabel.Text = string.format(
+            "📊 Status: Walking\n🎯 Height: %.1fm",
+            rootPart.Position.Y
+        )
+    end)
+end
+
+-- Stop Auto Walk
+local function stopAutoWalk()
+    if autoWalkConnection then
+        autoWalkConnection:Disconnect()
+        autoWalkConnection = nil
     end
+    if humanoid then
+        humanoid:Move(Vector3.new(0, 0, 0))
+    end
+    StatusLabel.Text = "📊 Status: Idle\n🎯 Height: 0m"
+end
+
+-- ========== BUTTON FUNCTIONS ==========
+
+-- Auto Walk Toggle
+AutoWalkToggle.MouseButton1Click:Connect(function()
+    Config.AutoWalk = not Config.AutoWalk
     
-    print("[RM] Clicked: " .. target.Name .. " | Mode: " .. Settings.Mode)
-    applyEffect(target, Settings.Mode)
+    if Config.AutoWalk then
+        AutoWalkToggle.Text = "🚶 Auto Walk: ON"
+        AutoWalkToggle.BackgroundColor3 = Color3.fromRGB(0, 200, 0)
+        startAutoWalk()
+    else
+        AutoWalkToggle.Text = "🚶 Auto Walk: OFF"
+        AutoWalkToggle.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+        stopAutoWalk()
+    end
 end)
 
-wait(0.5)
-notify("✅ RapipppModss", "25 Bypass Methods loaded!", 3)
-print("✅ RapipppModss Ultimate Fixed loaded!")
-print("🔧 ALL FEATURES WORKING:")
-print("   ✅ GUI visible and working")
-print("   ✅ Mode buttons functional")
-print("   ✅ Dragging smooth")
-print("   ✅ Minimize/restore working")
-print("   ✅ Close button destroys GUI")
-print("   ✅ All 4 modes selectable")
-print("💪 25 BYPASS METHODS GACOR!")
-print("🔥 Nuclear bypass included!")
-print("📱 Ready to JEBOL!")
+-- Speed Button
+local speedOptions = {16, 20, 25, 30, 40, 50}
+local currentSpeedIndex = 2
+
+SpeedButton.MouseButton1Click:Connect(function()
+    currentSpeedIndex = currentSpeedIndex + 1
+    if currentSpeedIndex > #speedOptions then
+        currentSpeedIndex = 1
+    end
+    
+    Config.WalkSpeed = speedOptions[currentSpeedIndex]
+    SpeedLabel.Text = "⚡ Speed: " .. Config.WalkSpeed
+    
+    if humanoid then
+        humanoid.WalkSpeed = Config.WalkSpeed
+    end
+end)
+
+-- Auto Jump Toggle
+AutoJumpToggle.MouseButton1Click:Connect(function()
+    Config.AutoJump = not Config.AutoJump
+    
+    if Config.AutoJump then
+        AutoJumpToggle.Text = "✅ Auto Jump: ON"
+        AutoJumpToggle.BackgroundColor3 = Color3.fromRGB(0, 150, 0)
+    else
+        AutoJumpToggle.Text = "❌ Auto Jump: OFF"
+        AutoJumpToggle.BackgroundColor3 = Color3.fromRGB(150, 0, 0)
+    end
+end)
+
+-- Anti Void Toggle
+AntiVoidToggle.MouseButton1Click:Connect(function()
+    Config.AntiVoid = not Config.AntiVoid
+    
+    if Config.AntiVoid then
+        AntiVoidToggle.Text = "✅ Anti Void: ON"
+        AntiVoidToggle.BackgroundColor3 = Color3.fromRGB(0, 150, 0)
+    else
+        AntiVoidToggle.Text = "❌ Anti Void: OFF"
+        AntiVoidToggle.BackgroundColor3 = Color3.fromRGB(150, 0, 0)
+    end
+end)
+
+-- Close Button
+CloseButton.MouseButton1Click:Connect(function()
+    stopAutoWalk()
+    ScreenGui:Destroy()
+end)
+
+-- ========== KEYBOARD SHORTCUTS ==========
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    
+    -- Press "E" to toggle auto walk
+    if input.KeyCode == Enum.KeyCode.E then
+        AutoWalkToggle.MouseButton1Click:Fire()
+    end
+    
+    -- Press "R" to toggle GUI
+    if input.KeyCode == Enum.KeyCode.R then
+        MainFrame.Visible = not MainFrame.Visible
+    end
+end)
+
+-- ========== HANDLE RESPAWN ==========
+player.CharacterAdded:Connect(function(newCharacter)
+    character = newCharacter
+    humanoid = character:WaitForChild("Humanoid")
+    rootPart = character:WaitForChild("HumanoidRootPart")
+    
+    if Config.AutoWalk then
+        stopAutoWalk()
+        wait(1)
+        startAutoWalk()
+    end
+end)
+
+-- ========== STARTUP NOTIFICATION ==========
+game.StarterGui:SetCore("SendNotification", {
+    Title = "🔥 RAPIPMODS";
+    Text = "Auto Walk loaded!\nPress E to toggle\nPress R to hide GUI";
+    Duration = 5;
+})
+
+print("========================================")
+print("🔥 RAPIPMODS - Mountain Auto Walk 🔥")
+print("Press E: Toggle Auto Walk")
+print("Press R: Toggle GUI")
+print("========================================")
