@@ -175,5 +175,12 @@
     "active": true,
     "createdBy": "rav",
     "createdAt": "2025-10-19T14:46:41.230Z"
+  },
+  {
+    "name": "buyer",
+    "token": "8258079021:AAGz_Tj4aupxctCX2u9lNEKZ11ZlrNwTwto",
+    "active": true,
+    "createdBy": "asep",
+    "createdAt": "2025-10-19T16:56:56.958Z"
   }
 ]
