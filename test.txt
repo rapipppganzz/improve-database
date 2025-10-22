@@ -1,8 +1,8 @@
 --[[
-    🏔️ AUTO MOUNTAIN CLIMBER - DELTA ANDROID SIMPLE & GUI-ONLY
-    ✅ Semua kontrol dari GUI
-    ✅ Tidak ada /start /stop di chat
-    ✅ GUI kecil & stabil
+    🏔️ AUTO TELEPORT TO CHECKPOINT LOOP - DELTA ANDROID READY
+    ✅ Teleport ke Finish/Goal secara loop
+    ✅ GUI cantik & responsif
+    ✅ Tidak ada chat command
     ✅ Cocok untuk semua executor mobile
 ]]
 
@@ -18,18 +18,31 @@ local rootPart = character:WaitForChild("HumanoidRootPart")
 -- Config
 _G.Config = _G.Config or {
     Enabled = false,
+    LoopMode = true, -- True = loop, False = satu kali
     WalkSpeed = 25,
     AutoJump = true,
     SearchRadius = 80,
     SearchHeight = 150,
-    TargetPosition = nil
+    TargetPosition = nil,
+    StartPosition = nil
 }
 
--- ========== TARGET FINDER ==========
-local function findHighestPoint()
+-- ========== FIND CHECKPOINT / FINISH POINT ==========
+local function findCheckpoint()
+    print("🔍 Mencari checkpoint atau finish point...")
+
+    local finishParts = {"Finish", "End", "Goal", "Win", "Complete", "EndPoint", "FinishLine", "Victory", "Checkpoint"}
+    for _, partName in ipairs(finishParts) do
+        local part = workspace:FindFirstChild(partName)
+        if part and part:IsA("BasePart") then
+            return part.Position
+        end
+    end
+
+    -- Jika tidak ditemukan, cari titik tertinggi
     local bestPosition = nil
     local highestY = -math.huge
-    
+
     for x = -_G.Config.SearchRadius, _G.Config.SearchRadius, 20 do
         for z = -_G.Config.SearchRadius, _G.Config.SearchRadius, 20 do
             local scanPos = Vector3.new(rootPart.Position.X + x, rootPart.Position.Y + _G.Config.SearchHeight, rootPart.Position.Z + z)
@@ -42,24 +55,26 @@ local function findHighestPoint()
             end
         end
     end
-    
+
     return bestPosition or rootPart.Position + Vector3.new(0, 20, 0)
 end
 
--- ========== NAVIGATION ==========
-local lastStuckCheck = tick()
-local lastPosition = rootPart.Position
-
-local function moveTowardsTarget(target)
+-- ========== TELEPORT FUNCTION ==========
+local function teleportToTarget(target)
     if not target then return end
     
-    local direction = (target - rootPart.Position).Unit
-    humanoid:Move(direction)
+    -- Simpan posisi awal jika belum disimpan
+    if not _G.Config.StartPosition then
+        _G.Config.StartPosition = rootPart.Position
+    end
+
+    -- Teleport
+    humanoid:MoveTo(target)
     
     -- Auto jump jika dekat dinding
     if _G.Config.AutoJump then
         local rayOrigin = rootPart.Position + Vector3.new(0, 2, 0)
-        local rayDirection = direction * 10
+        local rayDirection = (target - rootPart.Position).Unit * 10
         local ray = Ray.new(rayOrigin, rayDirection)
         local hit = workspace:FindPartOnRayWithIgnoreList(ray, {character})
         
@@ -71,42 +86,50 @@ local function moveTowardsTarget(target)
 end
 
 -- ========== MAIN LOOP ==========
+local lastTeleportTime = tick()
+local isTeleporting = false
+
 RunService.Heartbeat:Connect(function()
     if not _G.Config.Enabled then return end
     
     if not character or not character.Parent then return end
     if not humanoid or not rootPart then return end
-    
+
     humanoid.WalkSpeed = _G.Config.WalkSpeed
-    
-    -- Cek stuck
-    if tick() - lastStuckCheck < 2 then return end
-    local currentPos = rootPart.Position
-    local distanceMoved = (currentPos - lastPosition).Magnitude
-    
-    if distanceMoved < 1.5 then
-        print("🔄 Stuck! Resetting...")
-        _G.Config.TargetPosition = nil
-        lastStuckCheck = tick()
-        lastPosition = currentPos
+
+    -- Cek jika sudah sampai target
+    if _G.Config.TargetPosition and (rootPart.Position - _G.Config.TargetPosition).Magnitude < 5 then
+        print("✅ Sampai di target!")
+
+        -- Jika mode loop, kembali ke start
+        if _G.Config.LoopMode then
+            _G.Config.TargetPosition = _G.Config.StartPosition
+            print("🔄 Kembali ke start...")
+        else
+            -- Matikan jika bukan loop
+            _G.Config.Enabled = false
+            humanoid:Move(Vector3.new(0, 0, 0))
+            print("🛑 Selesai! (Non-loop mode)")
+        end
         return
     end
-    
-    lastPosition = currentPos
-    lastStuckCheck = tick()
-    
-    -- Set target
-    if not _G.Config.TargetPosition then
-        _G.Config.TargetPosition = findHighestPoint()
+
+    -- Teleport ke target
+    if not isTeleporting then
+        _G.Config.TargetPosition = findCheckpoint()
+        if _G.Config.TargetPosition then
+            teleportToTarget(_G.Config.TargetPosition)
+            isTeleporting = true
+        else
+            print("⚠️ Tidak ditemukan checkpoint!")
+            _G.Config.Enabled = false
+        end
     end
-    
-    -- Move to target
-    moveTowardsTarget(_G.Config.TargetPosition)
 end)
 
--- ========== GUI (SIMPLE & MOBILE-FRIENDLY) ==========
+-- ========== GUI (CANTIK & RESPONSIF) ==========
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "MountainClimber"
+ScreenGui.Name = "CheckpointTeleporter"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
@@ -117,11 +140,12 @@ end)
 local Main = Instance.new("Frame")
 Main.Name = "MainFrame"
 Main.Parent = ScreenGui
-Main.Size = UDim2.new(0, 200, 0, 120)
+Main.Size = UDim2.new(0.4, -20, 0.5, -40) -- 40% lebar, 50% tinggi
 Main.Position = UDim2.new(0.02, 0, 0.02, 0)
-Main.BackgroundColor3 = Color3.fromRGB(30, 30, 50)
+Main.BackgroundColor3 = Color3.fromRGB(20, 20, 40)
+Main.BackgroundTransparency = 0.05
 Main.BorderSizePixel = 2
-Main.BorderColor3 = Color3.fromRGB(0, 150, 255)
+Main.BorderColor3 = Color3.fromRGB(0, 200, 255)
 Main.Active = true
 Main.Draggable = true
 Main.ZIndex = 100
@@ -137,7 +161,7 @@ TitleBar.BackgroundColor3 = Color3.fromRGB(0, 100, 200)
 TitleBar.Parent = Main
 
 local Title = Instance.new("TextLabel")
-Title.Text = "🏔️ MOUNTAIN CLIMBER"
+Title.Text = "🏔️ CHECKPOINT TELEPORTER"
 Title.Size = UDim2.new(0.9, 0, 1, 0)
 Title.Position = UDim2.new(0.05, 0, 0, 0)
 Title.BackgroundTransparency = 1
@@ -165,13 +189,24 @@ Content.Parent = Main
 local ToggleBtn = Instance.new("TextButton")
 ToggleBtn.Size = UDim2.new(1, 0, 0, 40)
 ToggleBtn.Position = UDim2.new(0, 0, 0, 0)
-ToggleBtn.Text = "🚀 START CLIMBING"
+ToggleBtn.Text = "🚀 START LOOP"
 ToggleBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 0)
 ToggleBtn.BorderSizePixel = 0
 ToggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 ToggleBtn.Font = Enum.Font.GothamBold
 ToggleBtn.TextSize = 14
 ToggleBtn.Parent = Content
+
+local LoopToggle = Instance.new("TextButton")
+LoopToggle.Size = UDim2.new(1, 0, 0, 30)
+LoopToggle.Position = UDim2.new(0, 0, 0.4, 0)
+LoopToggle.Text = "🔁 LOOP MODE: ON"
+LoopToggle.BackgroundColor3 = Color3.fromRGB(0, 120, 80)
+LoopToggle.BorderSizePixel = 0
+LoopToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
+LoopToggle.Font = Enum.Font.GothamBold
+LoopToggle.TextSize = 12
+LoopToggle.Parent = Content
 
 local SpeedLabel = Instance.new("TextLabel")
 SpeedLabel.Text = "⚡ SPEED: " .. _G.Config.WalkSpeed
@@ -185,7 +220,7 @@ SpeedLabel.Parent = Content
 
 local SpeedDown = Instance.new("TextButton")
 SpeedDown.Size = UDim2.new(0.48, 0, 0, 30)
-SpeedDown.Position = UDim2.new(0, 0, 0.4, 0)
+SpeedDown.Position = UDim2.new(0, 0, 0.7, 0)
 SpeedDown.Text = "➖ SPEED"
 SpeedDown.BackgroundColor3 = Color3.fromRGB(200, 100, 0)
 SpeedDown.BorderSizePixel = 0
@@ -196,7 +231,7 @@ SpeedDown.Parent = Content
 
 local SpeedUp = Instance.new("TextButton")
 SpeedUp.Size = UDim2.new(0.48, 0, 0, 30)
-SpeedUp.Position = UDim2.new(0.52, 0, 0.4, 0)
+SpeedUp.Position = UDim2.new(0.52, 0, 0.7, 0)
 SpeedUp.Text = "➕ SPEED"
 SpeedUp.BackgroundColor3 = Color3.fromRGB(0, 100, 200)
 SpeedUp.BorderSizePixel = 0
@@ -205,30 +240,31 @@ SpeedUp.Font = Enum.Font.GothamBold
 SpeedUp.TextSize = 12
 SpeedUp.Parent = Content
 
-local JumpToggle = Instance.new("TextButton")
-JumpToggle.Size = UDim2.new(1, 0, 0, 30)
-JumpToggle.Position = UDim2.new(0, 0, 0.6, 0)
-JumpToggle.Text = "🦘 AUTO JUMP: ON"
-JumpToggle.BackgroundColor3 = Color3.fromRGB(0, 120, 80)
-JumpToggle.BorderSizePixel = 0
-JumpToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
-JumpToggle.Font = Enum.Font.GothamBold
-JumpToggle.TextSize = 12
-JumpToggle.Parent = Content
-
 -- ========== BUTTON LOGIC ==========
 ToggleBtn.MouseButton1Click:Connect(function()
     _G.Config.Enabled = not _G.Config.Enabled
     if _G.Config.Enabled then
-        ToggleBtn.Text = "🛑 STOP CLIMBING"
+        ToggleBtn.Text = "🛑 STOP LOOP"
         ToggleBtn.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
+        _G.Config.StartPosition = rootPart.Position
         _G.Config.TargetPosition = nil
-        print("✅ Mountain Climber: STARTED")
+        print("✅ Checkpoint Teleporter: STARTED")
     else
-        ToggleBtn.Text = "🚀 START CLIMBING"
+        ToggleBtn.Text = "🚀 START LOOP"
         ToggleBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 0)
         humanoid:Move(Vector3.new(0, 0, 0))
-        print("🛑 Mountain Climber: STOPPED")
+        print("🛑 Checkpoint Teleporter: STOPPED")
+    end
+end)
+
+LoopToggle.MouseButton1Click:Connect(function()
+    _G.Config.LoopMode = not _G.Config.LoopMode
+    if _G.Config.LoopMode then
+        LoopToggle.Text = "🔁 LOOP MODE: ON"
+        LoopToggle.BackgroundColor3 = Color3.fromRGB(0, 120, 80)
+    else
+        LoopToggle.Text = "❌ LOOP MODE: OFF"
+        LoopToggle.BackgroundColor3 = Color3.fromRGB(120, 0, 0)
     end
 end)
 
@@ -244,17 +280,6 @@ SpeedDown.MouseButton1Click:Connect(function()
     humanoid.WalkSpeed = _G.Config.WalkSpeed
 end)
 
-JumpToggle.MouseButton1Click:Connect(function()
-    _G.Config.AutoJump = not _G.Config.AutoJump
-    if _G.Config.AutoJump then
-        JumpToggle.Text = "🦘 AUTO JUMP: ON"
-        JumpToggle.BackgroundColor3 = Color3.fromRGB(0, 120, 80)
-    else
-        JumpToggle.Text = "❌ AUTO JUMP: OFF"
-        JumpToggle.BackgroundColor3 = Color3.fromRGB(120, 0, 0)
-    end
-end)
-
 CloseBtn.MouseButton1Click:Connect(function()
     _G.Config.Enabled = false
     humanoid:Move(Vector3.new(0, 0, 0))
@@ -268,6 +293,7 @@ player.CharacterAdded:Connect(function(newChar)
     humanoid = character:WaitForChild("Humanoid")
     rootPart = character:WaitForChild("HumanoidRootPart")
     _G.Config.Enabled = false
+    _G.Config.StartPosition = nil
     _G.Config.TargetPosition = nil
 end)
 
@@ -278,6 +304,7 @@ ScreenGui.Destroying:Connect(function()
     end
 end)
 
-print("✅ MOUNTAIN CLIMBER LOADED - GUI-ONLY VERSION")
+print("✅ CHECKPOINT TELEPORTER LOADED - LOOP VERSION")
 print("📱 Optimized for Delta Android")
-print("🛠️ No chat commands, all from GUI")
+print("🎨 GUI cantik & responsif")
+print("🔁 Auto teleport ke checkpoint & loop")
