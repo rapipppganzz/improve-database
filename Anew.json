@@ -217,5 +217,12 @@
     "active": true,
     "createdBy": "xyroo",
     "createdAt": "2025-10-20T19:42:14.538Z"
+  },
+  {
+    "name": "buyer",
+    "token": "8415864972:AAHO_3SFQ5OaBxQWugwBkgPY8dAXWEgqWwE",
+    "active": true,
+    "createdBy": "asep",
+    "createdAt": "2025-10-22T09:09:20.449Z"
   }
 ]
