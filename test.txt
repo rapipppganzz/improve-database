@@ -1,5 +1,5 @@
--- Mountain Checkpoint Auto Teleport Script (Mobile Optimized)
--- Enhanced scanning system with comprehensive map search
+-- Mountain Checkpoint Auto Teleport Script
+-- Premium GUI with all working features
 
 local TweenService = game:GetService("TweenService")
 local Players = game:GetService("Players")
@@ -15,100 +15,39 @@ local loopEnabled = true
 local teleportSpeed = 0.5
 local checkpoints = {}
 
--- ENHANCED SCAN FUNCTION - Comprehensive map scanning
+-- Scan for checkpoints in workspace
 local function scanCheckpoints()
     checkpoints = {}
-    local scannedCount = 0
-    
-    -- Method 1: Scan all BaseParts in workspace
     for _, obj in pairs(workspace:GetDescendants()) do
-        if obj:IsA("BasePart") then
-            local name = string.lower(obj.Name)
-            
-            -- Check for common checkpoint keywords
-            if name:find("checkpoint") or 
-               name:find("stage") or
-               name:find("platform") or
-               name:find("check") or
-               name:find("cp") or
-               name:find("point") or
-               name:find("spawn") or
-               name:find("level") or
-               name:find("respawn") then
-                
-                table.insert(checkpoints, obj)
-                scannedCount = scannedCount + 1
-            end
+        if obj:IsA("BasePart") and (
+            string.lower(obj.Name):find("checkpoint") or 
+            string.lower(obj.Name):find("stage") or
+            string.lower(obj.Name):find("platform")
+        ) then
+            table.insert(checkpoints, obj)
         end
     end
-    
-    -- Method 2: If no checkpoints found, scan for parts with specific properties
-    if #checkpoints == 0 then
-        for _, obj in pairs(workspace:GetDescendants()) do
-            if obj:IsA("BasePart") then
-                -- Check for parts with specific colors (often checkpoints are colored)
-                if obj.BrickColor == BrickColor.new("Bright green") or
-                   obj.BrickColor == BrickColor.new("Lime green") or
-                   obj.BrickColor == BrickColor.new("Bright yellow") or
-                   obj.Material == Enum.Material.Neon then
-                    
-                    table.insert(checkpoints, obj)
-                    scannedCount = scannedCount + 1
-                end
-            end
-        end
-    end
-    
-    -- Method 3: Scan specific folders
-    local commonFolders = {"Checkpoints", "Stages", "Spawns", "Points", "Map"}
-    for _, folderName in pairs(commonFolders) do
-        local folder = workspace:FindFirstChild(folderName)
-        if folder then
-            for _, obj in pairs(folder:GetDescendants()) do
-                if obj:IsA("BasePart") then
-                    table.insert(checkpoints, obj)
-                    scannedCount = scannedCount + 1
-                end
-            end
-        end
-    end
-    
-    -- Remove duplicates
-    local seen = {}
-    local uniqueCheckpoints = {}
-    for _, cp in pairs(checkpoints) do
-        if not seen[cp] then
-            seen[cp] = true
-            table.insert(uniqueCheckpoints, cp)
-        end
-    end
-    checkpoints = uniqueCheckpoints
     
     -- Sort by Y position (height) - mountain climbing logic
     table.sort(checkpoints, function(a, b)
         return a.Position.Y < b.Position.Y
     end)
     
-    print("Scanned checkpoints:", #checkpoints)
-    for i, cp in pairs(checkpoints) do
-        print(i, cp.Name, cp.Position)
-    end
-    
     return #checkpoints
 end
 
--- Create GUI (Mobile Optimized - Smaller Size)
+-- Create GUI
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "CheckpointTPGui"
 screenGui.ResetOnSpawn = false
 screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 screenGui.Parent = player.PlayerGui
 
--- Main Frame (Compact for mobile)
+-- Main Frame (Modern Design)
 local mainFrame = Instance.new("Frame")
 mainFrame.Name = "MainFrame"
-mainFrame.Size = UDim2.new(0, 280, 0, 360)
-mainFrame.Position = UDim2.new(0.5, -140, 0.5, -180)
+mainFrame.Size = UDim2.new(0, 380, 0, 450)
+mainFrame.Position = UDim2.new(0.5, -190, 0.5, -225)
 mainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
 mainFrame.BorderSizePixel = 0
 mainFrame.Parent = screenGui
@@ -120,8 +59,8 @@ mainCorner.Parent = mainFrame
 -- Shadow effect
 local shadow = Instance.new("ImageLabel")
 shadow.Name = "Shadow"
-shadow.Size = UDim2.new(1, 20, 1, 20)
-shadow.Position = UDim2.new(0, -10, 0, -10)
+shadow.Size = UDim2.new(1, 30, 1, 30)
+shadow.Position = UDim2.new(0, -15, 0, -15)
 shadow.BackgroundTransparency = 1
 shadow.Image = "rbxasset://textures/ui/GuiImagePlaceholder.png"
 shadow.ImageColor3 = Color3.fromRGB(0, 0, 0)
@@ -132,7 +71,7 @@ shadow.Parent = mainFrame
 -- Title Bar
 local titleBar = Instance.new("Frame")
 titleBar.Name = "TitleBar"
-titleBar.Size = UDim2.new(1, 0, 0, 40)
+titleBar.Size = UDim2.new(1, 0, 0, 50)
 titleBar.BackgroundColor3 = Color3.fromRGB(138, 43, 226)
 titleBar.BorderSizePixel = 0
 titleBar.Parent = mainFrame
@@ -149,12 +88,12 @@ titleCover.BorderSizePixel = 0
 titleCover.Parent = titleBar
 
 local title = Instance.new("TextLabel")
-title.Size = UDim2.new(1, -50, 1, 0)
-title.Position = UDim2.new(0, 10, 0, 0)
+title.Size = UDim2.new(1, -60, 1, 0)
+title.Position = UDim2.new(0, 15, 0, 0)
 title.BackgroundTransparency = 1
-title.Text = "⛰️ Checkpoint TP"
+title.Text = "⛰️ Mountain Checkpoint TP"
 title.TextColor3 = Color3.fromRGB(255, 255, 255)
-title.TextSize = 14
+title.TextSize = 18
 title.Font = Enum.Font.GothamBold
 title.TextXAlignment = Enum.TextXAlignment.Left
 title.Parent = titleBar
@@ -162,12 +101,12 @@ title.Parent = titleBar
 -- Close Button
 local closeBtn = Instance.new("TextButton")
 closeBtn.Name = "CloseButton"
-closeBtn.Size = UDim2.new(0, 35, 0, 35)
-closeBtn.Position = UDim2.new(1, -38, 0, 2.5)
+closeBtn.Size = UDim2.new(0, 40, 0, 40)
+closeBtn.Position = UDim2.new(1, -45, 0, 5)
 closeBtn.BackgroundColor3 = Color3.fromRGB(255, 59, 59)
 closeBtn.Text = "✕"
 closeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-closeBtn.TextSize = 16
+closeBtn.TextSize = 20
 closeBtn.Font = Enum.Font.GothamBold
 closeBtn.Parent = titleBar
 
@@ -178,139 +117,139 @@ closeBtnCorner.Parent = closeBtn
 -- Content Frame
 local contentFrame = Instance.new("Frame")
 contentFrame.Name = "Content"
-contentFrame.Size = UDim2.new(1, -20, 1, -55)
-contentFrame.Position = UDim2.new(0, 10, 0, 50)
+contentFrame.Size = UDim2.new(1, -30, 1, -80)
+contentFrame.Position = UDim2.new(0, 15, 0, 65)
 contentFrame.BackgroundTransparency = 1
 contentFrame.Parent = mainFrame
 
 -- Status Label
 local statusLabel = Instance.new("TextLabel")
 statusLabel.Name = "StatusLabel"
-statusLabel.Size = UDim2.new(1, 0, 0, 25)
+statusLabel.Size = UDim2.new(1, 0, 0, 30)
 statusLabel.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
-statusLabel.Text = "🔴 Stopped"
+statusLabel.Text = "🔴 Status: Stopped"
 statusLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-statusLabel.TextSize = 12
+statusLabel.TextSize = 14
 statusLabel.Font = Enum.Font.Gotham
 statusLabel.Parent = contentFrame
 
 local statusCorner = Instance.new("UICorner")
-statusCorner.CornerRadius = UDim.new(0, 6)
+statusCorner.CornerRadius = UDim.new(0, 8)
 statusCorner.Parent = statusLabel
 
 -- Checkpoint Info
 local checkpointInfo = Instance.new("TextLabel")
 checkpointInfo.Name = "CheckpointInfo"
-checkpointInfo.Size = UDim2.new(1, 0, 0, 25)
-checkpointInfo.Position = UDim2.new(0, 0, 0, 30)
+checkpointInfo.Size = UDim2.new(1, 0, 0, 30)
+checkpointInfo.Position = UDim2.new(0, 0, 0, 40)
 checkpointInfo.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
-checkpointInfo.Text = "📍 CP: 0 / 0"
+checkpointInfo.Text = "📍 Checkpoint: 0 / 0"
 checkpointInfo.TextColor3 = Color3.fromRGB(255, 255, 255)
-checkpointInfo.TextSize = 12
+checkpointInfo.TextSize = 14
 checkpointInfo.Font = Enum.Font.Gotham
 checkpointInfo.Parent = contentFrame
 
 local checkpointCorner = Instance.new("UICorner")
-checkpointCorner.CornerRadius = UDim.new(0, 6)
+checkpointCorner.CornerRadius = UDim.new(0, 8)
 checkpointCorner.Parent = checkpointInfo
 
 -- Scan Button
 local scanBtn = Instance.new("TextButton")
 scanBtn.Name = "ScanButton"
-scanBtn.Size = UDim2.new(1, 0, 0, 35)
-scanBtn.Position = UDim2.new(0, 0, 0, 60)
+scanBtn.Size = UDim2.new(1, 0, 0, 40)
+scanBtn.Position = UDim2.new(0, 0, 0, 80)
 scanBtn.BackgroundColor3 = Color3.fromRGB(52, 152, 219)
-scanBtn.Text = "🔍 Scan Map"
+scanBtn.Text = "🔍 Scan Checkpoints"
 scanBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-scanBtn.TextSize = 13
+scanBtn.TextSize = 16
 scanBtn.Font = Enum.Font.GothamBold
 scanBtn.Parent = contentFrame
 
 local scanCorner = Instance.new("UICorner")
-scanCorner.CornerRadius = UDim.new(0, 6)
+scanCorner.CornerRadius = UDim.new(0, 8)
 scanCorner.Parent = scanBtn
 
 -- Start/Stop Button
 local toggleBtn = Instance.new("TextButton")
 toggleBtn.Name = "ToggleButton"
-toggleBtn.Size = UDim2.new(1, 0, 0, 40)
-toggleBtn.Position = UDim2.new(0, 0, 0, 100)
+toggleBtn.Size = UDim2.new(1, 0, 0, 50)
+toggleBtn.Position = UDim2.new(0, 0, 0, 130)
 toggleBtn.BackgroundColor3 = Color3.fromRGB(46, 204, 113)
-toggleBtn.Text = "▶️ Start"
+toggleBtn.Text = "▶️ Start Auto TP"
 toggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-toggleBtn.TextSize = 14
+toggleBtn.TextSize = 18
 toggleBtn.Font = Enum.Font.GothamBold
 toggleBtn.Parent = contentFrame
 
 local toggleCorner = Instance.new("UICorner")
-toggleCorner.CornerRadius = UDim.new(0, 6)
+toggleCorner.CornerRadius = UDim.new(0, 8)
 toggleCorner.Parent = toggleBtn
 
 -- Loop Toggle
 local loopFrame = Instance.new("Frame")
 loopFrame.Name = "LoopFrame"
-loopFrame.Size = UDim2.new(1, 0, 0, 32)
-loopFrame.Position = UDim2.new(0, 0, 0, 145)
+loopFrame.Size = UDim2.new(1, 0, 0, 40)
+loopFrame.Position = UDim2.new(0, 0, 0, 190)
 loopFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
 loopFrame.Parent = contentFrame
 
 local loopCorner = Instance.new("UICorner")
-loopCorner.CornerRadius = UDim.new(0, 6)
+loopCorner.CornerRadius = UDim.new(0, 8)
 loopCorner.Parent = loopFrame
 
 local loopLabel = Instance.new("TextLabel")
-loopLabel.Size = UDim2.new(0.6, 0, 1, 0)
+loopLabel.Size = UDim2.new(0.7, 0, 1, 0)
 loopLabel.BackgroundTransparency = 1
-loopLabel.Text = "🔄 Loop"
+loopLabel.Text = "🔄 Loop Mode"
 loopLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-loopLabel.TextSize = 12
+loopLabel.TextSize = 14
 loopLabel.Font = Enum.Font.GothamBold
 loopLabel.TextXAlignment = Enum.TextXAlignment.Left
-loopLabel.Position = UDim2.new(0, 8, 0, 0)
+loopLabel.Position = UDim2.new(0, 10, 0, 0)
 loopLabel.Parent = loopFrame
 
 local loopToggle = Instance.new("TextButton")
 loopToggle.Name = "LoopToggle"
-loopToggle.Size = UDim2.new(0, 50, 0, 24)
-loopToggle.Position = UDim2.new(1, -55, 0.5, -12)
+loopToggle.Size = UDim2.new(0, 60, 0, 28)
+loopToggle.Position = UDim2.new(1, -70, 0.5, -14)
 loopToggle.BackgroundColor3 = Color3.fromRGB(46, 204, 113)
 loopToggle.Text = "ON"
 loopToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
-loopToggle.TextSize = 11
+loopToggle.TextSize = 14
 loopToggle.Font = Enum.Font.GothamBold
 loopToggle.Parent = loopFrame
 
 local loopToggleCorner = Instance.new("UICorner")
-loopToggleCorner.CornerRadius = UDim.new(0, 5)
+loopToggleCorner.CornerRadius = UDim.new(0, 6)
 loopToggleCorner.Parent = loopToggle
 
 -- Speed Slider
 local speedFrame = Instance.new("Frame")
 speedFrame.Name = "SpeedFrame"
-speedFrame.Size = UDim2.new(1, 0, 0, 50)
-speedFrame.Position = UDim2.new(0, 0, 0, 182)
+speedFrame.Size = UDim2.new(1, 0, 0, 60)
+speedFrame.Position = UDim2.new(0, 0, 0, 240)
 speedFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
 speedFrame.Parent = contentFrame
 
 local speedCorner = Instance.new("UICorner")
-speedCorner.CornerRadius = UDim.new(0, 6)
+speedCorner.CornerRadius = UDim.new(0, 8)
 speedCorner.Parent = speedFrame
 
 local speedLabel = Instance.new("TextLabel")
-speedLabel.Size = UDim2.new(1, -16, 0, 22)
-speedLabel.Position = UDim2.new(0, 8, 0, 4)
+speedLabel.Size = UDim2.new(1, -20, 0, 25)
+speedLabel.Position = UDim2.new(0, 10, 0, 5)
 speedLabel.BackgroundTransparency = 1
-speedLabel.Text = "⚡ Speed: 0.5s"
+speedLabel.Text = "⚡ TP Speed: 0.5s"
 speedLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-speedLabel.TextSize = 11
+speedLabel.TextSize = 14
 speedLabel.Font = Enum.Font.GothamBold
 speedLabel.TextXAlignment = Enum.TextXAlignment.Left
 speedLabel.Parent = speedFrame
 
 local speedSlider = Instance.new("Frame")
 speedSlider.Name = "SpeedSlider"
-speedSlider.Size = UDim2.new(1, -16, 0, 5)
-speedSlider.Position = UDim2.new(0, 8, 0, 32)
+speedSlider.Size = UDim2.new(1, -20, 0, 6)
+speedSlider.Position = UDim2.new(0, 10, 0, 38)
 speedSlider.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
 speedSlider.Parent = speedFrame
 
@@ -331,8 +270,8 @@ fillCorner.Parent = speedFill
 
 local speedHandle = Instance.new("Frame")
 speedHandle.Name = "Handle"
-speedHandle.Size = UDim2.new(0, 14, 0, 14)
-speedHandle.Position = UDim2.new(0.5, -7, 0.5, -7)
+speedHandle.Size = UDim2.new(0, 16, 0, 16)
+speedHandle.Position = UDim2.new(0.5, -8, 0.5, -8)
 speedHandle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 speedHandle.Parent = speedSlider
 
@@ -343,26 +282,23 @@ handleCorner.Parent = speedHandle
 -- Reset Button
 local resetBtn = Instance.new("TextButton")
 resetBtn.Name = "ResetButton"
-resetBtn.Size = UDim2.new(1, 0, 0, 32)
-resetBtn.Position = UDim2.new(0, 0, 0, 237)
+resetBtn.Size = UDim2.new(1, 0, 0, 40)
+resetBtn.Position = UDim2.new(0, 0, 0, 310)
 resetBtn.BackgroundColor3 = Color3.fromRGB(231, 76, 60)
-resetBtn.Text = "🔄 Reset to CP 1"
+resetBtn.Text = "🔄 Reset to Checkpoint 1"
 resetBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-resetBtn.TextSize = 12
+resetBtn.TextSize = 14
 resetBtn.Font = Enum.Font.GothamBold
 resetBtn.Parent = contentFrame
 
 local resetCorner = Instance.new("UICorner")
-resetCorner.CornerRadius = UDim.new(0, 6)
+resetCorner.CornerRadius = UDim.new(0, 8)
 resetCorner.Parent = resetBtn
 
--- DRAG FUNCTIONALITY (Touch + Mouse Support)
-local dragging = false
-local dragInput
-local dragStart
-local startPos
+-- Drag functionality
+local dragging, dragInput, dragStart, startPos
 
-local function updateDrag(input)
+local function update(input)
     local delta = input.Position - dragStart
     mainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
 end
@@ -389,14 +325,26 @@ end)
 
 game:GetService("UserInputService").InputChanged:Connect(function(input)
     if input == dragInput and dragging then
-        updateDrag(input)
+        update(input)
     end
 end)
 
 -- Button animations
-local function animateButton(button, scale)
-    local tween = TweenService:Create(button, TweenInfo.new(0.1), {Size = UDim2.new(button.Size.X.Scale * scale, 0, button.Size.Y.Scale * scale, 0)})
+local function animateButton(button, isHover)
+    local goal = {}
+    if isHover then
+        goal.Size = UDim2.new(button.Size.X.Scale, button.Size.X.Offset, button.Size.Y.Scale + 0.02, button.Size.Y.Offset)
+    else
+        goal.Size = UDim2.new(button.Size.X.Scale, button.Size.X.Offset, button.Size.Y.Scale - 0.02, button.Size.Y.Offset)
+    end
+    
+    local tween = TweenService:Create(button, TweenInfo.new(0.2), goal)
     tween:Play()
+end
+
+for _, btn in pairs({scanBtn, toggleBtn, resetBtn, closeBtn}) do
+    btn.MouseEnter:Connect(function() animateButton(btn, true) end)
+    btn.MouseLeave:Connect(function() animateButton(btn, false) end)
 end
 
 -- Speed slider functionality
@@ -420,10 +368,10 @@ RunService.RenderStepped:Connect(function()
         local relativePos = math.clamp((mouse.X - speedSlider.AbsolutePosition.X) / speedSlider.AbsoluteSize.X, 0, 1)
         
         speedFill.Size = UDim2.new(relativePos, 0, 1, 0)
-        speedHandle.Position = UDim2.new(relativePos, -7, 0.5, -7)
+        speedHandle.Position = UDim2.new(relativePos, -8, 0.5, -8)
         
-        teleportSpeed = 0.1 + (relativePos * 1.9)
-        speedLabel.Text = string.format("⚡ Speed: %.1fs", teleportSpeed)
+        teleportSpeed = 0.1 + (relativePos * 1.9) -- Range: 0.1s to 2s
+        speedLabel.Text = string.format("⚡ TP Speed: %.1fs", teleportSpeed)
     end
 end)
 
@@ -437,8 +385,8 @@ end
 -- Main loop
 local function startAutoTP()
     isRunning = true
-    statusLabel.Text = "🟢 Running"
-    toggleBtn.Text = "⏸️ Stop"
+    statusLabel.Text = "🟢 Status: Running"
+    toggleBtn.Text = "⏸️ Stop Auto TP"
     toggleBtn.BackgroundColor3 = Color3.fromRGB(231, 76, 60)
     
     spawn(function()
@@ -448,14 +396,14 @@ local function startAutoTP()
                     currentCheckpoint = 1
                 else
                     isRunning = false
-                    statusLabel.Text = "✅ Done"
-                    toggleBtn.Text = "▶️ Start"
+                    statusLabel.Text = "✅ Status: Completed"
+                    toggleBtn.Text = "▶️ Start Auto TP"
                     toggleBtn.BackgroundColor3 = Color3.fromRGB(46, 204, 113)
                     break
                 end
             end
             
-            checkpointInfo.Text = string.format("📍 CP: %d / %d", currentCheckpoint, #checkpoints)
+            checkpointInfo.Text = string.format("📍 Checkpoint: %d / %d", currentCheckpoint, #checkpoints)
             teleportToCheckpoint(checkpoints[currentCheckpoint])
             
             currentCheckpoint = currentCheckpoint + 1
@@ -466,29 +414,26 @@ end
 
 -- Button functions
 scanBtn.MouseButton1Click:Connect(function()
-    scanBtn.Text = "⏳ Scanning..."
-    wait(0.5)
-    
     local count = scanCheckpoints()
-    checkpointInfo.Text = string.format("📍 Found: %d", count)
+    checkpointInfo.Text = string.format("📍 Found: %d checkpoints", count)
     currentCheckpoint = 1
     
-    scanBtn.Text = "🔍 Scan Map"
+    -- Visual feedback
     scanBtn.BackgroundColor3 = Color3.fromRGB(39, 174, 96)
-    wait(0.3)
+    wait(0.2)
     scanBtn.BackgroundColor3 = Color3.fromRGB(52, 152, 219)
 end)
 
 toggleBtn.MouseButton1Click:Connect(function()
     if #checkpoints == 0 then
-        checkpointInfo.Text = "⚠️ Scan first!"
+        checkpointInfo.Text = "⚠️ Scan checkpoints first!"
         return
     end
     
     if isRunning then
         isRunning = false
-        statusLabel.Text = "🔴 Stopped"
-        toggleBtn.Text = "▶️ Start"
+        statusLabel.Text = "🔴 Status: Stopped"
+        toggleBtn.Text = "▶️ Start Auto TP"
         toggleBtn.BackgroundColor3 = Color3.fromRGB(46, 204, 113)
     else
         startAutoTP()
@@ -510,7 +455,7 @@ resetBtn.MouseButton1Click:Connect(function()
     currentCheckpoint = 1
     if #checkpoints > 0 then
         teleportToCheckpoint(checkpoints[1])
-        checkpointInfo.Text = "📍 CP: 1 / " .. #checkpoints
+        checkpointInfo.Text = "📍 Checkpoint: 1 / " .. #checkpoints
     end
 end)
 
@@ -521,8 +466,5 @@ end)
 
 -- Auto-scan on load
 wait(1)
-print("=== Starting comprehensive checkpoint scan ===")
-local initialCount = scanCheckpoints()
-checkpointInfo.Text = string.format("📍 Found: %d", initialCount)
-print("=== Scan complete ===")
-print("Total checkpoints found:", initialCount)
+scanCheckpoints()
+checkpointInfo.Text = string.format("📍 Found: %d checkpoints", #checkpoints)
