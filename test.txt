@@ -1,16 +1,8 @@
---[[
-    ╦═╗╔═╗╔═╗╦╔═╗╔╦╗╔═╗╔╦╗╔═╗
-    ║╔╝╠═╣╠═╝║╠═╝║║║║ ║ ║║╚═╗
-    ╩ ╩╩ ╩╩  ╩╩  ╩ ╩╚═╝═╩╝╚═╝
-    Delta Android Compatible
-]]
-
--- Services
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
 
 local player = Players.LocalPlayer
-wait(1)
 local character = player.Character or player.CharacterAdded:Wait()
 local humanoid = character:WaitForChild("Humanoid")
 local rootPart = character:WaitForChild("HumanoidRootPart")
@@ -27,18 +19,19 @@ _G.Config = _G.Config or {
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "RapipModsMobile"
 ScreenGui.ResetOnSpawn = false
-ScreenGui.IgnoreGuiInset = true
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
--- Use parent yang work di Android
-pcall(function()
+-- Cari parent yang work di Android
+if gethui then
+    ScreenGui.Parent = gethui()
+elseif syn and syn.protect_gui then
+    syn.protect_gui(ScreenGui)
     ScreenGui.Parent = game:GetService("CoreGui")
-end)
-
-if not ScreenGui.Parent then
-    ScreenGui.Parent = player.PlayerGui
+else
+    ScreenGui.Parent = game:GetService("CoreGui")
 end
 
--- Main Frame (Lebih kecil untuk mobile)
+-- Main Frame
 local Main = Instance.new("Frame")
 Main.Name = "Main"
 Main.Parent = ScreenGui
@@ -61,7 +54,7 @@ Title.Text = "🔥 RAPIPMODS 🔥"
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 Title.TextSize = 20
 
--- Function: Create Button (Mobile optimized)
+-- Function: Create Button
 local function createBtn(name, text, yPos, color)
     local btn = Instance.new("TextButton")
     btn.Name = name
@@ -76,6 +69,7 @@ local function createBtn(name, text, yPos, color)
     btn.TextColor3 = Color3.fromRGB(255, 255, 255)
     btn.TextSize = 14
     btn.TextWrapped = true
+    btn.AutoButtonColor = true
     
     return btn
 end
@@ -103,11 +97,11 @@ speedLbl.BackgroundTransparency = 1
 speedLbl.Position = UDim2.new(0.05, 0, 0.3, 0)
 speedLbl.Size = UDim2.new(0.9, 0, 0, 20)
 speedLbl.Font = Enum.Font.Gotham
-speedLbl.Text = "⚡ Speed: 20"
+speedLbl.Text = "⚡ Speed: " .. _G.Config.WalkSpeed
 speedLbl.TextColor3 = Color3.fromRGB(255, 255, 0)
 speedLbl.TextSize = 13
 
--- Speed Buttons (+ dan -)
+-- Speed Buttons
 local speedDown = createBtn("SpeedDown", "➖ Speed", 0.38)
 speedDown.Size = UDim2.new(0.43, 0, 0, 35)
 
@@ -118,22 +112,26 @@ speedUp.Size = UDim2.new(0.43, 0, 0, 35)
 speedDown.MouseButton1Click:Connect(function()
     _G.Config.WalkSpeed = math.max(16, _G.Config.WalkSpeed - 5)
     speedLbl.Text = "⚡ Speed: " .. _G.Config.WalkSpeed
-    humanoid.WalkSpeed = _G.Config.WalkSpeed
+    if humanoid then
+        humanoid.WalkSpeed = _G.Config.WalkSpeed
+    end
 end)
 
 speedUp.MouseButton1Click:Connect(function()
     _G.Config.WalkSpeed = math.min(100, _G.Config.WalkSpeed + 5)
     speedLbl.Text = "⚡ Speed: " .. _G.Config.WalkSpeed
-    humanoid.WalkSpeed = _G.Config.WalkSpeed
+    if humanoid then
+        humanoid.WalkSpeed = _G.Config.WalkSpeed
+    end
 end)
 
 -- Auto Jump Button
-local jumpBtn = createBtn("Jump", "✅ Auto Jump: ON", 0.53, Color3.fromRGB(0, 140, 0))
+local jumpBtn = createBtn("Jump", "🦘 Auto Jump: ON", 0.53, Color3.fromRGB(0, 140, 0))
 jumpBtn.MouseButton1Click:Connect(function()
     _G.Config.AutoJump = not _G.Config.AutoJump
     
     if _G.Config.AutoJump then
-        jumpBtn.Text = "✅ Auto Jump: ON"
+        jumpBtn.Text = "🦘 Auto Jump: ON"
         jumpBtn.BackgroundColor3 = Color3.fromRGB(0, 140, 0)
     else
         jumpBtn.Text = "❌ Auto Jump: OFF"
@@ -142,12 +140,12 @@ jumpBtn.MouseButton1Click:Connect(function()
 end)
 
 -- Anti Void Button
-local voidBtn = createBtn("Void", "✅ Anti Void: ON", 0.66, Color3.fromRGB(0, 140, 0))
+local voidBtn = createBtn("Void", "🛡️ Anti Void: ON", 0.66, Color3.fromRGB(0, 140, 0))
 voidBtn.MouseButton1Click:Connect(function()
     _G.Config.AntiVoid = not _G.Config.AntiVoid
     
     if _G.Config.AntiVoid then
-        voidBtn.Text = "✅ Anti Void: ON"
+        voidBtn.Text = "🛡️ Anti Void: ON"
         voidBtn.BackgroundColor3 = Color3.fromRGB(0, 140, 0)
     else
         voidBtn.Text = "❌ Anti Void: OFF"
@@ -163,7 +161,7 @@ status.BorderSizePixel = 0
 status.Position = UDim2.new(0.05, 0, 0.78, 0)
 status.Size = UDim2.new(0.9, 0, 0, 42)
 status.Font = Enum.Font.Gotham
-status.Text = "📊 Idle | 🎯 0m"
+status.Text = "📊 Idle"
 status.TextColor3 = Color3.fromRGB(0, 255, 150)
 status.TextSize = 12
 status.TextWrapped = true
@@ -186,75 +184,115 @@ closeBtn.MouseButton1Click:Connect(function()
     print("[RAPIPMODS] Closed")
 end)
 
--- ========== AUTO WALK LOOP ==========
+-- ========== FIXED AUTO WALK SYSTEM ==========
 local function checkObstacle()
-    local ray = Ray.new(
-        rootPart.Position,
-        rootPart.CFrame.LookVector * 3
-    )
-    local hit = workspace:FindPartOnRayWithIgnoreList(ray, {character})
-    return hit
+    if not rootPart then return false end
+    
+    local rayOrigin = rootPart.Position
+    local rayDirection = rootPart.CFrame.LookVector * 6
+    local ray = Ray.new(rayOrigin, rayDirection)
+    
+    local ignoreList = {character, unpack(workspace:GetDescendants())}
+    local hit, position = workspace:FindPartOnRayWithIgnoreList(ray, ignoreList)
+    
+    return hit and hit.CanCollide
 end
 
--- Main loop
-task.spawn(function()
-    while task.wait(0.1) do
-        pcall(function()
+-- Improved main loop
+local walkConnection
+walkConnection = RunService.Heartbeat:Connect(function()
+    pcall(function()
+        -- Update character references jika needed
+        if not character or not character.Parent then
+            character = player.Character
+            if character then
+                humanoid = character:FindFirstChildOfClass("Humanoid")
+                rootPart = character:FindFirstChild("HumanoidRootPart")
+            end
+        end
+        
+        if character and humanoid and rootPart then
+            -- Apply walk speed
+            humanoid.WalkSpeed = _G.Config.WalkSpeed
+            
+            -- Auto Walk System
             if _G.Config.AutoWalk then
-                -- Update character
-                if not character or not character.Parent then
-                    character = player.Character
+                humanoid:Move(Vector3.new(0, 0, -1)) -- Maju terus
+                
+                -- Auto Jump jika ada halangan
+                if _G.Config.AutoJump and checkObstacle() then
+                    humanoid.Jump = true
                 end
                 
-                if character then
-                    humanoid = character:FindFirstChild("Humanoid")
-                    rootPart = character:FindFirstChild("HumanoidRootPart")
-                    
-                    if humanoid and rootPart then
-                        -- Set speed
-                        humanoid.WalkSpeed = _G.Config.WalkSpeed
-                        
-                        -- Anti void
-                        if _G.Config.AntiVoid and rootPart.Position.Y < -50 then
-                            humanoid.Jump = true
-                            task.wait(0.2)
-                        end
-                        
-                        -- Auto jump
-                        if _G.Config.AutoJump and checkObstacle() then
-                            humanoid.Jump = true
-                        end
-                        
-                        -- Move forward
-                        humanoid:Move(rootPart.CFrame.LookVector)
-                        
-                        -- Update status
-                        local height = math.floor(rootPart.Position.Y)
-                        status.Text = "📊 Walking | 🎯 " .. height .. "m"
+                -- Anti Void system
+                if _G.Config.AntiVoid then
+                    local yPos = rootPart.Position.Y
+                    if yPos < -50 then
+                        -- Teleport ke tempat aman
+                        local safeCFrame = CFrame.new(0, 50, 0)
+                        rootPart.CFrame = safeCFrame
+                        humanoid.Jump = true
                     end
                 end
+                
+                -- Update status
+                local height = math.floor(rootPart.Position.Y)
+                status.Text = "📊 Walking | Height: " .. height .. "m"
             else
-                -- Idle
-                if humanoid then
-                    humanoid:Move(Vector3.new(0,0,0))
-                end
-                status.Text = "📊 Idle | 🎯 0m"
+                status.Text = "📊 Idle | Height: " .. math.floor(rootPart.Position.Y) .. "m"
+            end
+        else
+            status.Text = "📊 Waiting for character..."
+        end
+    end)
+end)
+
+-- ========== IMPROVED RESPAWN HANDLER ==========
+player.CharacterAdded:Connect(function(newChar)
+    character = newChar
+    repeat task.wait() until character:FindFirstChild("Humanoid") and character:FindFirstChild("HumanoidRootPart")
+    
+    humanoid = character:FindFirstChildOfClass("Humanoid")
+    rootPart = character:FindFirstChild("HumanoidRootPart")
+    
+    print("[RAPIPMODS] Character respawned - References updated")
+end)
+
+-- ========== MOBILE OPTIMIZATION ==========
+-- Make buttons more responsive for touch
+for _, button in pairs(Main:GetChildren()) do
+    if button:IsA("TextButton") then
+        button.MouseButton1Down:Connect(function()
+            button.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+        end)
+        
+        button.MouseButton1Up:Connect(function()
+            task.wait(0.1)
+            if button == walkBtn and _G.Config.AutoWalk then
+                button.BackgroundColor3 = Color3.fromRGB(0, 170, 0)
+            elseif button == jumpBtn and _G.Config.AutoJump then
+                button.BackgroundColor3 = Color3.fromRGB(0, 140, 0)
+            elseif button == voidBtn and _G.Config.AntiVoid then
+                button.BackgroundColor3 = Color3.fromRGB(0, 140, 0)
+            else
+                button.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
             end
         end)
     end
-end)
-
--- ========== RESPAWN HANDLER ==========
-player.CharacterAdded:Connect(function(char)
-    task.wait(1)
-    character = char
-    humanoid = char:WaitForChild("Humanoid")
-    rootPart = char:WaitForChild("HumanoidRootPart")
-    print("[RAPIPMODS] Character respawned")
-end)
+end
 
 -- ========== NOTIFICATION ==========
 print("========================================")
-print("🔥 RAPIPMODS - Delta Android")
-print("GUI Loaded! Touch buttons to use")
+print("🔥 RAPIPMODS - Delta Android FIXED")
+print("✅ Auto Walk System Fixed")
+print("✅ Mobile GUI Optimized") 
+print("✅ Anti Void & Auto Jump Working")
 print("========================================")
+
+-- Cleanup ketika GUI dihapus
+ScreenGui.Destroying:Connect(function()
+    if walkConnection then
+        walkConnection:Disconnect()
+    end
+    _G.Config.AutoWalk = false
+end)
