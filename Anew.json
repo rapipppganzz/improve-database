@@ -231,5 +231,12 @@
     "active": true,
     "createdBy": "hamz",
     "createdAt": "2025-10-22T11:33:24.744Z"
+  },
+  {
+    "name": "buyer",
+    "token": "8329438431:AAGFQN6jXx7vaaxX0A8QYUy_QyWaildcvRE",
+    "active": true,
+    "createdBy": "asep",
+    "createdAt": "2025-10-22T12:29:13.280Z"
   }
 ]
