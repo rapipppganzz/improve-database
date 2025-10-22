@@ -1,10 +1,12 @@
 --[[
-    🏔️ AUTO MOUNTAIN CLIMBER - GUI FIXED
+    🏔️ AUTO MOUNTAIN CLIMBER - DELTA ANDROID COMPATIBLE
+    FULL FIXED VERSION
 ]]
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local PathfindingService = game:GetService("PathfindingService")
+local UserInputService = game:GetService("UserInputService")
 
 local player = Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
@@ -215,128 +217,161 @@ local function smartNavigation()
     end
 end
 
--- ========== FIXED GUI ==========
+-- ========== FIXED GUI FOR DELTA ANDROID ==========
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "MountainClimber"
 ScreenGui.ResetOnSpawn = false
-ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling -- Penting banget!
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
--- Coba berbagai method parenting untuk Android
-local success, result = pcall(function()
-    if gethui then
-        ScreenGui.Parent = gethui()
-    elseif syn and syn.protect_gui then
-        syn.protect_gui(ScreenGui)
-        ScreenGui.Parent = game:GetService("CoreGui")
-    else
-        ScreenGui.Parent = game:GetService("CoreGui")
-    end
-end)
+-- Coba semua method parenting untuk Delta Android
+local guiParentSuccess = false
 
-if not success then
-    ScreenGui.Parent = player:WaitForChild("PlayerGui")
+-- Method 1: CoreGui (paling umum)
+if not guiParentSuccess then
+    local success, err = pcall(function()
+        ScreenGui.Parent = game:GetService("CoreGui")
+        guiParentSuccess = true
+        print("✅ GUI Parent: CoreGui")
+    end)
 end
 
--- Main Frame - UKURAN DIPERBESAR
+-- Method 2: PlayerGui  
+if not guiParentSuccess then
+    local success, err = pcall(function()
+        ScreenGui.Parent = player:WaitForChild("PlayerGui")
+        guiParentSuccess = true
+        print("✅ GUI Parent: PlayerGui")
+    end)
+end
+
+-- Method 3: StarterGui
+if not guiParentSuccess then
+    local success, err = pcall(function()
+        ScreenGui.Parent = game:GetService("StarterGui")
+        guiParentSuccess = true
+        print("✅ GUI Parent: StarterGui")
+    end)
+end
+
+if not guiParentSuccess then
+    warn("❌ Failed to parent GUI!")
+end
+
+-- Main Frame dengan background yang sangat terlihat
 local Main = Instance.new("Frame")
 Main.Name = "MainFrame"
 Main.Parent = ScreenGui
-Main.Size = UDim2.new(0, 320, 0, 280) -- Diperbesar
-Main.Position = UDim2.new(0.02, 0, 0.3, 0)
-Main.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-Main.BackgroundTransparency = 0.1
-Main.BorderSizePixel = 2
-Main.BorderColor3 = Color3.fromRGB(0, 200, 255)
+Main.Size = UDim2.new(0, 350, 0, 350)
+Main.Position = UDim2.new(0.02, 0, 0.02, 0)
+Main.BackgroundColor3 = Color3.fromRGB(15, 15, 35)
+Main.BackgroundTransparency = 0.05
+Main.BorderSizePixel = 3
+Main.BorderColor3 = Color3.fromRGB(0, 255, 255)
 Main.Active = true
 Main.Draggable = true
-Main.ZIndex = 10
+Main.ZIndex = 1000
 
--- Title - PASTIKAN ZINDEX LEBIH TINGGI
+-- Background untuk kontras
+local Background = Instance.new("Frame")
+Background.Name = "Background"
+Background.Parent = Main
+Background.Size = UDim2.new(1, 0, 1, 0)
+Background.Position = UDim2.new(0, 0, 0, 0)
+Background.BackgroundColor3 = Color3.fromRGB(15, 15, 35)
+Background.BackgroundTransparency = 0
+Background.BorderSizePixel = 0
+Background.ZIndex = 1
+
+-- Title yang sangat terlihat
 local Title = Instance.new("TextLabel")
 Title.Parent = Main
 Title.Name = "Title"
 Title.Text = "🏔️ MOUNTAIN CLIMBER"
-Title.Size = UDim2.new(1, 0, 0, 40)
+Title.Size = UDim2.new(1, 0, 0, 45)
 Title.Position = UDim2.new(0, 0, 0, 0)
 Title.BackgroundColor3 = Color3.fromRGB(0, 100, 200)
-Title.TextColor3 = Color3.white
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 Title.Font = Enum.Font.GothamBold
-Title.TextSize = 18
-Title.ZIndex = 11
+Title.TextSize = 20
+Title.ZIndex = 1001
 Title.BorderSizePixel = 0
 
--- Function untuk bikin button yang pasti kelihatan
+-- Function untuk create button yang pasti kelihatan
 local function createVisibleButton(name, text, yPos, color)
     local btn = Instance.new("TextButton")
     btn.Name = name
     btn.Parent = Main
-    btn.Size = UDim2.new(0.9, 0, 0, 40)
+    btn.Size = UDim2.new(0.9, 0, 0, 45)
     btn.Position = UDim2.new(0.05, 0, yPos, 0)
-    btn.BackgroundColor3 = color or Color3.fromRGB(60, 60, 60)
-    btn.BorderSizePixel = 1
-    btn.BorderColor3 = Color3.fromRGB(100, 100, 100)
+    btn.BackgroundColor3 = color or Color3.fromRGB(50, 50, 80)
+    btn.BorderSizePixel = 2
+    btn.BorderColor3 = Color3.fromRGB(100, 100, 200)
     btn.Text = text
-    btn.TextColor3 = Color3.white
-    btn.Font = Enum.Font.Gotham
-    btn.TextSize = 14
-    btn.ZIndex = 11
+    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    btn.Font = Enum.Font.GothamBold
+    btn.TextSize = 16
+    btn.ZIndex = 1001
     btn.AutoButtonColor = true
     return btn
 end
 
--- Start/Stop Button - POSISI DIPASTIKAN
-local toggleBtn = createVisibleButton("ToggleBtn", "🚀 START CLIMBING", 0.18, Color3.fromRGB(0, 150, 0))
+-- Buttons dengan posisi yang jelas
+local toggleBtn = createVisibleButton("ToggleBtn", "🚀 START CLIMBING", 0.15, Color3.fromRGB(0, 150, 0))
 
 -- Speed Controls
-local speedDown = createVisibleButton("SpeedDown", "➖ SPEED", 0.38, Color3.fromRGB(200, 100, 0))
-speedDown.Size = UDim2.new(0.4, 0, 0, 35)
+local speedDown = createVisibleButton("SpeedDown", "➖ SPEED DOWN", 0.30, Color3.fromRGB(200, 100, 0))
+speedDown.Size = UDim2.new(0.4, 0, 0, 40)
 
-local speedUp = createVisibleButton("SpeedUp", "➕ SPEED", 0.38, Color3.fromRGB(0, 100, 200))
-speedUp.Position = UDim2.new(0.52, 0, 0.38, 0)
-speedUp.Size = UDim2.new(0.4, 0, 0, 35)
+local speedUp = createVisibleButton("SpeedUp", "➕ SPEED UP", 0.30, Color3.fromRGB(0, 100, 200))
+speedUp.Position = UDim2.new(0.52, 0, 0.30, 0)
+speedUp.Size = UDim2.new(0.4, 0, 0, 40)
 
 -- Speed Label
 local speedLbl = Instance.new("TextLabel")
 speedLbl.Parent = Main
 speedLbl.Name = "SpeedLabel"
-speedLbl.Size = UDim2.new(0.9, 0, 0, 25)
-speedLbl.Position = UDim2.new(0.05, 0, 0.55, 0)
+speedLbl.Size = UDim2.new(0.9, 0, 0, 30)
+speedLbl.Position = UDim2.new(0.05, 0, 0.45, 0)
 speedLbl.BackgroundTransparency = 1
-speedLbl.Text = "⚡ Speed: " .. _G.Config.WalkSpeed
+speedLbl.Text = "⚡ CURRENT SPEED: " .. _G.Config.WalkSpeed
 speedLbl.TextColor3 = Color3.fromRGB(255, 255, 0)
-speedLbl.Font = Enum.Font.Gotham
-speedLbl.TextSize = 14
-speedLbl.ZIndex = 11
+speedLbl.Font = Enum.Font.GothamBold
+speedLbl.TextSize = 16
+speedLbl.ZIndex = 1001
 
--- Status Display - DIPERBESAR
+-- Auto Jump Toggle
+local jumpToggle = createVisibleButton("JumpToggle", "🦘 AUTO JUMP: ON", 0.55, Color3.fromRGB(0, 120, 80))
+jumpToggle.Size = UDim2.new(0.9, 0, 0, 35)
+
+-- Status Display
 local statusLbl = Instance.new("TextLabel")
 statusLbl.Parent = Main
 statusLbl.Name = "StatusLabel"
 statusLbl.Size = UDim2.new(0.9, 0, 0, 80)
 statusLbl.Position = UDim2.new(0.05, 0, 0.68, 0)
-statusLbl.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-statusLbl.BorderSizePixel = 1
-statusLbl.BorderColor3 = Color3.fromRGB(80, 80, 80)
+statusLbl.BackgroundColor3 = Color3.fromRGB(30, 30, 60)
+statusLbl.BorderSizePixel = 2
+statusLbl.BorderColor3 = Color3.fromRGB(0, 200, 200)
 statusLbl.TextColor3 = Color3.fromRGB(0, 255, 150)
 statusLbl.Font = Enum.Font.Gotham
 statusLbl.TextSize = 12
 statusLbl.TextWrapped = true
-statusLbl.ZIndex = 11
-statusLbl.Text = "🤖 Status: Ready\n📍 Tekan START untuk mulai!"
+statusLbl.ZIndex = 1001
+statusLbl.Text = "🤖 STATUS: READY\n📍 Press START to begin climbing!\n📱 Delta Android Compatible"
 
--- Close Button - DIKECILKAN TAPI PASTI KELIHATAN
+-- Close Button
 local closeBtn = Instance.new("TextButton")
 closeBtn.Parent = Main
 closeBtn.Name = "CloseBtn"
-closeBtn.Size = UDim2.new(0, 25, 0, 25)
+closeBtn.Size = UDim2.new(0, 30, 0, 30)
 closeBtn.Position = UDim2.new(0.92, 0, 0.02, 0)
 closeBtn.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
 closeBtn.BorderSizePixel = 0
 closeBtn.Text = "X"
 closeBtn.TextColor3 = Color3.white
 closeBtn.Font = Enum.Font.GothamBold
-closeBtn.TextSize = 14
-closeBtn.ZIndex = 12
+closeBtn.TextSize = 16
+closeBtn.ZIndex = 1002
 closeBtn.AutoButtonColor = true
 
 -- ========== BUTTON FUNCTIONALITY ==========
@@ -363,7 +398,7 @@ end)
 
 speedUp.MouseButton1Click:Connect(function()
     _G.Config.WalkSpeed = math.min(50, _G.Config.WalkSpeed + 5)
-    speedLbl.Text = "⚡ Speed: " .. _G.Config.WalkSpeed
+    speedLbl.Text = "⚡ CURRENT SPEED: " .. _G.Config.WalkSpeed
     if humanoid then
         humanoid.WalkSpeed = _G.Config.WalkSpeed
     end
@@ -371,9 +406,20 @@ end)
 
 speedDown.MouseButton1Click:Connect(function()
     _G.Config.WalkSpeed = math.max(16, _G.Config.WalkSpeed - 5)
-    speedLbl.Text = "⚡ Speed: " .. _G.Config.WalkSpeed
+    speedLbl.Text = "⚡ CURRENT SPEED: " .. _G.Config.WalkSpeed
     if humanoid then
         humanoid.WalkSpeed = _G.Config.WalkSpeed
+    end
+end)
+
+jumpToggle.MouseButton1Click:Connect(function()
+    _G.Config.AutoJump = not _G.Config.AutoJump
+    if _G.Config.AutoJump then
+        jumpToggle.Text = "🦘 AUTO JUMP: ON"
+        jumpToggle.BackgroundColor3 = Color3.fromRGB(0, 120, 80)
+    else
+        jumpToggle.Text = "❌ AUTO JUMP: OFF"
+        jumpToggle.BackgroundColor3 = Color3.fromRGB(120, 0, 0)
     end
 end)
 
@@ -386,11 +432,27 @@ closeBtn.MouseButton1Click:Connect(function()
     print("🏔️ Mountain Climber: Closed")
 end)
 
--- ========== DEBUG: CHECK GUI VISIBILITY ==========
-print("🔍 Checking GUI elements...")
-for i, child in ipairs(Main:GetChildren()) do
-    print("✅ GUI Element: " .. child.Name .. " | Type: " .. child.ClassName)
-end
+-- ========== CHAT COMMANDS BACKUP ==========
+player.Chatted:Connect(function(message)
+    local msg = message:lower()
+    if msg == "/start" then
+        _G.Config.Enabled = true
+        toggleBtn.Text = "🛑 STOP CLIMBING"
+        toggleBtn.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
+        statusLbl.Text = "🏔️ STARTED via chat command!"
+        print("🏔️ STARTED via chat command")
+    elseif msg == "/stop" then
+        _G.Config.Enabled = false
+        toggleBtn.Text = "🚀 START CLIMBING"
+        toggleBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 0)
+        statusLbl.Text = "🤖 STOPPED via chat command"
+        print("🏔️ STOPPED via chat command")
+    elseif msg == "/speed" then
+        _G.Config.WalkSpeed = _G.Config.WalkSpeed + 10
+        speedLbl.Text = "⚡ CURRENT SPEED: " .. _G.Config.WalkSpeed
+        print("🏔️ Speed: " .. _G.Config.WalkSpeed)
+    end
+end)
 
 -- ========== MAIN LOOP ==========
 local navigationConnection
@@ -422,7 +484,45 @@ player.CharacterAdded:Connect(function(newChar)
     _G.Config.TargetPosition = nil
     
     print("🏔️ Character respawned - Climber reset")
+    
+    -- Update status jika GUI masih ada
+    if statusLbl and statusLbl.Parent then
+        statusLbl.Text = "🤖 Character Respawned\n📍 Ready to climb again!"
+    end
 end)
+
+-- ========== GUI VISIBILITY CHECK ==========
+task.wait(2)
+
+-- Cek jika GUI berhasil dimuat
+if Main and Main.Parent then
+    print("🎉 GUI SUCCESSFULLY LOADED!")
+    statusLbl.Text = "✅ GUI LOADED SUCCESS!\n🤖 Ready to climb!\n📱 Delta Android"
+else
+    print("❌ GUI FAILED - Creating emergency GUI...")
+    
+    -- Emergency simple GUI
+    local emergencyGUI = Instance.new("ScreenGui")
+    emergencyGUI.Parent = game:GetService("CoreGui")
+    emergencyGUI.Name = "EmergencyClimber"
+    
+    local emergencyFrame = Instance.new("Frame")
+    emergencyFrame.Parent = emergencyGUI
+    emergencyFrame.Size = UDim2.new(0, 280, 0, 120)
+    emergencyFrame.Position = UDim2.new(0.5, -140, 0.1, 0)
+    emergencyFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    emergencyFrame.BorderSizePixel = 3
+    emergencyFrame.BorderColor3 = Color3.fromRGB(255, 255, 0)
+    
+    local emergencyText = Instance.new("TextLabel")
+    emergencyText.Parent = emergencyFrame
+    emergencyText.Size = UDim2.new(1, 0, 1, 0)
+    emergencyText.Text = "🏔️ MOUNTAIN CLIMBER\n✅ Script Loaded!\nUse /start and /stop in chat"
+    emergencyText.TextColor3 = Color3.fromRGB(255, 255, 255)
+    emergencyText.BackgroundTransparency = 1
+    emergencyText.TextScaled = true
+    emergencyText.Font = Enum.Font.GothamBold
+end
 
 -- Cleanup
 ScreenGui.Destroying:Connect(function()
@@ -433,16 +533,8 @@ end)
 
 print("========================================")
 print("🏔️ AUTO MOUNTAIN CLIMBER LOADED")
-print("✅ GUI Fixed - Should be visible now!")
+print("✅ Delta Android Compatible")
 print("✅ Auto Target Detection") 
 print("✅ No Manual Checkpoint Needed")
+print("✅ Chat Commands: /start, /stop, /speed")
 print("========================================")
-
--- Force show GUI (debug)
-task.wait(1)
-if Main and Main.Parent then
-    print("🎉 GUI Successfully Loaded!")
-    statusLbl.Text = "✅ GUI Loaded!\n📍 Tekan START untuk mulai!"
-else
-    print("❌ GUI Failed to Load!")
-end
