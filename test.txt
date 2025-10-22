@@ -1,6 +1,5 @@
 --[[
-    🏔️ AUTO MOUNTAIN CLIMBER BOT
-    Fitur: Auto detect path, no manual checkpoint needed!
+    🏔️ AUTO MOUNTAIN CLIMBER - GUI FIXED
 ]]
 
 local Players = game:GetService("Players")
@@ -29,15 +28,12 @@ local function findHighestPoint()
     local bestPosition = nil
     local highestY = -math.huge
     
-    -- Scan area sekitar untuk mencari titik tinggi
     local scanRadius = _G.Config.SearchRadius
     local center = rootPart.Position
     
     for x = -scanRadius, scanRadius, 20 do
         for z = -scanRadius, scanRadius, 20 do
             local scanPos = Vector3.new(center.X + x, center.Y + _G.Config.SearchHeight, center.Z + z)
-            
-            -- Raycast ke bawah untuk cari permukaan
             local ray = Ray.new(scanPos, Vector3.new(0, -_G.Config.SearchHeight * 2, 0))
             local hit, position = workspace:FindPartOnRayWithIgnoreList(ray, {character})
             
@@ -51,12 +47,7 @@ local function findHighestPoint()
     if bestPosition then
         print("🎯 Titik tertinggi ditemukan: " .. tostring(bestPosition))
     else
-        -- Fallback: cari part dengan nama finish/end/goal
-        local finishParts = {
-            "Finish", "End", "Goal", "Win", "Complete",
-            "EndPoint", "FinishLine", "Victory"
-        }
-        
+        local finishParts = {"Finish", "End", "Goal", "Win", "Complete", "EndPoint", "FinishLine", "Victory"}
         for _, partName in ipairs(finishParts) do
             local part = workspace:FindFirstChild(partName)
             if part then
@@ -75,7 +66,6 @@ local function findPathToTarget()
         _G.Config.TargetPosition = findHighestPoint()
         
         if not _G.Config.TargetPosition then
-            -- Jika masih ga ketemu, coba explore random
             local randomPos = rootPart.Position + Vector3.new(
                 math.random(-50, 50),
                 math.random(10, 30),
@@ -98,7 +88,6 @@ local lastPosition = rootPart.Position
 
 local function computePath(targetPosition)
     if not PathfindingService then 
-        -- Simple direct movement jika pathfinding tidak tersedia
         return {{Position = targetPosition, Action = Enum.PathWaypointAction.Walk}}
     end
     
@@ -131,16 +120,13 @@ local function moveToWaypoint()
     local waypoint = waypoints[currentWaypointIndex]
     local direction = (waypoint.Position - rootPart.Position).Unit
     
-    -- Movement dengan obstacle avoidance
     humanoid:Move(direction)
     
-    -- Cek jika sudah dekat waypoint
     local distance = (rootPart.Position - waypoint.Position).Magnitude
     if distance < 5 then
         currentWaypointIndex = currentWaypointIndex + 1
     end
     
-    -- Handle jump waypoints
     if waypoint.Action == Enum.PathWaypointAction.Jump then
         humanoid.Jump = true
     end
@@ -148,7 +134,6 @@ local function moveToWaypoint()
     return currentWaypointIndex <= #waypoints
 end
 
--- ========== OBSTACLE DETECTION ==========
 local function checkFrontObstacle()
     local rayOrigin = rootPart.Position + Vector3.new(0, 2, 0)
     local rayDirection = rootPart.CFrame.LookVector * 8
@@ -158,24 +143,6 @@ local function checkFrontObstacle()
     return hit and hit.CanCollide
 end
 
-local function checkClimbable()
-    -- Deteksi jika ada tembok/tangga yang bisa dipanjat
-    local rayOrigin = rootPart.Position + Vector3.new(0, 2, 0)
-    local rayDirection = rootPart.CFrame.LookVector * 4
-    local ray = Ray.new(rayOrigin, rayDirection)
-    
-    local hit, position = workspace:FindPartOnRayWithIgnoreList(ray, {character})
-    if hit and hit.CanCollide then
-        -- Cek jika objek tinggi (mungkin tembok/tangga)
-        local topRay = Ray.new(position + Vector3.new(0, 10, 0), rayDirection)
-        local topHit = workspace:FindPartOnRayWithIgnoreList(topRay, {character})
-        return not topHit -- Jika tidak ada halangan di atas, berarti bisa dipanjat
-    end
-    
-    return false
-end
-
--- ========== ANTI-STUCK SYSTEM ==========
 local function checkIfStuck()
     local currentTime = os.time()
     if currentTime - lastStuckCheck < 2 then return false end
@@ -183,7 +150,7 @@ local function checkIfStuck()
     local currentPos = rootPart.Position
     local distanceMoved = (currentPos - lastPosition).Magnitude
     
-    if distanceMoved < 2 then -- Hanya bergerak 2 studs dalam 2 detik
+    if distanceMoved < 2 then
         print("🔄 Karakter stuck, mencari path baru...")
         lastStuckCheck = currentTime
         return true
@@ -198,7 +165,6 @@ end
 local function smartNavigation()
     if not _G.Config.Enabled then return end
     
-    -- Update character references
     if not character or not character.Parent then
         character = player.Character
         if character then
@@ -210,10 +176,8 @@ local function smartNavigation()
     
     if not humanoid or not rootPart then return end
     
-    -- Set walk speed
     humanoid.WalkSpeed = _G.Config.WalkSpeed
     
-    -- Anti-stuck system
     if checkIfStuck() then
         waypoints = nil
         _G.Config.TargetPosition = nil
@@ -221,12 +185,10 @@ local function smartNavigation()
         task.wait(0.5)
     end
     
-    -- Cari target jika belum ada
     if not _G.Config.TargetPosition then
         findPathToTarget()
     end
     
-    -- Compute path jika needed
     if not waypoints or currentWaypointIndex > #waypoints then
         local target = findPathToTarget()
         waypoints = computePath(target)
@@ -234,156 +196,205 @@ local function smartNavigation()
         print("🔄 Computing path ke target...")
     end
     
-    -- Eksekusi movement
     if waypoints and currentWaypointIndex <= #waypoints then
         if not moveToWaypoint() then
-            -- Path selesai, cari target baru
             print("✅ Path selesai, mencari target baru...")
             waypoints = nil
             _G.Config.TargetPosition = nil
         end
     end
     
-    -- Smart obstacle handling
-    if _G.Config.AutoJump then
-        if checkFrontObstacle() then
-            humanoid.Jump = true
-            task.wait(0.2)
-        elseif checkClimbable() then
-            -- Coba panjat dengan lompat berulang
-            humanoid.Jump = true
-            task.wait(0.3)
-        end
+    if _G.Config.AutoJump and checkFrontObstacle() then
+        humanoid.Jump = true
+        task.wait(0.2)
     end
     
-    -- Auto re-target setiap 30 detik
     if os.time() % 30 < 0.1 then
         _G.Config.TargetPosition = nil
         print("🔄 Auto re-targeting...")
     end
 end
 
--- ========== SIMPLE MOBILE GUI ==========
+-- ========== FIXED GUI ==========
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "MountainClimber"
 ScreenGui.ResetOnSpawn = false
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling -- Penting banget!
 
-if gethui then
-    ScreenGui.Parent = gethui()
-else
-    ScreenGui.Parent = game:GetService("CoreGui")
+-- Coba berbagai method parenting untuk Android
+local success, result = pcall(function()
+    if gethui then
+        ScreenGui.Parent = gethui()
+    elseif syn and syn.protect_gui then
+        syn.protect_gui(ScreenGui)
+        ScreenGui.Parent = game:GetService("CoreGui")
+    else
+        ScreenGui.Parent = game:GetService("CoreGui")
+    end
+end)
+
+if not success then
+    ScreenGui.Parent = player:WaitForChild("PlayerGui")
 end
 
+-- Main Frame - UKURAN DIPERBESAR
 local Main = Instance.new("Frame")
+Main.Name = "MainFrame"
 Main.Parent = ScreenGui
-Main.Size = UDim2.new(0, 280, 0, 200)
-Main.Position = UDim2.new(0.02, 0, 0.4, 0)
-Main.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+Main.Size = UDim2.new(0, 320, 0, 280) -- Diperbesar
+Main.Position = UDim2.new(0.02, 0, 0.3, 0)
+Main.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+Main.BackgroundTransparency = 0.1
 Main.BorderSizePixel = 2
 Main.BorderColor3 = Color3.fromRGB(0, 200, 255)
 Main.Active = true
 Main.Draggable = true
+Main.ZIndex = 10
 
+-- Title - PASTIKAN ZINDEX LEBIH TINGGI
 local Title = Instance.new("TextLabel")
 Title.Parent = Main
+Title.Name = "Title"
 Title.Text = "🏔️ MOUNTAIN CLIMBER"
-Title.Size = UDim2.new(1, 0, 0, 35)
+Title.Size = UDim2.new(1, 0, 0, 40)
+Title.Position = UDim2.new(0, 0, 0, 0)
 Title.BackgroundColor3 = Color3.fromRGB(0, 100, 200)
 Title.TextColor3 = Color3.white
 Title.Font = Enum.Font.GothamBold
+Title.TextSize = 18
+Title.ZIndex = 11
+Title.BorderSizePixel = 0
 
--- Start/Stop Button
-local toggleBtn = Instance.new("TextButton")
-toggleBtn.Parent = Main
-toggleBtn.Size = UDim2.new(0.9, 0, 0, 40)
-toggleBtn.Position = UDim2.new(0.05, 0, 0.2, 0)
-toggleBtn.Text = "🚀 START CLIMBING"
-toggleBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 0)
-toggleBtn.TextColor3 = Color3.white
-toggleBtn.Font = Enum.Font.Gotham
-toggleBtn.TextSize = 14
+-- Function untuk bikin button yang pasti kelihatan
+local function createVisibleButton(name, text, yPos, color)
+    local btn = Instance.new("TextButton")
+    btn.Name = name
+    btn.Parent = Main
+    btn.Size = UDim2.new(0.9, 0, 0, 40)
+    btn.Position = UDim2.new(0.05, 0, yPos, 0)
+    btn.BackgroundColor3 = color or Color3.fromRGB(60, 60, 60)
+    btn.BorderSizePixel = 1
+    btn.BorderColor3 = Color3.fromRGB(100, 100, 100)
+    btn.Text = text
+    btn.TextColor3 = Color3.white
+    btn.Font = Enum.Font.Gotham
+    btn.TextSize = 14
+    btn.ZIndex = 11
+    btn.AutoButtonColor = true
+    return btn
+end
 
+-- Start/Stop Button - POSISI DIPASTIKAN
+local toggleBtn = createVisibleButton("ToggleBtn", "🚀 START CLIMBING", 0.18, Color3.fromRGB(0, 150, 0))
+
+-- Speed Controls
+local speedDown = createVisibleButton("SpeedDown", "➖ SPEED", 0.38, Color3.fromRGB(200, 100, 0))
+speedDown.Size = UDim2.new(0.4, 0, 0, 35)
+
+local speedUp = createVisibleButton("SpeedUp", "➕ SPEED", 0.38, Color3.fromRGB(0, 100, 200))
+speedUp.Position = UDim2.new(0.52, 0, 0.38, 0)
+speedUp.Size = UDim2.new(0.4, 0, 0, 35)
+
+-- Speed Label
+local speedLbl = Instance.new("TextLabel")
+speedLbl.Parent = Main
+speedLbl.Name = "SpeedLabel"
+speedLbl.Size = UDim2.new(0.9, 0, 0, 25)
+speedLbl.Position = UDim2.new(0.05, 0, 0.55, 0)
+speedLbl.BackgroundTransparency = 1
+speedLbl.Text = "⚡ Speed: " .. _G.Config.WalkSpeed
+speedLbl.TextColor3 = Color3.fromRGB(255, 255, 0)
+speedLbl.Font = Enum.Font.Gotham
+speedLbl.TextSize = 14
+speedLbl.ZIndex = 11
+
+-- Status Display - DIPERBESAR
+local statusLbl = Instance.new("TextLabel")
+statusLbl.Parent = Main
+statusLbl.Name = "StatusLabel"
+statusLbl.Size = UDim2.new(0.9, 0, 0, 80)
+statusLbl.Position = UDim2.new(0.05, 0, 0.68, 0)
+statusLbl.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+statusLbl.BorderSizePixel = 1
+statusLbl.BorderColor3 = Color3.fromRGB(80, 80, 80)
+statusLbl.TextColor3 = Color3.fromRGB(0, 255, 150)
+statusLbl.Font = Enum.Font.Gotham
+statusLbl.TextSize = 12
+statusLbl.TextWrapped = true
+statusLbl.ZIndex = 11
+statusLbl.Text = "🤖 Status: Ready\n📍 Tekan START untuk mulai!"
+
+-- Close Button - DIKECILKAN TAPI PASTI KELIHATAN
+local closeBtn = Instance.new("TextButton")
+closeBtn.Parent = Main
+closeBtn.Name = "CloseBtn"
+closeBtn.Size = UDim2.new(0, 25, 0, 25)
+closeBtn.Position = UDim2.new(0.92, 0, 0.02, 0)
+closeBtn.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
+closeBtn.BorderSizePixel = 0
+closeBtn.Text = "X"
+closeBtn.TextColor3 = Color3.white
+closeBtn.Font = Enum.Font.GothamBold
+closeBtn.TextSize = 14
+closeBtn.ZIndex = 12
+closeBtn.AutoButtonColor = true
+
+-- ========== BUTTON FUNCTIONALITY ==========
 toggleBtn.MouseButton1Click:Connect(function()
     _G.Config.Enabled = not _G.Config.Enabled
     
     if _G.Config.Enabled then
         toggleBtn.Text = "🛑 STOP CLIMBING"
         toggleBtn.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
-        _G.Config.TargetPosition = nil -- Reset target
+        _G.Config.TargetPosition = nil
         waypoints = nil
         print("🏔️ Mountain Climber: STARTED")
+        statusLbl.Text = "🏔️ Sedang mendaki...\n🔍 Mencari jalur..."
     else
         toggleBtn.Text = "🚀 START CLIMBING"
         toggleBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 0)
-        humanoid:Move(Vector3.new(0, 0, 0))
+        if humanoid then
+            humanoid:Move(Vector3.new(0, 0, 0))
+        end
         print("🏔️ Mountain Climber: STOPPED")
+        statusLbl.Text = "🤖 Status: Ready\n📍 Tekan START untuk mulai!"
     end
 end)
-
--- Speed Control
-local speedUp = Instance.new("TextButton")
-speedUp.Parent = Main
-speedUp.Size = UDim2.new(0.4, 0, 0, 30)
-speedUp.Position = UDim2.new(0.52, 0, 0.5, 0)
-speedUp.Text = "➕ SPEED"
-speedUp.BackgroundColor3 = Color3.fromRGB(0, 100, 200)
-speedUp.TextColor3 = Color3.white
-
-local speedDown = Instance.new("TextButton")
-speedDown.Parent = Main
-speedDown.Size = UDim2.new(0.4, 0, 0, 30)
-speedDown.Position = UDim2.new(0.05, 0, 0.5, 0)
-speedDown.Text = "➖ SPEED"
-speedDown.BackgroundColor3 = Color3.fromRGB(200, 100, 0)
-speedDown.TextColor3 = Color3.white
-
-local speedLbl = Instance.new("TextLabel")
-speedLbl.Parent = Main
-speedLbl.Size = UDim2.new(0.9, 0, 0, 20)
-speedLbl.Position = UDim2.new(0.05, 0, 0.65, 0)
-speedLbl.BackgroundTransparency = 1
-speedLbl.Text = "⚡ Speed: " .. _G.Config.WalkSpeed
-speedLbl.TextColor3 = Color3.fromRGB(255, 255, 0)
-speedLbl.Font = Enum.Font.Gotham
 
 speedUp.MouseButton1Click:Connect(function()
     _G.Config.WalkSpeed = math.min(50, _G.Config.WalkSpeed + 5)
     speedLbl.Text = "⚡ Speed: " .. _G.Config.WalkSpeed
+    if humanoid then
+        humanoid.WalkSpeed = _G.Config.WalkSpeed
+    end
 end)
 
 speedDown.MouseButton1Click:Connect(function()
     _G.Config.WalkSpeed = math.max(16, _G.Config.WalkSpeed - 5)
     speedLbl.Text = "⚡ Speed: " .. _G.Config.WalkSpeed
+    if humanoid then
+        humanoid.WalkSpeed = _G.Config.WalkSpeed
+    end
 end)
-
--- Status Display
-local statusLbl = Instance.new("TextLabel")
-statusLbl.Parent = Main
-statusLbl.Size = UDim2.new(0.9, 0, 0, 60)
-statusLbl.Position = UDim2.new(0.05, 0, 0.75, 0)
-statusLbl.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-statusLbl.TextColor3 = Color3.fromRGB(0, 255, 150)
-statusLbl.Font = Enum.Font.Gotham
-statusLbl.TextSize = 11
-statusLbl.TextWrapped = true
-statusLbl.Text = "🤖 Status: Ready\n📍 Tekan START untuk mulai!"
-
--- Close Button
-local closeBtn = Instance.new("TextButton")
-closeBtn.Parent = Main
-closeBtn.Size = UDim2.new(0, 25, 0, 25)
-closeBtn.Position = UDim2.new(0.9, 0, 0.02, 0)
-closeBtn.Text = "X"
-closeBtn.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
-closeBtn.TextColor3 = Color3.white
 
 closeBtn.MouseButton1Click:Connect(function()
     _G.Config.Enabled = false
+    if humanoid then
+        humanoid:Move(Vector3.new(0, 0, 0))
+    end
     ScreenGui:Destroy()
+    print("🏔️ Mountain Climber: Closed")
 end)
 
+-- ========== DEBUG: CHECK GUI VISIBILITY ==========
+print("🔍 Checking GUI elements...")
+for i, child in ipairs(Main:GetChildren()) do
+    print("✅ GUI Element: " .. child.Name .. " | Type: " .. child.ClassName)
+end
+
 -- ========== MAIN LOOP ==========
-RunService.Heartbeat:Connect(function()
+local navigationConnection
+navigationConnection = RunService.Heartbeat:Connect(function()
     if _G.Config.Enabled then
         local success, err = pcall(smartNavigation)
         if not success then
@@ -391,16 +402,11 @@ RunService.Heartbeat:Connect(function()
             statusLbl.Text = "❌ Error: " .. err
         end
         
-        -- Update status
-        if _G.Config.TargetPosition then
+        if _G.Config.TargetPosition and rootPart then
             local dist = math.floor((rootPart.Position - _G.Config.TargetPosition).Magnitude)
             local height = math.floor(rootPart.Position.Y)
-            statusLbl.Text = "🏔️ Mendaki Gunung...\n📏 Jarak target: " .. dist .. " studs\n📐 Ketinggian: " .. height .. "m"
-        else
-            statusLbl.Text = "🔍 Mencari jalur pendakian..."
+            statusLbl.Text = "🏔️ Mendaki Gunung...\n📏 Jarak target: " .. dist .. " studs\n📐 Ketinggian: " .. height .. "m\n🎯 Waypoint: " .. currentWaypointIndex
         end
-    else
-        statusLbl.Text = "🤖 Status: Ready\n📍 Tekan START untuk mulai!"
     end
 end)
 
@@ -411,7 +417,6 @@ player.CharacterAdded:Connect(function(newChar)
     humanoid = character:WaitForChild("Humanoid")
     rootPart = character:WaitForChild("HumanoidRootPart")
     
-    -- Reset navigation
     waypoints = nil
     currentWaypointIndex = 0
     _G.Config.TargetPosition = nil
@@ -419,9 +424,25 @@ player.CharacterAdded:Connect(function(newChar)
     print("🏔️ Character respawned - Climber reset")
 end)
 
+-- Cleanup
+ScreenGui.Destroying:Connect(function()
+    if navigationConnection then
+        navigationConnection:Disconnect()
+    end
+end)
+
 print("========================================")
 print("🏔️ AUTO MOUNTAIN CLIMBER LOADED")
-print("✅ Auto Target Detection")
-print("✅ No Manual Checkpoint Needed") 
-print("✅ Smart Obstacle Climbing")
+print("✅ GUI Fixed - Should be visible now!")
+print("✅ Auto Target Detection") 
+print("✅ No Manual Checkpoint Needed")
 print("========================================")
+
+-- Force show GUI (debug)
+task.wait(1)
+if Main and Main.Parent then
+    print("🎉 GUI Successfully Loaded!")
+    statusLbl.Text = "✅ GUI Loaded!\n📍 Tekan START untuk mulai!"
+else
+    print("❌ GUI Failed to Load!")
+end
