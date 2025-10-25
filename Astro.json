@@ -96,6 +96,14 @@
     "createdAt": "2025-10-17T09:58:04.123Z"
   },
   {
+    "username": "miel",
+    "password": "9090",
+    "role": "reseller",
+    "expired": "2025-12-8",
+    "createdBy": "asep",
+    "createdAt": "2025-10-17T11:33:03.667Z"
+  },
+  {
     "username": "Adhit",
     "password": "69",
     "role": "reseller",
@@ -110,13 +118,5 @@
     "expired": "",
     "createdBy": "rapip",
     "createdAt": "2025-10-19T13:09:34.669Z"
-  },
-  {
-    "username": "tiriz",
-    "password": "919191",
-    "role": "admin",
-    "expired": "",
-    "createdBy": "rapip",
-    "createdAt": "2025-10-19T13:51:23.505Z"
   }
 ]
