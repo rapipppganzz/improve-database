@@ -24,20 +24,20 @@
     "createdBy": "user_admin"
   },
   {
-    "username": "ayam",
-    "password": "77",
-    "role": "admin",
-    "expired": "",
-    "createdBy": "rapip",
-    "createdAt": "2025-10-13T06:00:53.148Z"
-  },
-  {
     "username": "asep",
     "password": "9090",
     "role": "admin",
     "expired": "9090-12-30",
     "createdBy": "rapip",
     "createdAt": "2025-10-17T07:30:42.319Z"
+  },
+  {
+    "username": "chrulz",
+    "password": "818181",
+    "role": "admin",
+    "expired": "9090-12-31",
+    "createdBy": "rapip",
+    "createdAt": "2025-10-17T07:35:55.231Z"
   },
   {
     "username": "xyroo",
