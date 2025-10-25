@@ -96,14 +96,6 @@
     "createdAt": "2025-10-17T09:58:04.123Z"
   },
   {
-    "username": "miel",
-    "password": "9090",
-    "role": "reseller",
-    "expired": "2025-12-8",
-    "createdBy": "asep",
-    "createdAt": "2025-10-17T11:33:03.667Z"
-  },
-  {
     "username": "Adhit",
     "password": "69",
     "role": "reseller",
