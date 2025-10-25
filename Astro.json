@@ -24,6 +24,14 @@
     "createdBy": "user_admin"
   },
   {
+    "username": "ayam",
+    "password": "77",
+    "role": "admin",
+    "expired": "",
+    "createdBy": "rapip",
+    "createdAt": "2025-10-13T06:00:53.148Z"
+  },
+  {
     "username": "asep",
     "password": "9090",
     "role": "admin",
@@ -118,13 +126,5 @@
     "expired": "",
     "createdBy": "rapip",
     "createdAt": "2025-10-19T13:09:34.669Z"
-  },
-  {
-    "username": "tiriz",
-    "password": "919191",
-    "role": "admin",
-    "expired": "",
-    "createdBy": "rapip",
-    "createdAt": "2025-10-19T13:51:23.505Z"
   }
 ]
