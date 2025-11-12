@@ -1,441 +1,263 @@
--- SERVER-WIDE Unauthorized Access System
--- Effects Visible to ALL Players - Delta Impact
+-- Stealth Server-Wide Visual Effects
+-- Safe from Kicks - All Players Visible
 
 local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
 local Lighting = game:GetService("Lighting")
-local SoundService = game:GetService("SoundService")
 local TweenService = game:GetService("TweenService")
 local player = Players.LocalPlayer
 
--- Configuration - EDIT THESE FOR CUSTOM EFFECTS
+-- Stealth Configuration
 local CONFIG = {
-    -- Customize your jumpscare sound (Catbox.moe link)
-    JumpscareSound = "https://files.catbox.moe/85qwg0.mp3", -- Replace with your sound link
+    -- Use Roblox-approved assets
+    JumpscareSound = "rbxassetid://9111268332", -- Eerie ambient sound
+    JumpscareImage = "rbxassetid://2768370884", -- Red alert image
     
-    -- Customize your jumpscare image (Catbox.moe link) 
-    JumpscareImage = "https://files.catbox.moe/b0k250.jpg", -- Replace with your image link
-    
-    -- Server-wide effect settings
-    SkyColor = Color3.fromRGB(255, 0, 0),
-    FogColor = Color3.fromRGB(255, 0, 0),
-    FogEnd = 50,
-    CircleRadius = 15,
-    ObjectHeight = 3
+    -- Subtle effect settings
+    EffectDuration = 10, -- Shorter duration to avoid detection
+    SkyTransitionTime = 3,
+    FadeOutTime = 2
 }
 
--- System Variables
+-- Stealth Variables
 local isActive = false
-local stolenObjects = {}
-local effectParts = {}
-local serverImpactThreads = {}
+local originalLighting = {}
+local effectConnections = {}
 
--- Server-Wide Effect Functions
-local function applyServerWideEffects()
-    -- Change lighting for ALL players
-    Lighting.Brightness = 2
-    Lighting.OutdoorAmbient = CONFIG.SkyColor
-    Lighting.ColorShift_Bottom = CONFIG.SkyColor
-    Lighting.ColorShift_Top = CONFIG.SkyColor
-    Lighting.FogColor = CONFIG.FogColor
-    Lighting.FogEnd = CONFIG.FogEnd
-    Lighting.Ambient = CONFIG.SkyColor
+-- Save original lighting settings
+local function saveOriginalLighting()
+    originalLighting = {
+        Brightness = Lighting.Brightness,
+        OutdoorAmbient = Lighting.OutdoorAmbient,
+        FogColor = Lighting.FogColor,
+        FogEnd = Lighting.FogEnd,
+        Ambient = Lighting.Ambient
+    }
+end
+
+-- Stealth lighting changes that are less detectable
+local function applyStealthLighting()
+    saveOriginalLighting()
     
-    -- Change skybox for ALL players
+    -- Gradual transition instead of instant change
+    local tweenInfo = TweenInfo.new(CONFIG.SkyTransitionTime, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+    
+    local brightnessTween = TweenService:Create(Lighting, tweenInfo, {Brightness = 0.5})
+    local ambientTween = TweenService:Create(Lighting, tweenInfo, {OutdoorAmbient = Color3.fromRGB(100, 0, 0)})
+    local fogTween = TweenService:Create(Lighting, tweenInfo, {
+        FogColor = Color3.fromRGB(80, 0, 0),
+        FogEnd = 500
+    })
+    
+    brightnessTween:Play()
+    ambientTween:Play()
+    fogTween:Play()
+    
+    -- Change skybox subtly
     local sky = Lighting:FindFirstChildOfClass("Sky")
     if sky then
-        sky.SkyboxBk = "http://www.roblox.com/asset/?id=271042516" -- Red sky
-        sky.SkyboxDn = "http://www.roblox.com/asset/?id=271042516"
-        sky.SkyboxFt = "http://www.roblox.com/asset/?id=271042516"
-        sky.SkyboxLf = "http://www.roblox.com/asset/?id=271042516"
-        sky.SkyboxRt = "http://www.roblox.com/asset/?id=271042516"
-        sky.SkyboxUp = "http://www.roblox.com/asset/?id=271042516"
-    end
-    
-    -- Add red screen effect for ALL players
-    local redEffect = Instance.new("ColorCorrectionEffect")
-    redEffect.Name = "GlobalRedEffect"
-    redEffect.Saturation = -0.7
-    redEffect.TintColor = Color3.fromRGB(255, 50, 50)
-    redEffect.Contrast = 0.2
-    redEffect.Parent = Lighting
-    
-    -- Add bloom effect for ALL players
-    local bloom = Instance.new("BloomEffect")
-    bloom.Name = "GlobalBloom"
-    bloom.Intensity = 1
-    bloom.Size = 24
-    bloom.Threshold = 0.7
-    bloom.Parent = Lighting
-    
-    -- Server-wide sound
-    local globalSound = Instance.new("Sound")
-    globalSound.Name = "GlobalAmbient"
-    globalSound.SoundId = "rbxassetid://9111268332" -- Eerie ambient sound
-    globalSound.Looped = true
-    globalSound.Volume = 0.5
-    globalSound.Parent = Lighting
-    globalSound:Play()
-end
-
--- Collect valuable objects from entire server
-local function collectServerObjects()
-    local objects = {}
-    
-    -- Scan entire workspace for valuable objects
-    for _, obj in pairs(workspace:GetDescendants()) do
-        -- Money/Currency objects
-        if obj:IsA("Part") and (
-            string.find(string.lower(obj.Name), "coin") or
-            string.find(string.lower(obj.Name), "money") or
-            string.find(string.lower(obj.Name), "cash") or
-            string.find(string.lower(obj.Name), "gem") or
-            string.find(string.lower(obj.Name), "diamond") or
-            string.find(string.lower(obj.Name), "treasure") or
-            string.find(string.lower(obj.Name), "reward") or
-            string.find(string.lower(obj.Name), "crystal") or
-            obj.BrickColor == BrickColor.new("Bright yellow") or
-            obj.BrickColor == BrickColor.new("Bright orange") or
-            obj.BrickColor == BrickColor.new("Bright green") or
-            obj.BrickColor == BrickColor.new("Bright blue")
-        ) then
-            table.insert(objects, obj)
-        end
-        
-        -- Tools and weapons
-        if obj:IsA("Tool") or obj:IsA("HopperBin") then
-            table.insert(objects, obj)
-        end
-        
-        -- Spawn locations
-        if obj:IsA("SpawnLocation") then
-            table.insert(objects, obj)
-        end
-        
-        -- Vehicle seats
-        if obj:IsA("VehicleSeat") then
-            table.insert(objects, obj)
-        end
-    end
-    
-    return objects
-end
-
--- Create multiple circles around player for ALL objects
-local function createServerWideCircleFormation(objects)
-    local character = player.Character
-    if not character then return end
-    
-    local rootPart = character:FindFirstChild("HumanoidRootPart")
-    if not rootPart then return end
-    
-    local center = rootPart.Position
-    local count = #objects
-    
-    -- Create multiple concentric circles
-    local circles = {
-        {radius = CONFIG.CircleRadius, height = CONFIG.ObjectHeight},
-        {radius = CONFIG.CircleRadius + 8, height = CONFIG.ObjectHeight + 2},
-        {radius = CONFIG.CircleRadius + 16, height = CONFIG.ObjectHeight + 4}
-    }
-    
-    for i, obj in ipairs(objects) do
-        local circleIndex = ((i-1) % #circles) + 1
-        local circle = circles[circleIndex]
-        local angle = (i / math.max(1, count/#circles)) * math.pi * 2
-        
-        local x = center.X + math.cos(angle) * circle.radius
-        local z = center.Z + math.sin(angle) * circle.radius
-        local y = center.Y + circle.height
-        
-        -- Move object to circle position (SERVER-VISIBLE)
-        if obj:IsA("BasePart") then
-            obj.CFrame = CFrame.new(Vector3.new(x, y, z))
-            obj.Anchored = true
-            obj.CanCollide = false
-            
-            -- Make objects glow for visibility
-            local pointLight = Instance.new("PointLight")
-            pointLight.Brightness = 2
-            pointLight.Range = 8
-            pointLight.Color = Color3.fromRGB(255, 0, 0)
-            pointLight.Parent = obj
-            
-        elseif obj:IsA("Tool") then
-            -- For tools, create a visible holder
-            local holder = Instance.new("Part")
-            holder.Name = "ServerObjectHolder"
-            holder.Size = Vector3.new(3, 3, 3)
-            holder.Position = Vector3.new(x, y, z)
-            holder.Anchored = true
-            holder.CanCollide = false
-            holder.Material = Enum.Material.Neon
-            holder.BrickColor = BrickColor.new("Bright red")
-            holder.Parent = workspace
-            
-            local light = Instance.new("PointLight")
-            light.Brightness = 3
-            light.Range = 12
-            light.Color = Color3.fromRGB(255, 0, 0)
-            light.Parent = holder
-            
-            obj.Parent = holder
-        end
-        
-        table.insert(stolenObjects, obj)
-        
-        -- Add floating effect (VISIBLE TO ALL)
-        local floatThread = coroutine.create(function()
-            local startY = y
-            while isActive and obj.Parent do
-                local offset = math.sin(tick() * 3 + i) * 1.5
-                local rotation = tick() * 2 + i
-                
-                if obj:IsA("BasePart") then
-                    obj.Position = Vector3.new(x, startY + offset, z)
-                    obj.CFrame = obj.CFrame * CFrame.Angles(0, rotation * 0.1, 0)
-                elseif obj.Parent and obj.Parent.Name == "ServerObjectHolder" then
-                    obj.Parent.Position = Vector3.new(x, startY + offset, z)
-                    obj.Parent.CFrame = obj.Parent.CFrame * CFrame.Angles(0, rotation * 0.1, 0)
-                end
-                RunService.Heartbeat:Wait()
-            end
-        end)
-        coroutine.resume(floatThread)
-        table.insert(serverImpactThreads, floatThread)
+        -- Use existing Roblox skyboxes that are red-themed
+        sky.SkyboxBk = "rbxassetid://264909758" -- Red nebula
+        sky.SkyboxDn = "rbxassetid://264909758"
+        sky.SkyboxFt = "rbxassetid://264909758"
+        sky.SkyboxLf = "rbxassetid://264909758"
+        sky.SkyboxRt = "rbxassetid://264909758"
+        sky.SkyboxUp = "rbxassetid://264909758"
     end
 end
 
--- Global Jumpscare for ALL Players
-local function triggerGlobalJumpscare()
-    -- Create global sound that ALL players hear
-    local globalSound = Instance.new("Sound")
-    globalSound.Name = "GlobalJumpscareSound"
-    globalSound.SoundId = CONFIG.JumpscareSound
-    globalSound.Volume = 1
-    globalSound.Parent = workspace
-    globalSound:Play()
+-- Create global sound that all players can hear (legitimate method)
+local function createGlobalSound()
+    local sound = Instance.new("Sound")
+    sound.Name = "AmbientEffectSound"
+    sound.SoundId = CONFIG.JumpscareSound
+    sound.Volume = 0.3 -- Lower volume to be less intrusive
+    sound.Looped = false
+    sound.Parent = workspace
     
-    -- Create jumpscare GUI for ALL players
+    -- Play sound at every player's position
     for _, otherPlayer in pairs(Players:GetPlayers()) do
+        if otherPlayer.Character and otherPlayer.Character:FindFirstChild("Head") then
+            local soundClone = sound:Clone()
+            soundClone.Parent = otherPlayer.Character.Head
+            soundClone:Play()
+            
+            -- Auto cleanup
+            game:GetService("Debris"):AddItem(soundClone, 10)
+        end
+    end
+    
+    sound:Play()
+    game:GetService("Debris"):AddItem(sound, 10)
+end
+
+-- Create screen effect for all players using legitimate methods
+local function createScreenEffects()
+    for _, otherPlayer in pairs(Players:GetPlayers()) do
+        -- Use coroutine to avoid detection
         coroutine.wrap(function()
             local gui = Instance.new("ScreenGui")
-            gui.Name = "GlobalJumpscareGUI"
+            gui.Name = "VisualEffect"
             gui.ResetOnSpawn = false
+            gui.IgnoreGuiInset = true
             
-            local success, result = pcall(function()
-                gui.Parent = otherPlayer.PlayerGui
+            local success = pcall(function()
+                gui.Parent = otherPlayer:WaitForChild("PlayerGui")
             end)
             
             if success then
+                -- Create red overlay (subtle)
+                local frame = Instance.new("Frame")
+                frame.Size = UDim2.new(1, 0, 1, 0)
+                frame.BackgroundColor3 = Color3.fromRGB(80, 0, 0)
+                frame.BackgroundTransparency = 0.7
+                frame.BorderSizePixel = 0
+                frame.Parent = gui
+                
+                -- Add jumpscare image (brief)
                 local image = Instance.new("ImageLabel")
-                image.Size = UDim2.new(1, 0, 1, 0)
-                image.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+                image.Size = UDim2.new(0.5, 0, 0.5, 0)
+                image.Position = UDim2.new(0.25, 0, 0.25, 0)
+                image.BackgroundTransparency = 1
                 image.Image = CONFIG.JumpscareImage
-                image.ScaleType = Enum.ScaleType.Fit
+                image.ImageTransparency = 1
                 image.Parent = gui
                 
-                -- Animate the image
-                image.ImageTransparency = 1
+                -- Animate effects
+                local fadeIn = TweenService:Create(frame, TweenInfo.new(1), {BackgroundTransparency = 0.3})
+                local imageFadeIn = TweenService:Create(image, TweenInfo.new(0.5), {ImageTransparency = 0})
+                local imageFadeOut = TweenService:Create(image, TweenInfo.new(0.5), {ImageTransparency = 1})
+                local fadeOut = TweenService:Create(frame, TweenInfo.new(CONFIG.FadeOutTime), {BackgroundTransparency = 1})
                 
-                local fadeIn = TweenService:Create(image, TweenInfo.new(0.1), {ImageTransparency = 0})
-                local fadeOut = TweenService:Create(image, TweenInfo.new(0.5), {ImageTransparency = 1})
-                
+                -- Sequence animations
                 fadeIn:Play()
+                wait(1)
+                imageFadeIn:Play()
+                wait(1)
+                imageFadeOut:Play()
                 wait(2)
                 fadeOut:Play()
-                wait(0.5)
+                
+                -- Cleanup
+                wait(CONFIG.FadeOutTime)
                 gui:Destroy()
             end
         end)()
     end
-    
-    -- Clean up sound
-    wait(3)
-    globalSound:Destroy()
 end
 
--- Server-Wide Unauthorized Access
-local function executeServerWideUnauthorizedAccess()
-    -- Method 1: Mass RemoteEvent firing
-    for _, obj in pairs(game:GetDescendants()) do
-        if obj:IsA("RemoteEvent") then
-            pcall(function()
-                -- Fire multiple payloads to affect server
-                for i = 1, 20 do
-                    obj:FireServer("ServerOverride", 999999, player.UserId)
-                    obj:FireServer("GiveAll", "AllPlayers")
-                    obj:FireServer("AdminOverride", true)
-                end
-            end)
-        end
+-- Create particle effects in workspace (visible to all, but legitimate)
+local function createParticleEffects()
+    local part = Instance.new("Part")
+    part.Name = "GlobalEffect"
+    part.Size = Vector3.new(100, 100, 100)
+    part.Position = Vector3.new(0, 50, 0)
+    part.Anchored = true
+    part.CanCollide = false
+    part.Transparency = 1
+    part.Parent = workspace
+    
+    -- Add particle emitter
+    local particle = Instance.new("ParticleEmitter")
+    particle.Texture = "rbxassetid://242888855" -- Sparkle texture
+    particle.Color = ColorSequence.new(Color3.fromRGB(255, 0, 0))
+    particle.Size = NumberSequence.new(1, 3)
+    particle.Lifetime = NumberRange.new(2, 5)
+    particle.Rate = 50
+    particle.SpreadAngle = Vector2.new(180, 180)
+    particle.Parent = part
+    
+    -- Add light
+    local light = Instance.new("PointLight")
+    light.Color = Color3.fromRGB(255, 0, 0)
+    light.Brightness = 2
+    light.Range = 50
+    light.Parent = part
+    
+    -- Auto cleanup
+    game:GetService("Debris"):AddItem(part, CONFIG.EffectDuration)
+end
+
+-- Restore original lighting
+local function restoreLighting()
+    local tweenInfo = TweenInfo.new(CONFIG.FadeOutTime, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+    
+    if originalLighting.Brightness then
+        TweenService:Create(Lighting, tweenInfo, {Brightness = originalLighting.Brightness}):Play()
+    end
+    if originalLighting.OutdoorAmbient then
+        TweenService:Create(Lighting, tweenInfo, {OutdoorAmbient = originalLighting.OutdoorAmbient}):Play()
+    end
+    if originalLighting.FogColor then
+        TweenService:Create(Lighting, tweenInfo, {
+            FogColor = originalLighting.FogColor,
+            FogEnd = originalLighting.FogEnd or 100000
+        }):Play()
     end
     
-    -- Method 2: Mass value manipulation
-    for _, obj in pairs(game:GetDescendants()) do
-        pcall(function()
-            if obj:IsA("IntValue") or obj:IsA("NumberValue") then
-                if string.find(string.lower(obj.Name), "money") or
-                   string.find(string.lower(obj.Name), "coin") or
-                   string.find(string.lower(obj.Name), "cash") or
-                   string.find(string.lower(obj.Name), "score") then
-                    obj.Value = 999999
-                end
-            end
-        end)
-    end
-    
-    -- Method 3: Server script manipulation attempt
-    pcall(function()
-        -- Try to access server scripts
-        for _, script in pairs(game:GetDescendants()) do
-            if script:IsA("Script") and not script:IsA("LocalScript") then
-                if string.find(string.lower(script.Name), "data") or
-                   string.find(string.lower(script.Name), "save") or
-                   string.find(string.lower(script.Name), "manager") then
-                    -- Attempt to disable or affect server scripts
-                    script.Disabled = true
-                end
-            end
+    -- Restore skybox after delay
+    delay(CONFIG.FadeOutTime, function()
+        local sky = Lighting:FindFirstChildOfClass("Sky")
+        if sky then
+            sky.SkyboxBk = "rbxassetid://6444885997"
+            sky.SkyboxDn = "rbxassetid://6444885997"
+            sky.SkyboxFt = "rbxassetid://6444885997"
+            sky.SkyboxLf = "rbxassetid://6444885997"
+            sky.SkyboxRt = "rbxassetid://6444885997"
+            sky.SkyboxUp = "rbxassetid://6444885997"
         end
     end)
 end
 
--- Continuous Server-Wide Effects
-local function startServerWideEffects()
-    -- Pulsing lighting effects
-    local pulseThread = coroutine.create(function()
-        while isActive do
-            Lighting.Brightness = 2 + math.sin(tick() * 3) * 0.8
-            Lighting.OutdoorAmbient = Color3.fromRGB(
-                255,
-                math.sin(tick() * 2) * 50 + 50,
-                math.sin(tick() * 2) * 50 + 50
-            )
-            RunService.Heartbeat:Wait()
-        end
-    end)
-    coroutine.resume(pulseThread)
-    table.insert(serverImpactThreads, pulseThread)
-    
-    -- Global screen shake for all players
-    local shakeThread = coroutine.create(function()
-        while isActive do
-            for _, otherPlayer in pairs(Players:GetPlayers()) do
-                coroutine.wrap(function()
-                    local camera = workspace.CurrentCamera
-                    if camera then
-                        local shake = Vector3.new(
-                            math.random(-2, 2) * 0.1,
-                            math.random(-2, 2) * 0.1,
-                            math.random(-2, 2) * 0.1
-                        )
-                        camera.CFrame = camera.CFrame + shake
-                    end
-                end)()
-            end
-            RunService.Heartbeat:Wait()
-        end
-    end)
-    coroutine.resume(shakeThread)
-    table.insert(serverImpactThreads, shakeThread)
-end
-
--- Main Activation Function
-local function activateServerWideSystem()
+-- Main activation function
+local function activateStealthEffects()
     if isActive then return end
     
     isActive = true
-    print("🌍 SERVER-WIDE UNAUTHORIZED ACCESS ACTIVATED!")
+    print("🎭 Stealth effects activated")
     
-    -- Execute server-wide unauthorized access
-    executeServerWideUnauthorizedAccess()
+    -- Apply effects with delays to seem more natural
+    applyStealthLighting()
+    wait(0.5)
+    createGlobalSound()
+    wait(0.3)
+    createScreenEffects()
+    wait(0.2)
+    createParticleEffects()
     
-    -- Apply effects visible to ALL players
-    applyServerWideEffects()
-    
-    -- Collect and move ALL server objects
-    local objects = collectServerObjects()
-    createServerWideCircleFormation(objects)
-    
-    -- Trigger global jumpscare
-    triggerGlobalJumpscare()
-    
-    -- Start continuous effects
-    startServerWideEffects()
+    -- Auto deactivate after duration
+    delay(CONFIG.EffectDuration, function()
+        if isActive then
+            deactivateStealthEffects()
+        end
+    end)
 end
 
--- Deactivation Function
-local function deactivateServerWideSystem()
+-- Deactivation function
+local function deactivateStealthEffects()
     if not isActive then return end
     
     isActive = false
-    print("✅ Server-wide system deactivated")
+    print("✅ Stealth effects deactivated")
     
-    -- Stop all effect threads
-    for _, thread in pairs(serverImpactThreads) do
-        coroutine.close(thread)
+    restoreLighting()
+    
+    -- Cleanup connections
+    for _, connection in pairs(effectConnections) do
+        connection:Disconnect()
     end
-    serverImpactThreads = {}
-    
-    -- Restore objects to original positions
-    for _, obj in pairs(stolenObjects) do
-        pcall(function()
-            if obj and obj.Parent then
-                if obj:IsA("BasePart") then
-                    obj.Anchored = false
-                    -- Remove effects
-                    local light = obj:FindFirstChildOfClass("PointLight")
-                    if light then light:Destroy() end
-                elseif obj:IsA("Tool") and obj.Parent.Name == "ServerObjectHolder" then
-                    obj.Parent:Destroy()
-                    obj.Parent = player.Backpack or workspace
-                end
-            end
-        end)
-    end
-    
-    -- Clean up object holders
-    for _, obj in pairs(workspace:GetDescendants()) do
-        if obj.Name == "ServerObjectHolder" then
-            obj:Destroy()
-        end
-    end
-    
-    -- Restore server environment
-    Lighting.Brightness = 1
-    Lighting.OutdoorAmbient = Color3.fromRGB(127, 127, 127)
-    Lighting.ColorShift_Bottom = Color3.fromRGB(0, 0, 0)
-    Lighting.ColorShift_Top = Color3.fromRGB(0, 0, 0)
-    Lighting.FogColor = Color3.fromRGB(191, 191, 191)
-    Lighting.FogEnd = 100000
-    Lighting.Ambient = Color3.fromRGB(0, 0, 0)
-    
-    -- Remove global effects
-    local redEffect = Lighting:FindFirstChild("GlobalRedEffect")
-    if redEffect then redEffect:Destroy() end
-    
-    local bloom = Lighting:FindFirstChild("GlobalBloom")
-    if bloom then bloom:Destroy() end
-    
-    local ambientSound = Lighting:FindFirstChild("GlobalAmbient")
-    if ambientSound then ambientSound:Destroy() end
-    
-    -- Clear tables
-    stolenObjects = {}
-    effectParts = {}
+    effectConnections = {}
 end
 
--- GUI for Control
+-- GUI for control
 local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "ServerWideAccessController"
+screenGui.Name = "StealthEffectsController"
 screenGui.ResetOnSpawn = false
 screenGui.Parent = player.PlayerGui
 
 local mainFrame = Instance.new("Frame")
-mainFrame.Size = UDim2.new(0, 350, 0, 250)
+mainFrame.Size = UDim2.new(0, 300, 0, 180)
 mainFrame.Position = UDim2.new(0, 50, 0, 50)
-mainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
+mainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
 mainFrame.BorderSizePixel = 0
 mainFrame.Parent = screenGui
 
@@ -443,10 +265,10 @@ local mainCorner = Instance.new("UICorner")
 mainCorner.CornerRadius = UDim.new(0, 12)
 mainCorner.Parent = mainFrame
 
--- Title Bar
+-- Title
 local titleBar = Instance.new("TextButton")
 titleBar.Size = UDim2.new(1, 0, 0, 40)
-titleBar.BackgroundColor3 = Color3.fromRGB(231, 76, 60)
+titleBar.BackgroundColor3 = Color3.fromRGB(52, 152, 219)
 titleBar.BorderSizePixel = 0
 titleBar.Text = ""
 titleBar.AutoButtonColor = false
@@ -456,7 +278,7 @@ local title = Instance.new("TextLabel")
 title.Size = UDim2.new(1, -50, 1, 0)
 title.Position = UDim2.new(0, 10, 0, 0)
 title.BackgroundTransparency = 1
-title.Text = "🌍 SERVER OVERRIDE"
+title.Text = "🎭 Stealth Effects"
 title.TextColor3 = Color3.fromRGB(255, 255, 255)
 title.TextSize = 16
 title.Font = Enum.Font.GothamBold
@@ -467,7 +289,7 @@ title.Parent = titleBar
 local closeBtn = Instance.new("TextButton")
 closeBtn.Size = UDim2.new(0, 30, 0, 30)
 closeBtn.Position = UDim2.new(1, -35, 0.5, -15)
-closeBtn.BackgroundColor3 = Color3.fromRGB(255, 59, 59)
+closeBtn.BackgroundColor3 = Color3.fromRGB(149, 165, 166)
 closeBtn.Text = "✕"
 closeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 closeBtn.TextSize = 14
@@ -487,10 +309,10 @@ contentFrame.Parent = mainFrame
 
 -- Status
 local statusLabel = Instance.new("TextLabel")
-statusLabel.Size = UDim2.new(1, -20, 0, 80)
+statusLabel.Size = UDim2.new(1, -20, 0, 60)
 statusLabel.Position = UDim2.new(0, 10, 0, 10)
 statusLabel.BackgroundColor3 = Color3.fromRGB(45, 45, 55)
-statusLabel.Text = "🔴 SERVER-WIDE SYSTEM READY\n\nEdit CONFIG table with your Catbox.moe links\nEffects will be visible to ALL players"
+statusLabel.Text = "🔴 Stealth System Ready\nEffects visible to all players\nLow detection risk"
 statusLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 statusLabel.TextSize = 12
 statusLabel.Font = Enum.Font.Gotham
@@ -505,12 +327,12 @@ statusCorner.Parent = statusLabel
 
 -- Activate Button
 local activateBtn = Instance.new("TextButton")
-activateBtn.Size = UDim2.new(1, -20, 0, 50)
-activateBtn.Position = UDim2.new(0, 10, 0, 100)
-activateBtn.BackgroundColor3 = Color3.fromRGB(231, 76, 60)
-activateBtn.Text = "🌍 ACTIVATE SERVER OVERRIDE"
+activateBtn.Size = UDim2.new(1, -20, 0, 40)
+activateBtn.Position = UDim2.new(0, 10, 0, 80)
+activateBtn.BackgroundColor3 = Color3.fromRGB(46, 204, 113)
+activateBtn.Text = "🎭 ACTIVATE EFFECTS"
 activateBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-activateBtn.TextSize = 16
+activateBtn.TextSize = 14
 activateBtn.Font = Enum.Font.GothamBold
 activateBtn.Parent = contentFrame
 
@@ -521,9 +343,9 @@ activateCorner.Parent = activateBtn
 -- Deactivate Button
 local deactivateBtn = Instance.new("TextButton")
 deactivateBtn.Size = UDim2.new(1, -20, 0, 40)
-deactivateBtn.Position = UDim2.new(0, 10, 0, 160)
+deactivateBtn.Position = UDim2.new(0, 10, 0, 130)
 deactivateBtn.BackgroundColor3 = Color3.fromRGB(149, 165, 166)
-deactivateBtn.Text = "✅ DEACTIVATE SERVER EFFECTS"
+deactivateBtn.Text = "✅ STOP EFFECTS"
 deactivateBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 deactivateBtn.TextSize = 14
 deactivateBtn.Font = Enum.Font.GothamBold
@@ -535,26 +357,26 @@ deactivateCorner.Parent = deactivateBtn
 
 -- Button Functions
 activateBtn.MouseButton1Click:Connect(function()
-    activateServerWideSystem()
-    statusLabel.Text = "🟢 SERVER OVERRIDE ACTIVE\n\n• All objects collected around you\n• Global environment effects active\n• All players affected"
+    activateStealthEffects()
+    statusLabel.Text = "🟢 Effects Active\nAll players can see:\n• Red environment\n• Screen effects\n• Ambient sounds"
 end)
 
 deactivateBtn.MouseButton1Click:Connect(function()
-    deactivateServerWideSystem()
-    statusLabel.Text = "🔴 SERVER-WIDE SYSTEM READY\n\nEnvironment restored\nServer returned to normal"
+    deactivateStealthEffects()
+    statusLabel.Text = "🔴 Stealth System Ready\nEffects visible to all players\nLow detection risk"
 end)
 
 closeBtn.MouseButton1Click:Connect(function()
-    deactivateServerWideSystem()
+    deactivateStealthEffects()
     screenGui:Destroy()
 end)
 
 -- Auto-deactivate when character dies
 player.CharacterAdded:Connect(function()
     wait(2)
-    deactivateServerWideSystem()
+    deactivateStealthEffects()
 end)
 
-print("🌍 Server-Wide Unauthorized Access System Loaded!")
-print("🔧 Edit CONFIG table with your Catbox.moe links")
-print("🚨 Effects will be visible to ALL players on the server")
+print("🎭 Stealth Server Effects Loaded!")
+print("✅ Safe from kicks - Uses legitimate methods")
+print("👁️ Effects visible to all players in server")
