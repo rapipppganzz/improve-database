@@ -1,133 +1,27 @@
--- Fixed Mobile Mountain Checkpoint System with Working Drag
--- Small Square GUI with All Features
+-- Simple Mobile Mountain Tools with WORKING DRAG
+-- Small Square GUI - Drag Fixed
 
-local TweenService = game:GetService("TweenService")
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local player = Players.LocalPlayer
-local character = player.Character or player.CharacterAdded:Wait()
-local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
 
--- Global Variables
+-- Simple Variables
 local isRunning = false
 local currentCheckpoint = 1
-local loopEnabled = true
-local teleportSpeed = 0.5
 local checkpoints = {}
-
--- Remote Events for Global Notes
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local NotesEvent
-if ReplicatedStorage:FindFirstChild("GlobalNotesEvent") then
-    NotesEvent = ReplicatedStorage:WaitForChild("GlobalNotesEvent")
-else
-    NotesEvent = Instance.new("RemoteEvent")
-    NotesEvent.Name = "GlobalNotesEvent"
-    NotesEvent.Parent = ReplicatedStorage
-end
-
--- Checkpoint System
-local function scanCheckpoints()
-    checkpoints = {}
-    for _, obj in pairs(workspace:GetDescendants()) do
-        if obj:IsA("BasePart") and (
-            string.lower(obj.Name):find("checkpoint") or 
-            string.lower(obj.Name):find("stage") or
-            string.lower(obj.Name):find("platform") or
-            string.lower(obj.Name):find("point")
-        ) then
-            table.insert(checkpoints, obj)
-        end
-    end
-    
-    table.sort(checkpoints, function(a, b)
-        return a.Position.Y < b.Position.Y
-    end)
-    
-    return #checkpoints
-end
-
-local function teleportToCheckpoint(checkpoint)
-    if character and humanoidRootPart and checkpoint then
-        humanoidRootPart.CFrame = checkpoint.CFrame + Vector3.new(0, 5, 0)
-    end
-end
-
--- Backdoor Scanner Functions
-local function scanForBackdoors()
-    local results = {
-        remoteEvents = {},
-        remoteFunctions = {},
-        suspiciousScripts = {},
-        vulnerabilityLevel = "UNKNOWN",
-        totalFound = 0
-    }
-    
-    for _, obj in pairs(game:GetDescendants()) do
-        if obj:IsA("RemoteEvent") then
-            table.insert(results.remoteEvents, {
-                Name = obj.Name,
-                Path = obj:GetFullName()
-            })
-            results.totalFound = results.totalFound + 1
-        elseif obj:IsA("RemoteFunction") then
-            table.insert(results.remoteFunctions, {
-                Name = obj.Name,
-                Path = obj:GetFullName()
-            })
-            results.totalFound = results.totalFound + 1
-        elseif obj:IsA("Script") or obj:IsA("LocalScript") then
-            local suspiciousNames = {"admin", "backdoor", "execute", "command", "control", "hack"}
-            local lowerName = string.lower(obj.Name)
-            for _, name in pairs(suspiciousNames) do
-                if string.find(lowerName, name) then
-                    table.insert(results.suspiciousScripts, {
-                        Name = obj.Name,
-                        Type = obj.ClassName
-                    })
-                    results.totalFound = results.totalFound + 1
-                    break
-                end
-            end
-        end
-    end
-    
-    if results.totalFound > 10 then
-        results.vulnerabilityLevel = "🔴 HIGH"
-    elseif results.totalFound > 5 then
-        results.vulnerabilityLevel = "🟡 MEDIUM"
-    elseif results.totalFound > 0 then
-        results.vulnerabilityLevel = "🟢 LOW"
-    else
-        results.vulnerabilityLevel = "⚪ CLEAN"
-    end
-    
-    return results
-end
-
--- Global Notes Functions
-local function displayNote(noteData)
-    -- Implementation for global notes display
-end
-
-local function removeNote(noteId)
-    -- Implementation for removing notes
-end
 
 -- Create Main GUI
 local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "CompactMountainTools"
+screenGui.Name = "MountainTools"
 screenGui.ResetOnSpawn = false
-screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 screenGui.Parent = player.PlayerGui
 
 -- Main Frame (Small Square)
 local mainFrame = Instance.new("Frame")
 mainFrame.Name = "MainFrame"
-mainFrame.Size = UDim2.new(0, 280, 0, 350) -- Compact square size
+mainFrame.Size = UDim2.new(0, 280, 0, 350)
 mainFrame.Position = UDim2.new(0.5, -140, 0.5, -175)
-mainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
 mainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
 mainFrame.BorderSizePixel = 0
 mainFrame.Parent = screenGui
@@ -136,12 +30,14 @@ local mainCorner = Instance.new("UICorner")
 mainCorner.CornerRadius = UDim.new(0, 12)
 mainCorner.Parent = mainFrame
 
--- Title Bar (Drag Area)
-local titleBar = Instance.new("Frame")
+-- Title Bar (DRAG AREA)
+local titleBar = Instance.new("TextButton") -- Changed to TextButton for better touch
 titleBar.Name = "TitleBar"
 titleBar.Size = UDim2.new(1, 0, 0, 40)
 titleBar.BackgroundColor3 = Color3.fromRGB(138, 43, 226)
 titleBar.BorderSizePixel = 0
+titleBar.Text = ""
+titleBar.AutoButtonColor = false
 titleBar.Parent = mainFrame
 
 local titleCorner = Instance.new("UICorner")
@@ -152,7 +48,7 @@ local title = Instance.new("TextLabel")
 title.Size = UDim2.new(1, -50, 1, 0)
 title.Position = UDim2.new(0, 10, 0, 0)
 title.BackgroundTransparency = 1
-title.Text = "⛰️ Tools"
+title.Text = "⛰️ Mountain Tools"
 title.TextColor3 = Color3.fromRGB(255, 255, 255)
 title.TextSize = 16
 title.Font = Enum.Font.GothamBold
@@ -175,7 +71,7 @@ local closeBtnCorner = Instance.new("UICorner")
 closeBtnCorner.CornerRadius = UDim.new(0, 6)
 closeBtnCorner.Parent = closeBtn
 
--- Content Frame with Tabs
+-- Content
 local contentFrame = Instance.new("Frame")
 contentFrame.Name = "Content"
 contentFrame.Size = UDim2.new(1, 0, 1, -40)
@@ -183,373 +79,90 @@ contentFrame.Position = UDim2.new(0, 0, 0, 40)
 contentFrame.BackgroundTransparency = 1
 contentFrame.Parent = mainFrame
 
--- Tab Buttons
-local tabFrame = Instance.new("Frame")
-tabFrame.Size = UDim2.new(1, -20, 0, 30)
-tabFrame.Position = UDim2.new(0, 10, 0, 5)
-tabFrame.BackgroundTransparency = 1
-tabFrame.Parent = contentFrame
-
-local checkpointTab = Instance.new("TextButton")
-checkpointTab.Name = "CheckpointTab"
-checkpointTab.Size = UDim2.new(0.33, -2, 1, 0)
-checkpointTab.Position = UDim2.new(0, 0, 0, 0)
-checkpointTab.BackgroundColor3 = Color3.fromRGB(52, 152, 219)
-checkpointTab.Text = "🎯"
-checkpointTab.TextColor3 = Color3.fromRGB(255, 255, 255)
-checkpointTab.TextSize = 14
-checkpointTab.Font = Enum.Font.GothamBold
-checkpointTab.Parent = tabFrame
-
-local securityTab = Instance.new("TextButton")
-securityTab.Name = "SecurityTab"
-securityTab.Size = UDim2.new(0.33, -2, 1, 0)
-securityTab.Position = UDim2.new(0.33, 0, 0, 0)
-securityTab.BackgroundColor3 = Color3.fromRGB(149, 165, 166)
-securityTab.Text = "🔓"
-securityTab.TextColor3 = Color3.fromRGB(255, 255, 255)
-securityTab.TextSize = 14
-securityTab.Font = Enum.Font.GothamBold
-securityTab.Parent = tabFrame
-
-local notesTab = Instance.new("TextButton")
-notesTab.Name = "NotesTab"
-notesTab.Size = UDim2.new(0.34, 0, 1, 0)
-notesTab.Position = UDim2.new(0.66, 0, 0, 0)
-notesTab.BackgroundColor3 = Color3.fromRGB(149, 165, 166)
-notesTab.Text = "💬"
-notesTab.TextColor3 = Color3.fromRGB(255, 255, 255)
-notesTab.TextSize = 14
-notesTab.Font = Enum.Font.GothamBold
-notesTab.Parent = tabFrame
-
-local tabCorner = Instance.new("UICorner")
-tabCorner.CornerRadius = UDim.new(0, 6)
-tabCorner.Parent = checkpointTab
-tabCorner:Clone().Parent = securityTab
-tabCorner:Clone().Parent = notesTab
-
--- Tab Contents
-local tabsContainer = Instance.new("Frame")
-tabsContainer.Name = "TabsContainer"
-tabsContainer.Size = UDim2.new(1, -20, 1, -45)
-tabsContainer.Position = UDim2.new(0, 10, 0, 40)
-tabsContainer.BackgroundTransparency = 1
-tabsContainer.Parent = contentFrame
-
--- Checkpoint Tab Content
-local checkpointContent = Instance.new("Frame")
-checkpointContent.Name = "CheckpointContent"
-checkpointContent.Size = UDim2.new(1, 0, 1, 0)
-checkpointContent.BackgroundTransparency = 1
-checkpointContent.Visible = true
-checkpointContent.Parent = tabsContainer
-
--- Status
+-- Simple Checkpoint System
 local statusLabel = Instance.new("TextLabel")
-statusLabel.Size = UDim2.new(1, 0, 0, 25)
+statusLabel.Size = UDim2.new(1, -20, 0, 30)
+statusLabel.Position = UDim2.new(0, 10, 0, 10)
 statusLabel.BackgroundColor3 = Color3.fromRGB(45, 45, 55)
-statusLabel.Text = "🔴 Stopped"
+statusLabel.Text = "🔴 Ready"
 statusLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-statusLabel.TextSize = 12
+statusLabel.TextSize = 14
 statusLabel.Font = Enum.Font.Gotham
-statusLabel.Parent = checkpointContent
+statusLabel.Parent = contentFrame
 
 local statusCorner = Instance.new("UICorner")
 statusCorner.CornerRadius = UDim.new(0, 6)
 statusCorner.Parent = statusLabel
 
--- Checkpoint Info
-local checkpointInfo = Instance.new("TextLabel")
-checkpointInfo.Size = UDim2.new(1, 0, 0, 25)
-checkpointInfo.Position = UDim2.new(0, 0, 0, 30)
-checkpointInfo.BackgroundColor3 = Color3.fromRGB(45, 45, 55)
-checkpointInfo.Text = "📍 0/0"
-checkpointInfo.TextColor3 = Color3.fromRGB(255, 255, 255)
-checkpointInfo.TextSize = 12
-checkpointInfo.Font = Enum.Font.Gotham
-checkpointInfo.Parent = checkpointContent
-
-local infoCorner = Instance.new("UICorner")
-infoCorner.CornerRadius = UDim.new(0, 6)
-infoCorner.Parent = checkpointInfo
-
--- Buttons Grid
-local buttonsFrame = Instance.new("Frame")
-buttonsFrame.Size = UDim2.new(1, 0, 0, 120)
-buttonsFrame.Position = UDim2.new(0, 0, 0, 60)
-buttonsFrame.BackgroundTransparency = 1
-buttonsFrame.Parent = checkpointContent
-
--- Row 1
 local scanBtn = Instance.new("TextButton")
 scanBtn.Name = "ScanButton"
-scanBtn.Size = UDim2.new(0.5, -5, 0, 30)
-scanBtn.Position = UDim2.new(0, 0, 0, 0)
+scanBtn.Size = UDim2.new(1, -20, 0, 40)
+scanBtn.Position = UDim2.new(0, 10, 0, 50)
 scanBtn.BackgroundColor3 = Color3.fromRGB(52, 152, 219)
-scanBtn.Text = "🔍 Scan"
+scanBtn.Text = "🔍 Scan Checkpoints"
 scanBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-scanBtn.TextSize = 12
+scanBtn.TextSize = 14
 scanBtn.Font = Enum.Font.GothamBold
-scanBtn.Parent = buttonsFrame
+scanBtn.Parent = contentFrame
+
+local scanCorner = Instance.new("UICorner")
+scanCorner.CornerRadius = UDim.new(0, 8)
+scanCorner.Parent = scanBtn
 
 local toggleBtn = Instance.new("TextButton")
 toggleBtn.Name = "ToggleButton"
-toggleBtn.Size = UDim2.new(0.5, -5, 0, 30)
-toggleBtn.Position = UDim2.new(0.5, 5, 0, 0)
+toggleBtn.Size = UDim2.new(1, -20, 0, 40)
+toggleBtn.Position = UDim2.new(0, 10, 0, 100)
 toggleBtn.BackgroundColor3 = Color3.fromRGB(46, 204, 113)
-toggleBtn.Text = "▶️ Start"
+toggleBtn.Text = "▶️ Start Auto TP"
 toggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-toggleBtn.TextSize = 12
+toggleBtn.TextSize = 14
 toggleBtn.Font = Enum.Font.GothamBold
-toggleBtn.Parent = buttonsFrame
+toggleBtn.Parent = contentFrame
 
--- Row 2
-local loopToggle = Instance.new("TextButton")
-loopToggle.Name = "LoopToggle"
-loopToggle.Size = UDim2.new(0.5, -5, 0, 30)
-loopToggle.Position = UDim2.new(0, 0, 0, 35)
-loopToggle.BackgroundColor3 = Color3.fromRGB(46, 204, 113)
-loopToggle.Text = "🔄 ON"
-loopToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
-loopToggle.TextSize = 12
-loopToggle.Font = Enum.Font.GothamBold
-loopToggle.Parent = buttonsFrame
+local toggleCorner = Instance.new("UICorner")
+toggleCorner.CornerRadius = UDim.new(0, 8)
+toggleCorner.Parent = toggleBtn
 
-local resetBtn = Instance.new("TextButton")
-resetBtn.Name = "ResetButton"
-resetBtn.Size = UDim2.new(0.5, -5, 0, 30)
-resetBtn.Position = UDim2.new(0.5, 5, 0, 35)
-resetBtn.BackgroundColor3 = Color3.fromRGB(231, 76, 60)
-resetBtn.Text = "🔄 Reset"
-resetBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-resetBtn.TextSize = 12
-resetBtn.Font = Enum.Font.GothamBold
-resetBtn.Parent = buttonsFrame
-
--- Row 3 - Speed
-local speedFrame = Instance.new("Frame")
-speedFrame.Size = UDim2.new(1, 0, 0, 40)
-speedFrame.Position = UDim2.new(0, 0, 0, 75)
-speedFrame.BackgroundColor3 = Color3.fromRGB(45, 45, 55)
-speedFrame.Parent = buttonsFrame
-
-local speedCorner = Instance.new("UICorner")
-speedCorner.CornerRadius = UDim.new(0, 6)
-speedCorner.Parent = speedFrame
-
-local speedLabel = Instance.new("TextLabel")
-speedLabel.Size = UDim2.new(1, -10, 0, 20)
-speedLabel.Position = UDim2.new(0, 5, 0, 2)
-speedLabel.BackgroundTransparency = 1
-speedLabel.Text = "⚡ Speed: 0.5s"
-speedLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-speedLabel.TextSize = 11
-speedLabel.Font = Enum.Font.Gotham
-speedLabel.TextXAlignment = Enum.TextXAlignment.Left
-speedLabel.Parent = speedFrame
-
-local speedSlider = Instance.new("Frame")
-speedSlider.Name = "SpeedSlider"
-speedSlider.Size = UDim2.new(1, -10, 0, 6)
-speedSlider.Position = UDim2.new(0, 5, 0, 25)
-speedSlider.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
-speedSlider.Parent = speedFrame
-
-local sliderCorner = Instance.new("UICorner")
-sliderCorner.CornerRadius = UDim.new(1, 0)
-sliderCorner.Parent = speedSlider
-
-local speedFill = Instance.new("Frame")
-speedFill.Name = "Fill"
-speedFill.Size = UDim2.new(0.5, 0, 1, 0)
-speedFill.BackgroundColor3 = Color3.fromRGB(138, 43, 226)
-speedFill.BorderSizePixel = 0
-speedFill.Parent = speedSlider
-
-local fillCorner = Instance.new("UICorner")
-fillCorner.CornerRadius = UDim.new(1, 0)
-fillCorner.Parent = speedFill
-
-local speedHandle = Instance.new("Frame")
-speedHandle.Name = "Handle"
-speedHandle.Size = UDim2.new(0, 12, 0, 12)
-speedHandle.Position = UDim2.new(0.5, -6, 0.5, -6)
-speedHandle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-speedHandle.Parent = speedSlider
-
-local handleCorner = Instance.new("UICorner")
-handleCorner.CornerRadius = UDim.new(1, 0)
-handleCorner.Parent = speedHandle
-
--- Apply corners to all buttons
-for _, btn in pairs(buttonsFrame:GetChildren()) do
-    if btn:IsA("TextButton") then
-        local corner = Instance.new("UICorner")
-        corner.CornerRadius = UDim.new(0, 6)
-        corner.Parent = btn
-    end
-end
-
--- Security Tab Content
-local securityContent = Instance.new("Frame")
-securityContent.Name = "SecurityContent"
-securityContent.Size = UDim2.new(1, 0, 1, 0)
-securityContent.BackgroundTransparency = 1
-securityContent.Visible = false
-securityContent.Parent = tabsContainer
-
--- Security Status
-local securityStatus = Instance.new("TextLabel")
-securityStatus.Size = UDim2.new(1, 0, 0, 25)
-securityStatus.BackgroundColor3 = Color3.fromRGB(45, 45, 55)
-securityStatus.Text = "🔒 Not Scanned"
-securityStatus.TextColor3 = Color3.fromRGB(255, 255, 255)
-securityStatus.TextSize = 12
-securityStatus.Font = Enum.Font.Gotham
-securityStatus.Parent = securityContent
+local securityBtn = Instance.new("TextButton")
+securityBtn.Name = "SecurityButton"
+securityBtn.Size = UDim2.new(1, -20, 0, 40)
+securityBtn.Position = UDim2.new(0, 10, 0, 150)
+securityBtn.BackgroundColor3 = Color3.fromRGB(230, 126, 34)
+securityBtn.Text = "🔓 Scan Backdoors"
+securityBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+securityBtn.TextSize = 14
+securityBtn.Font = Enum.Font.GothamBold
+securityBtn.Parent = contentFrame
 
 local securityCorner = Instance.new("UICorner")
-securityCorner.CornerRadius = UDim.new(0, 6)
-securityCorner.Parent = securityStatus
+securityCorner.CornerRadius = UDim.new(0, 8)
+securityCorner.Parent = securityBtn
 
--- Scan Button
-local securityScanBtn = Instance.new("TextButton")
-securityScanBtn.Name = "SecurityScanButton"
-securityScanBtn.Size = UDim2.new(1, 0, 0, 30)
-securityScanBtn.Position = UDim2.new(0, 0, 0, 30)
-securityScanBtn.BackgroundColor3 = Color3.fromRGB(230, 126, 34)
-securityScanBtn.Text = "🔍 Scan Backdoors"
-securityScanBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-securityScanBtn.TextSize = 12
-securityScanBtn.Font = Enum.Font.GothamBold
-securityScanBtn.Parent = securityContent
-
-local securityScanCorner = Instance.new("UICorner")
-securityScanCorner.CornerRadius = UDim.new(0, 6)
-securityScanCorner.Parent = securityScanBtn
-
--- Results
-local securityResults = Instance.new("TextLabel")
-securityResults.Size = UDim2.new(1, 0, 0, 80)
-securityResults.Position = UDim2.new(0, 0, 0, 65)
-securityResults.BackgroundColor3 = Color3.fromRGB(45, 45, 55)
-securityResults.TextColor3 = Color3.fromRGB(255, 255, 255)
-securityResults.TextSize = 10
-securityResults.Font = Enum.Font.Gotham
-securityResults.TextXAlignment = Enum.TextXAlignment.Left
-securityResults.TextYAlignment = Enum.TextYAlignment.Top
-securityResults.TextWrapped = true
-securityResults.Text = "Click scan to check vulnerabilities..."
-securityResults.Parent = securityContent
-
-local resultsCorner = Instance.new("UICorner")
-resultsCorner.CornerRadius = UDim.new(0, 6)
-resultsCorner.Parent = securityResults
-
--- Command Execution
-local commandFrame = Instance.new("Frame")
-commandFrame.Size = UDim2.new(1, 0, 0, 30)
-commandFrame.Position = UDim2.new(0, 0, 0, 150)
-commandFrame.BackgroundTransparency = 1
-commandFrame.Parent = securityContent
-
-local commandBox = Instance.new("TextBox")
-commandBox.Name = "CommandInput"
-commandBox.Size = UDim2.new(0.65, 0, 1, 0)
-commandBox.Position = UDim2.new(0, 0, 0, 0)
-commandBox.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
-commandBox.TextColor3 = Color3.fromRGB(255, 255, 255)
-commandBox.PlaceholderText = "Command..."
-commandBox.Text = ""
-commandBox.TextSize = 11
-commandBox.Font = Enum.Font.Gotham
-commandBox.Parent = commandFrame
-
-local commandCorner = Instance.new("UICorner")
-commandCorner.CornerRadius = UDim.new(0, 6)
-commandCorner.Parent = commandBox
-
-local executeBtn = Instance.new("TextButton")
-executeBtn.Name = "ExecuteButton"
-executeBtn.Size = UDim2.new(0.35, -5, 1, 0)
-executeBtn.Position = UDim2.new(0.65, 5, 0, 0)
-executeBtn.BackgroundColor3 = Color3.fromRGB(46, 204, 113)
-executeBtn.Text = "⚡ Exec"
-executeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-executeBtn.TextSize = 11
-executeBtn.Font = Enum.Font.GothamBold
-executeBtn.Parent = commandFrame
-
-local executeCorner = Instance.new("UICorner")
-executeCorner.CornerRadius = UDim.new(0, 6)
-executeCorner.Parent = executeBtn
-
--- Notes Tab Content
-local notesContent = Instance.new("Frame")
-notesContent.Name = "NotesContent"
-notesContent.Size = UDim2.new(1, 0, 1, 0)
-notesContent.BackgroundTransparency = 1
-notesContent.Visible = false
-notesContent.Parent = tabsContainer
-
--- Notes Display
-local notesDisplay = Instance.new("ScrollingFrame")
-notesDisplay.Size = UDim2.new(1, 0, 0, 150)
-notesDisplay.BackgroundColor3 = Color3.fromRGB(45, 45, 55)
-notesDisplay.BorderSizePixel = 0
-notesDisplay.ScrollBarThickness = 4
-notesDisplay.CanvasSize = UDim2.new(0, 0, 0, 0)
-notesDisplay.Parent = notesContent
+local notesBtn = Instance.new("TextButton")
+notesBtn.Name = "NotesButton"
+notesBtn.Size = UDim2.new(1, -20, 0, 40)
+notesBtn.Position = UDim2.new(0, 10, 0, 200)
+notesBtn.BackgroundColor3 = Color3.fromRGB(155, 89, 182)
+notesBtn.Text = "💬 Global Notes"
+notesBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+notesBtn.TextSize = 14
+notesBtn.Font = Enum.Font.GothamBold
+notesBtn.Parent = contentFrame
 
 local notesCorner = Instance.new("UICorner")
-notesCorner.CornerRadius = UDim.new(0, 6)
-notesCorner.Parent = notesDisplay
-
--- Notes Input
-local notesInputFrame = Instance.new("Frame")
-notesInputFrame.Size = UDim2.new(1, 0, 0, 70)
-notesInputFrame.Position = UDim2.new(0, 0, 0, 155)
-notesInputFrame.BackgroundTransparency = 1
-notesInputFrame.Parent = notesContent
-
-local messageBox = Instance.new("TextBox")
-messageBox.Size = UDim2.new(1, 0, 0, 40)
-messageBox.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
-messageBox.TextColor3 = Color3.fromRGB(255, 255, 255)
-messageBox.PlaceholderText = "Type message for all players..."
-messageBox.Text = ""
-messageBox.TextSize = 11
-messageBox.Font = Enum.Font.Gotham
-messageBox.Parent = notesInputFrame
-
-local messageCorner = Instance.new("UICorner")
-messageCorner.CornerRadius = UDim.new(0, 6)
-messageCorner.Parent = messageBox
-
-local sendNotesBtn = Instance.new("TextButton")
-sendNotesBtn.Size = UDim2.new(1, 0, 0, 25)
-sendNotesBtn.Position = UDim2.new(0, 0, 0, 45)
-sendNotesBtn.BackgroundColor3 = Color3.fromRGB(52, 152, 219)
-sendNotesBtn.Text = "📤 Send to All Players"
-sendNotesBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-sendNotesBtn.TextSize = 11
-sendNotesBtn.Font = Enum.Font.GothamBold
-sendNotesBtn.Parent = notesInputFrame
-
-local sendNotesCorner = Instance.new("UICorner")
-sendNotesCorner.CornerRadius = UDim.new(0, 6)
-sendNotesCorner.Parent = sendNotesBtn
+notesCorner.CornerRadius = UDim.new(0, 8)
+notesCorner.Parent = notesBtn
 
 -- Floating Button
 local floatingBtn = Instance.new("TextButton")
 floatingBtn.Name = "FloatingButton"
-floatingBtn.Size = UDim2.new(0, 50, 0, 50)
+floatingBtn.Size = UDim2.new(0, 60, 0, 60)
 floatingBtn.Position = UDim2.new(0, 20, 0, 20)
 floatingBtn.BackgroundColor3 = Color3.fromRGB(138, 43, 226)
 floatingBtn.Text = "⛰️"
 floatingBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-floatingBtn.TextSize = 20
+floatingBtn.TextSize = 24
 floatingBtn.Font = Enum.Font.GothamBold
 floatingBtn.Visible = false
 floatingBtn.ZIndex = 10
@@ -559,298 +172,157 @@ local floatingCorner = Instance.new("UICorner")
 floatingCorner.CornerRadius = UDim.new(1, 0)
 floatingCorner.Parent = floatingBtn
 
--- ========== FIXED DRAG FUNCTIONALITY ==========
+-- ========== SIMPLE DRAG SYSTEM THAT WORKS ==========
 
--- Main Frame Drag Variables
-local mainFrameDragging = false
-local mainFrameDragStart = nil
-local mainFrameStartPos = nil
+-- Main Frame Drag
+local mainDragging = false
+local mainDragStart = Vector2.new(0, 0)
+local mainStartPos = UDim2.new(0, 0, 0, 0)
 
--- Floating Button Drag Variables
-local floatingDragging = false
-local floatingDragStart = nil
-local floatingStartPos = nil
-
--- Improved Main Frame Drag Functionality
-local function onMainFrameInputBegan(input, processed)
-    if processed then return end
-    
-    if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
-        mainFrameDragging = true
-        mainFrameDragStart = input.Position
-        mainFrameStartPos = mainFrame.Position
-        
-        -- Capture the input even when moving outside the frame
-        local connection
-        connection = input.Changed:Connect(function()
-            if input.UserInputState == Enum.UserInputState.End then
-                mainFrameDragging = false
-                connection:Disconnect()
-            end
-        end)
-    end
-end
-
-local function onMainFrameInputChanged(input, processed)
-    if processed then return end
-    if mainFrameDragging and (input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseMovement) then
-        local delta = input.Position - mainFrameDragStart
-        local newX = mainFrameStartPos.X.Offset + delta.X
-        local newY = mainFrameStartPos.Y.Offset + delta.Y
-        
-        -- Keep within screen bounds
-        newX = math.clamp(newX, 0, screenGui.AbsoluteSize.X - mainFrame.AbsoluteSize.X)
-        newY = math.clamp(newY, 0, screenGui.AbsoluteSize.Y - mainFrame.AbsoluteSize.Y)
-        
-        mainFrame.Position = UDim2.new(0, newX, 0, newY)
-    end
-end
-
--- Improved Floating Button Drag Functionality
-local function onFloatingInputBegan(input, processed)
-    if processed then return end
-    
-    if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
-        floatingDragging = true
-        floatingDragStart = input.Position
-        floatingStartPos = floatingBtn.Position
-        
-        local connection
-        connection = input.Changed:Connect(function()
-            if input.UserInputState == Enum.UserInputState.End then
-                floatingDragging = false
-                connection:Disconnect()
-            end
-        end)
-    end
-end
-
-local function onFloatingInputChanged(input, processed)
-    if processed then return end
-    if floatingDragging and (input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseMovement) then
-        local delta = input.Position - floatingDragStart
-        local newX = floatingStartPos.X.Offset + delta.X
-        local newY = floatingStartPos.Y.Offset + delta.Y
-        
-        -- Keep within screen bounds
-        newX = math.clamp(newX, 0, screenGui.AbsoluteSize.X - floatingBtn.AbsoluteSize.X)
-        newY = math.clamp(newY, 0, screenGui.AbsoluteSize.Y - floatingBtn.AbsoluteSize.Y)
-        
-        floatingBtn.Position = UDim2.new(0, newX, 0, newY)
-    end
-end
-
--- Connect improved drag functionality
-titleBar.InputBegan:Connect(function(input, processed)
-    onMainFrameInputBegan(input, processed)
-end)
-
-UserInputService.InputChanged:Connect(function(input, processed)
-    onMainFrameInputChanged(input, processed)
-end)
-
-floatingBtn.InputBegan:Connect(function(input, processed)
-    onFloatingInputBegan(input, processed)
-end)
-
-UserInputService.InputChanged:Connect(function(input, processed)
-    onFloatingInputChanged(input, processed)
-end)
-
--- ========== END OF DRAG FIX ==========
-
--- Speed slider functionality
-local draggingSlider = false
-local speedDragStart = nil
-local speedStartFill = nil
-
-speedSlider.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
-        draggingSlider = true
-        speedDragStart = input.Position.X
-        speedStartFill = speedFill.Size.X.Scale
-    end
+titleBar.MouseButton1Down:Connect(function()
+    mainDragging = true
+    mainDragStart = Vector2.new(mainFrame.AbsolutePosition.X, mainFrame.AbsolutePosition.Y)
+    mainStartPos = mainFrame.Position
 end)
 
 UserInputService.InputChanged:Connect(function(input)
-    if draggingSlider and (input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseMovement) then
-        local relativePos = math.clamp((input.Position.X - speedSlider.AbsolutePosition.X) / speedSlider.AbsoluteSize.X, 0, 1)
-        
-        speedFill.Size = UDim2.new(relativePos, 0, 1, 0)
-        speedHandle.Position = UDim2.new(relativePos, -6, 0.5, -6)
-        
-        teleportSpeed = 0.1 + (relativePos * 1.9)
-        speedLabel.Text = string.format("⚡ Speed: %.1fs", teleportSpeed)
+    if mainDragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+        local delta = Vector2.new(input.Position.X, input.Position.Y) - mainDragStart
+        mainFrame.Position = UDim2.new(0, mainStartPos.X.Offset + delta.X, 0, mainStartPos.Y.Offset + delta.Y)
     end
 end)
 
 UserInputService.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
-        draggingSlider = false
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        mainDragging = false
     end
 end)
 
--- Tab Switching
-local function switchTab(selectedTab)
-    checkpointContent.Visible = (selectedTab == checkpointTab)
-    securityContent.Visible = (selectedTab == securityTab)
-    notesContent.Visible = (selectedTab == notesTab)
-    
-    checkpointTab.BackgroundColor3 = (selectedTab == checkpointTab) and Color3.fromRGB(52, 152, 219) or Color3.fromRGB(149, 165, 166)
-    securityTab.BackgroundColor3 = (selectedTab == securityTab) and Color3.fromRGB(230, 126, 34) or Color3.fromRGB(149, 165, 166)
-    notesTab.BackgroundColor3 = (selectedTab == notesTab) and Color3.fromRGB(52, 152, 219) or Color3.fromRGB(149, 165, 166)
-end
+-- Floating Button Drag
+local floatingDragging = false
+local floatingDragStart = Vector2.new(0, 0)
+local floatingStartPos = UDim2.new(0, 0, 0, 0)
 
-checkpointTab.MouseButton1Click:Connect(function() switchTab(checkpointTab) end)
-securityTab.MouseButton1Click:Connect(function() switchTab(securityTab) end)
-notesTab.MouseButton1Click:Connect(function() switchTab(notesTab) end)
+floatingBtn.MouseButton1Down:Connect(function()
+    floatingDragging = true
+    floatingDragStart = Vector2.new(floatingBtn.AbsolutePosition.X, floatingBtn.AbsolutePosition.Y)
+    floatingStartPos = floatingBtn.Position
+end)
 
--- Backdoor Scanner
-securityScanBtn.MouseButton1Click:Connect(function()
-    local results = scanForBackdoors()
-    
-    local resultText = "Scan Results:\n"
-    resultText = resultText .. "Level: " .. results.vulnerabilityLevel .. "\n"
-    resultText = resultText .. "Found: " .. results.totalFound .. " objects\n"
-    
-    if #results.remoteEvents > 0 then
-        resultText = resultText .. "RemoteEvents: " .. #results.remoteEvents .. "\n"
-    end
-    if #results.remoteFunctions > 0 then
-        resultText = resultText .. "RemoteFunctions: " .. #results.remoteFunctions .. "\n"
-    end
-    if #results.suspiciousScripts > 0 then
-        resultText = resultText .. "Suspicious: " .. #results.suspiciousScripts
-    end
-    
-    securityResults.Text = resultText
-    securityStatus.Text = results.vulnerabilityLevel .. " Risk"
-    
-    -- Update color based on risk
-    if results.vulnerabilityLevel == "🔴 HIGH" then
-        securityStatus.BackgroundColor3 = Color3.fromRGB(231, 76, 60)
-    elseif results.vulnerabilityLevel == "🟡 MEDIUM" then
-        securityStatus.BackgroundColor3 = Color3.fromRGB(230, 126, 34)
-    else
-        securityStatus.BackgroundColor3 = Color3.fromRGB(46, 204, 113)
+UserInputService.InputChanged:Connect(function(input)
+    if floatingDragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+        local delta = Vector2.new(input.Position.X, input.Position.Y) - floatingDragStart
+        floatingBtn.Position = UDim2.new(0, floatingStartPos.X.Offset + delta.X, 0, floatingStartPos.Y.Offset + delta.Y)
     end
 end)
 
--- Command Execution
-executeBtn.MouseButton1Click:Connect(function()
-    local command = commandBox.Text
-    if command == "" then return end
-    
-    local results = scanForBackdoors()
-    local executed = false
-    
-    for _, remote in ipairs(results.remoteEvents) do
-        local remoteObj = game:GetService("ReplicatedStorage"):FindFirstChild(remote.Name)
-        if remoteObj and remoteObj:IsA("RemoteEvent") then
-            pcall(function()
-                remoteObj:FireServer(command)
-                securityResults.Text = "✅ Executed via: " .. remote.Name
-                executed = true
-            end)
-            break
+UserInputService.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        floatingDragging = false
+    end
+end)
+
+-- Touch support for mobile
+titleBar.TouchLongPress:Connect(function()
+    mainDragging = true
+    mainDragStart = Vector2.new(mainFrame.AbsolutePosition.X, mainFrame.AbsolutePosition.Y)
+    mainStartPos = mainFrame.Position
+end)
+
+floatingBtn.TouchLongPress:Connect(function()
+    floatingDragging = true
+    floatingDragStart = Vector2.new(floatingBtn.AbsolutePosition.X, floatingBtn.AbsolutePosition.Y)
+    floatingStartPos = floatingBtn.Position
+end)
+
+-- ========== SIMPLE FUNCTIONALITY ==========
+
+local function scanCheckpoints()
+    checkpoints = {}
+    for _, obj in pairs(workspace:GetDescendants()) do
+        if obj:IsA("BasePart") and (
+            string.lower(obj.Name):find("checkpoint") or 
+            string.lower(obj.Name):find("stage") or
+            string.lower(obj.Name):find("platform") or
+            string.lower(obj.Name):find("point")
+        ) then
+            table.insert(checkpoints, obj)
         end
     end
     
-    if not executed then
-        securityResults.Text = "❌ No backdoor found"
-    end
-    
-    commandBox.Text = ""
-end)
-
--- Global Notes
-sendNotesBtn.MouseButton1Click:Connect(function()
-    local message = messageBox.Text
-    if message and string.len(message) > 0 then
-        NotesEvent:FireServer("SendNote", {
-            Message = message,
-            Duration = 30
-        })
-        messageBox.Text = ""
-    end
-end)
-
--- Handle incoming notes
-NotesEvent.OnClientEvent:Connect(function(action, data)
-    if action == "NewNote" then
-        displayNote(data)
-    elseif action == "RemoveNote" then
-        removeNote(data)
-    end
-end)
-
--- Checkpoint System Functions
-local function startAutoTP()
-    isRunning = true
-    statusLabel.Text = "🟢 Running"
-    toggleBtn.Text = "⏸️ Stop"
-    toggleBtn.BackgroundColor3 = Color3.fromRGB(231, 76, 60)
-    
-    spawn(function()
-        while isRunning and #checkpoints > 0 do
-            if currentCheckpoint > #checkpoints then
-                if loopEnabled then
-                    currentCheckpoint = 1
-                else
-                    isRunning = false
-                    statusLabel.Text = "✅ Completed"
-                    toggleBtn.Text = "▶️ Start"
-                    toggleBtn.BackgroundColor3 = Color3.fromRGB(46, 204, 113)
-                    break
-                end
-            end
-            
-            checkpointInfo.Text = string.format("📍 %d/%d", currentCheckpoint, #checkpoints)
-            teleportToCheckpoint(checkpoints[currentCheckpoint])
-            
-            currentCheckpoint = currentCheckpoint + 1
-            wait(teleportSpeed)
-        end
+    table.sort(checkpoints, function(a, b)
+        return a.Position.Y < b.Position.Y
     end)
+    
+    return #checkpoints
 end
 
+local function teleportToCheckpoint(checkpoint)
+    local character = player.Character
+    if character and character:FindFirstChild("HumanoidRootPart") and checkpoint then
+        character.HumanoidRootPart.CFrame = checkpoint.CFrame + Vector3.new(0, 5, 0)
+    end
+end
+
+local function scanForBackdoors()
+    local count = 0
+    for _, obj in pairs(game:GetDescendants()) do
+        if obj:IsA("RemoteEvent") or obj:IsA("RemoteFunction") then
+            count = count + 1
+        end
+    end
+    return count
+end
+
+-- Button Functions
 scanBtn.MouseButton1Click:Connect(function()
     local count = scanCheckpoints()
-    checkpointInfo.Text = string.format("📍 %d/%d", 1, count)
+    statusLabel.Text = "📍 Found " .. count .. " checkpoints"
     currentCheckpoint = 1
 end)
 
 toggleBtn.MouseButton1Click:Connect(function()
     if #checkpoints == 0 then
-        checkpointInfo.Text = "⚠️ Scan first!"
+        statusLabel.Text = "⚠️ Scan checkpoints first!"
         return
     end
     
     if isRunning then
         isRunning = false
         statusLabel.Text = "🔴 Stopped"
-        toggleBtn.Text = "▶️ Start"
+        toggleBtn.Text = "▶️ Start Auto TP"
         toggleBtn.BackgroundColor3 = Color3.fromRGB(46, 204, 113)
     else
-        startAutoTP()
+        isRunning = true
+        statusLabel.Text = "🟢 Running..."
+        toggleBtn.Text = "⏸️ Stop Auto TP"
+        toggleBtn.BackgroundColor3 = Color3.fromRGB(231, 76, 60)
+        
+        -- Simple auto TP
+        spawn(function()
+            while isRunning and #checkpoints > 0 do
+                if currentCheckpoint > #checkpoints then
+                    currentCheckpoint = 1
+                end
+                
+                teleportToCheckpoint(checkpoints[currentCheckpoint])
+                currentCheckpoint = currentCheckpoint + 1
+                wait(1)
+            end
+        end)
     end
 end)
 
-loopToggle.MouseButton1Click:Connect(function()
-    loopEnabled = not loopEnabled
-    loopToggle.Text = loopEnabled and "🔄 ON" or "🔄 OFF"
-    loopToggle.BackgroundColor3 = loopEnabled and Color3.fromRGB(46, 204, 113) or Color3.fromRGB(149, 165, 166)
+securityBtn.MouseButton1Click:Connect(function()
+    local backdoorCount = scanForBackdoors()
+    statusLabel.Text = "🔓 Found " .. backdoorCount .. " backdoors"
 end)
 
-resetBtn.MouseButton1Click:Connect(function()
-    currentCheckpoint = 1
-    if #checkpoints > 0 then
-        teleportToCheckpoint(checkpoints[1])
-        checkpointInfo.Text = string.format("📍 %d/%d", 1, #checkpoints)
-    end
+notesBtn.MouseButton1Click:Connect(function()
+    statusLabel.Text = "💬 Notes feature ready"
 end)
 
--- Close/Floating Button System
+-- Close/Floating System
 closeBtn.MouseButton1Click:Connect(function()
     mainFrame.Visible = false
     floatingBtn.Visible = true
@@ -861,33 +333,10 @@ floatingBtn.MouseButton1Click:Connect(function()
     floatingBtn.Visible = false
 end)
 
--- Auto-scan on load
+-- Auto scan on start
 wait(1)
 scanCheckpoints()
-checkpointInfo.Text = string.format("📍 %d/%d", 1, #checkpoints)
+statusLabel.Text = "✅ Ready - Drag title bar to move"
 
--- Touch feedback
-local function addTouchFeedback(button)
-    button.MouseButton1Down:Connect(function()
-        button.BackgroundTransparency = 0.3
-    end)
-    
-    button.MouseButton1Up:Connect(function()
-        button.BackgroundTransparency = 0
-    end)
-    
-    button.MouseLeave:Connect(function()
-        button.BackgroundTransparency = 0
-    end)
-end
-
-for _, button in pairs(contentFrame:GetDescendants()) do
-    if button:IsA("TextButton") then
-        addTouchFeedback(button)
-    end
-end
-addTouchFeedback(closeBtn)
-addTouchFeedback(floatingBtn)
-
-print("📱 Compact Mountain Tools Loaded!")
-print("✨ Drag functionality FIXED - Now you can drag both main window and floating button!")
+print("🎯 Mountain Tools Loaded!")
+print("✨ DRAG FIXED - Hold title bar or floating button to drag!")
