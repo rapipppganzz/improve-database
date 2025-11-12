@@ -1,29 +1,441 @@
--- Auto Lag Server GUI
--- Compact Mobile Design with Drag Functionality
+-- SERVER-WIDE Unauthorized Access System
+-- Effects Visible to ALL Players - Delta Impact
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
-local UserInputService = game:GetService("UserInputService")
+local Lighting = game:GetService("Lighting")
+local SoundService = game:GetService("SoundService")
+local TweenService = game:GetService("TweenService")
 local player = Players.LocalPlayer
 
--- Lag Variables
-local isLagging = false
-local lagIntensity = 50
-local lagMethod = "Particles"
-local lagThreads = {}
+-- Configuration - EDIT THESE FOR CUSTOM EFFECTS
+local CONFIG = {
+    -- Customize your jumpscare sound (Catbox.moe link)
+    JumpscareSound = "https://files.catbox.moe/85qwg0.mp3", -- Replace with your sound link
+    
+    -- Customize your jumpscare image (Catbox.moe link) 
+    JumpscareImage = "https://files.catbox.moe/b0k250.jpg", -- Replace with your image link
+    
+    -- Server-wide effect settings
+    SkyColor = Color3.fromRGB(255, 0, 0),
+    FogColor = Color3.fromRGB(255, 0, 0),
+    FogEnd = 50,
+    CircleRadius = 15,
+    ObjectHeight = 3
+}
 
--- Create GUI
+-- System Variables
+local isActive = false
+local stolenObjects = {}
+local effectParts = {}
+local serverImpactThreads = {}
+
+-- Server-Wide Effect Functions
+local function applyServerWideEffects()
+    -- Change lighting for ALL players
+    Lighting.Brightness = 2
+    Lighting.OutdoorAmbient = CONFIG.SkyColor
+    Lighting.ColorShift_Bottom = CONFIG.SkyColor
+    Lighting.ColorShift_Top = CONFIG.SkyColor
+    Lighting.FogColor = CONFIG.FogColor
+    Lighting.FogEnd = CONFIG.FogEnd
+    Lighting.Ambient = CONFIG.SkyColor
+    
+    -- Change skybox for ALL players
+    local sky = Lighting:FindFirstChildOfClass("Sky")
+    if sky then
+        sky.SkyboxBk = "http://www.roblox.com/asset/?id=271042516" -- Red sky
+        sky.SkyboxDn = "http://www.roblox.com/asset/?id=271042516"
+        sky.SkyboxFt = "http://www.roblox.com/asset/?id=271042516"
+        sky.SkyboxLf = "http://www.roblox.com/asset/?id=271042516"
+        sky.SkyboxRt = "http://www.roblox.com/asset/?id=271042516"
+        sky.SkyboxUp = "http://www.roblox.com/asset/?id=271042516"
+    end
+    
+    -- Add red screen effect for ALL players
+    local redEffect = Instance.new("ColorCorrectionEffect")
+    redEffect.Name = "GlobalRedEffect"
+    redEffect.Saturation = -0.7
+    redEffect.TintColor = Color3.fromRGB(255, 50, 50)
+    redEffect.Contrast = 0.2
+    redEffect.Parent = Lighting
+    
+    -- Add bloom effect for ALL players
+    local bloom = Instance.new("BloomEffect")
+    bloom.Name = "GlobalBloom"
+    bloom.Intensity = 1
+    bloom.Size = 24
+    bloom.Threshold = 0.7
+    bloom.Parent = Lighting
+    
+    -- Server-wide sound
+    local globalSound = Instance.new("Sound")
+    globalSound.Name = "GlobalAmbient"
+    globalSound.SoundId = "rbxassetid://9111268332" -- Eerie ambient sound
+    globalSound.Looped = true
+    globalSound.Volume = 0.5
+    globalSound.Parent = Lighting
+    globalSound:Play()
+end
+
+-- Collect valuable objects from entire server
+local function collectServerObjects()
+    local objects = {}
+    
+    -- Scan entire workspace for valuable objects
+    for _, obj in pairs(workspace:GetDescendants()) do
+        -- Money/Currency objects
+        if obj:IsA("Part") and (
+            string.find(string.lower(obj.Name), "coin") or
+            string.find(string.lower(obj.Name), "money") or
+            string.find(string.lower(obj.Name), "cash") or
+            string.find(string.lower(obj.Name), "gem") or
+            string.find(string.lower(obj.Name), "diamond") or
+            string.find(string.lower(obj.Name), "treasure") or
+            string.find(string.lower(obj.Name), "reward") or
+            string.find(string.lower(obj.Name), "crystal") or
+            obj.BrickColor == BrickColor.new("Bright yellow") or
+            obj.BrickColor == BrickColor.new("Bright orange") or
+            obj.BrickColor == BrickColor.new("Bright green") or
+            obj.BrickColor == BrickColor.new("Bright blue")
+        ) then
+            table.insert(objects, obj)
+        end
+        
+        -- Tools and weapons
+        if obj:IsA("Tool") or obj:IsA("HopperBin") then
+            table.insert(objects, obj)
+        end
+        
+        -- Spawn locations
+        if obj:IsA("SpawnLocation") then
+            table.insert(objects, obj)
+        end
+        
+        -- Vehicle seats
+        if obj:IsA("VehicleSeat") then
+            table.insert(objects, obj)
+        end
+    end
+    
+    return objects
+end
+
+-- Create multiple circles around player for ALL objects
+local function createServerWideCircleFormation(objects)
+    local character = player.Character
+    if not character then return end
+    
+    local rootPart = character:FindFirstChild("HumanoidRootPart")
+    if not rootPart then return end
+    
+    local center = rootPart.Position
+    local count = #objects
+    
+    -- Create multiple concentric circles
+    local circles = {
+        {radius = CONFIG.CircleRadius, height = CONFIG.ObjectHeight},
+        {radius = CONFIG.CircleRadius + 8, height = CONFIG.ObjectHeight + 2},
+        {radius = CONFIG.CircleRadius + 16, height = CONFIG.ObjectHeight + 4}
+    }
+    
+    for i, obj in ipairs(objects) do
+        local circleIndex = ((i-1) % #circles) + 1
+        local circle = circles[circleIndex]
+        local angle = (i / math.max(1, count/#circles)) * math.pi * 2
+        
+        local x = center.X + math.cos(angle) * circle.radius
+        local z = center.Z + math.sin(angle) * circle.radius
+        local y = center.Y + circle.height
+        
+        -- Move object to circle position (SERVER-VISIBLE)
+        if obj:IsA("BasePart") then
+            obj.CFrame = CFrame.new(Vector3.new(x, y, z))
+            obj.Anchored = true
+            obj.CanCollide = false
+            
+            -- Make objects glow for visibility
+            local pointLight = Instance.new("PointLight")
+            pointLight.Brightness = 2
+            pointLight.Range = 8
+            pointLight.Color = Color3.fromRGB(255, 0, 0)
+            pointLight.Parent = obj
+            
+        elseif obj:IsA("Tool") then
+            -- For tools, create a visible holder
+            local holder = Instance.new("Part")
+            holder.Name = "ServerObjectHolder"
+            holder.Size = Vector3.new(3, 3, 3)
+            holder.Position = Vector3.new(x, y, z)
+            holder.Anchored = true
+            holder.CanCollide = false
+            holder.Material = Enum.Material.Neon
+            holder.BrickColor = BrickColor.new("Bright red")
+            holder.Parent = workspace
+            
+            local light = Instance.new("PointLight")
+            light.Brightness = 3
+            light.Range = 12
+            light.Color = Color3.fromRGB(255, 0, 0)
+            light.Parent = holder
+            
+            obj.Parent = holder
+        end
+        
+        table.insert(stolenObjects, obj)
+        
+        -- Add floating effect (VISIBLE TO ALL)
+        local floatThread = coroutine.create(function()
+            local startY = y
+            while isActive and obj.Parent do
+                local offset = math.sin(tick() * 3 + i) * 1.5
+                local rotation = tick() * 2 + i
+                
+                if obj:IsA("BasePart") then
+                    obj.Position = Vector3.new(x, startY + offset, z)
+                    obj.CFrame = obj.CFrame * CFrame.Angles(0, rotation * 0.1, 0)
+                elseif obj.Parent and obj.Parent.Name == "ServerObjectHolder" then
+                    obj.Parent.Position = Vector3.new(x, startY + offset, z)
+                    obj.Parent.CFrame = obj.Parent.CFrame * CFrame.Angles(0, rotation * 0.1, 0)
+                end
+                RunService.Heartbeat:Wait()
+            end
+        end)
+        coroutine.resume(floatThread)
+        table.insert(serverImpactThreads, floatThread)
+    end
+end
+
+-- Global Jumpscare for ALL Players
+local function triggerGlobalJumpscare()
+    -- Create global sound that ALL players hear
+    local globalSound = Instance.new("Sound")
+    globalSound.Name = "GlobalJumpscareSound"
+    globalSound.SoundId = CONFIG.JumpscareSound
+    globalSound.Volume = 1
+    globalSound.Parent = workspace
+    globalSound:Play()
+    
+    -- Create jumpscare GUI for ALL players
+    for _, otherPlayer in pairs(Players:GetPlayers()) do
+        coroutine.wrap(function()
+            local gui = Instance.new("ScreenGui")
+            gui.Name = "GlobalJumpscareGUI"
+            gui.ResetOnSpawn = false
+            
+            local success, result = pcall(function()
+                gui.Parent = otherPlayer.PlayerGui
+            end)
+            
+            if success then
+                local image = Instance.new("ImageLabel")
+                image.Size = UDim2.new(1, 0, 1, 0)
+                image.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+                image.Image = CONFIG.JumpscareImage
+                image.ScaleType = Enum.ScaleType.Fit
+                image.Parent = gui
+                
+                -- Animate the image
+                image.ImageTransparency = 1
+                
+                local fadeIn = TweenService:Create(image, TweenInfo.new(0.1), {ImageTransparency = 0})
+                local fadeOut = TweenService:Create(image, TweenInfo.new(0.5), {ImageTransparency = 1})
+                
+                fadeIn:Play()
+                wait(2)
+                fadeOut:Play()
+                wait(0.5)
+                gui:Destroy()
+            end
+        end)()
+    end
+    
+    -- Clean up sound
+    wait(3)
+    globalSound:Destroy()
+end
+
+-- Server-Wide Unauthorized Access
+local function executeServerWideUnauthorizedAccess()
+    -- Method 1: Mass RemoteEvent firing
+    for _, obj in pairs(game:GetDescendants()) do
+        if obj:IsA("RemoteEvent") then
+            pcall(function()
+                -- Fire multiple payloads to affect server
+                for i = 1, 20 do
+                    obj:FireServer("ServerOverride", 999999, player.UserId)
+                    obj:FireServer("GiveAll", "AllPlayers")
+                    obj:FireServer("AdminOverride", true)
+                end
+            end)
+        end
+    end
+    
+    -- Method 2: Mass value manipulation
+    for _, obj in pairs(game:GetDescendants()) do
+        pcall(function()
+            if obj:IsA("IntValue") or obj:IsA("NumberValue") then
+                if string.find(string.lower(obj.Name), "money") or
+                   string.find(string.lower(obj.Name), "coin") or
+                   string.find(string.lower(obj.Name), "cash") or
+                   string.find(string.lower(obj.Name), "score") then
+                    obj.Value = 999999
+                end
+            end
+        end)
+    end
+    
+    -- Method 3: Server script manipulation attempt
+    pcall(function()
+        -- Try to access server scripts
+        for _, script in pairs(game:GetDescendants()) do
+            if script:IsA("Script") and not script:IsA("LocalScript") then
+                if string.find(string.lower(script.Name), "data") or
+                   string.find(string.lower(script.Name), "save") or
+                   string.find(string.lower(script.Name), "manager") then
+                    -- Attempt to disable or affect server scripts
+                    script.Disabled = true
+                end
+            end
+        end
+    end)
+end
+
+-- Continuous Server-Wide Effects
+local function startServerWideEffects()
+    -- Pulsing lighting effects
+    local pulseThread = coroutine.create(function()
+        while isActive do
+            Lighting.Brightness = 2 + math.sin(tick() * 3) * 0.8
+            Lighting.OutdoorAmbient = Color3.fromRGB(
+                255,
+                math.sin(tick() * 2) * 50 + 50,
+                math.sin(tick() * 2) * 50 + 50
+            )
+            RunService.Heartbeat:Wait()
+        end
+    end)
+    coroutine.resume(pulseThread)
+    table.insert(serverImpactThreads, pulseThread)
+    
+    -- Global screen shake for all players
+    local shakeThread = coroutine.create(function()
+        while isActive do
+            for _, otherPlayer in pairs(Players:GetPlayers()) do
+                coroutine.wrap(function()
+                    local camera = workspace.CurrentCamera
+                    if camera then
+                        local shake = Vector3.new(
+                            math.random(-2, 2) * 0.1,
+                            math.random(-2, 2) * 0.1,
+                            math.random(-2, 2) * 0.1
+                        )
+                        camera.CFrame = camera.CFrame + shake
+                    end
+                end)()
+            end
+            RunService.Heartbeat:Wait()
+        end
+    end)
+    coroutine.resume(shakeThread)
+    table.insert(serverImpactThreads, shakeThread)
+end
+
+-- Main Activation Function
+local function activateServerWideSystem()
+    if isActive then return end
+    
+    isActive = true
+    print("🌍 SERVER-WIDE UNAUTHORIZED ACCESS ACTIVATED!")
+    
+    -- Execute server-wide unauthorized access
+    executeServerWideUnauthorizedAccess()
+    
+    -- Apply effects visible to ALL players
+    applyServerWideEffects()
+    
+    -- Collect and move ALL server objects
+    local objects = collectServerObjects()
+    createServerWideCircleFormation(objects)
+    
+    -- Trigger global jumpscare
+    triggerGlobalJumpscare()
+    
+    -- Start continuous effects
+    startServerWideEffects()
+end
+
+-- Deactivation Function
+local function deactivateServerWideSystem()
+    if not isActive then return end
+    
+    isActive = false
+    print("✅ Server-wide system deactivated")
+    
+    -- Stop all effect threads
+    for _, thread in pairs(serverImpactThreads) do
+        coroutine.close(thread)
+    end
+    serverImpactThreads = {}
+    
+    -- Restore objects to original positions
+    for _, obj in pairs(stolenObjects) do
+        pcall(function()
+            if obj and obj.Parent then
+                if obj:IsA("BasePart") then
+                    obj.Anchored = false
+                    -- Remove effects
+                    local light = obj:FindFirstChildOfClass("PointLight")
+                    if light then light:Destroy() end
+                elseif obj:IsA("Tool") and obj.Parent.Name == "ServerObjectHolder" then
+                    obj.Parent:Destroy()
+                    obj.Parent = player.Backpack or workspace
+                end
+            end
+        end)
+    end
+    
+    -- Clean up object holders
+    for _, obj in pairs(workspace:GetDescendants()) do
+        if obj.Name == "ServerObjectHolder" then
+            obj:Destroy()
+        end
+    end
+    
+    -- Restore server environment
+    Lighting.Brightness = 1
+    Lighting.OutdoorAmbient = Color3.fromRGB(127, 127, 127)
+    Lighting.ColorShift_Bottom = Color3.fromRGB(0, 0, 0)
+    Lighting.ColorShift_Top = Color3.fromRGB(0, 0, 0)
+    Lighting.FogColor = Color3.fromRGB(191, 191, 191)
+    Lighting.FogEnd = 100000
+    Lighting.Ambient = Color3.fromRGB(0, 0, 0)
+    
+    -- Remove global effects
+    local redEffect = Lighting:FindFirstChild("GlobalRedEffect")
+    if redEffect then redEffect:Destroy() end
+    
+    local bloom = Lighting:FindFirstChild("GlobalBloom")
+    if bloom then bloom:Destroy() end
+    
+    local ambientSound = Lighting:FindFirstChild("GlobalAmbient")
+    if ambientSound then ambientSound:Destroy() end
+    
+    -- Clear tables
+    stolenObjects = {}
+    effectParts = {}
+end
+
+-- GUI for Control
 local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "AutoLagServer"
+screenGui.Name = "ServerWideAccessController"
 screenGui.ResetOnSpawn = false
 screenGui.Parent = player.PlayerGui
 
--- Main Frame
 local mainFrame = Instance.new("Frame")
-mainFrame.Name = "MainFrame"
-mainFrame.Size = UDim2.new(0, 280, 0, 350)
+mainFrame.Size = UDim2.new(0, 350, 0, 250)
 mainFrame.Position = UDim2.new(0, 50, 0, 50)
-mainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+mainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
 mainFrame.BorderSizePixel = 0
 mainFrame.Parent = screenGui
 
@@ -31,9 +443,8 @@ local mainCorner = Instance.new("UICorner")
 mainCorner.CornerRadius = UDim.new(0, 12)
 mainCorner.Parent = mainFrame
 
--- Title Bar - DRAG AREA
+-- Title Bar
 local titleBar = Instance.new("TextButton")
-titleBar.Name = "TitleBar"
 titleBar.Size = UDim2.new(1, 0, 0, 40)
 titleBar.BackgroundColor3 = Color3.fromRGB(231, 76, 60)
 titleBar.BorderSizePixel = 0
@@ -45,7 +456,7 @@ local title = Instance.new("TextLabel")
 title.Size = UDim2.new(1, -50, 1, 0)
 title.Position = UDim2.new(0, 10, 0, 0)
 title.BackgroundTransparency = 1
-title.Text = "⚡ Auto Lag Server"
+title.Text = "🌍 SERVER OVERRIDE"
 title.TextColor3 = Color3.fromRGB(255, 255, 255)
 title.TextSize = 16
 title.Font = Enum.Font.GothamBold
@@ -54,7 +465,6 @@ title.Parent = titleBar
 
 -- Close Button
 local closeBtn = Instance.new("TextButton")
-closeBtn.Name = "CloseButton"
 closeBtn.Size = UDim2.new(0, 30, 0, 30)
 closeBtn.Position = UDim2.new(1, -35, 0.5, -15)
 closeBtn.BackgroundColor3 = Color3.fromRGB(255, 59, 59)
@@ -68,488 +478,83 @@ local closeCorner = Instance.new("UICorner")
 closeCorner.CornerRadius = UDim.new(0, 6)
 closeCorner.Parent = closeBtn
 
--- Content Frame
+-- Content
 local contentFrame = Instance.new("Frame")
-contentFrame.Name = "Content"
 contentFrame.Size = UDim2.new(1, 0, 1, -40)
 contentFrame.Position = UDim2.new(0, 0, 0, 40)
 contentFrame.BackgroundTransparency = 1
 contentFrame.Parent = mainFrame
 
--- Status Display
+-- Status
 local statusLabel = Instance.new("TextLabel")
-statusLabel.Size = UDim2.new(1, -20, 0, 40)
+statusLabel.Size = UDim2.new(1, -20, 0, 80)
 statusLabel.Position = UDim2.new(0, 10, 0, 10)
 statusLabel.BackgroundColor3 = Color3.fromRGB(45, 45, 55)
-statusLabel.Text = "🔴 Lag: OFF"
+statusLabel.Text = "🔴 SERVER-WIDE SYSTEM READY\n\nEdit CONFIG table with your Catbox.moe links\nEffects will be visible to ALL players"
 statusLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-statusLabel.TextSize = 14
-statusLabel.Font = Enum.Font.GothamBold
+statusLabel.TextSize = 12
+statusLabel.Font = Enum.Font.Gotham
+statusLabel.TextXAlignment = Enum.TextXAlignment.Left
+statusLabel.TextYAlignment = Enum.TextYAlignment.Top
+statusLabel.TextWrapped = true
 statusLabel.Parent = contentFrame
 
 local statusCorner = Instance.new("UICorner")
 statusCorner.CornerRadius = UDim.new(0, 8)
 statusCorner.Parent = statusLabel
 
--- Lag Intensity Control
-local intensityFrame = Instance.new("Frame")
-intensityFrame.Size = UDim2.new(1, -20, 0, 70)
-intensityFrame.Position = UDim2.new(0, 10, 0, 60)
-intensityFrame.BackgroundColor3 = Color3.fromRGB(45, 45, 55)
-intensityFrame.Parent = contentFrame
+-- Activate Button
+local activateBtn = Instance.new("TextButton")
+activateBtn.Size = UDim2.new(1, -20, 0, 50)
+activateBtn.Position = UDim2.new(0, 10, 0, 100)
+activateBtn.BackgroundColor3 = Color3.fromRGB(231, 76, 60)
+activateBtn.Text = "🌍 ACTIVATE SERVER OVERRIDE"
+activateBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+activateBtn.TextSize = 16
+activateBtn.Font = Enum.Font.GothamBold
+activateBtn.Parent = contentFrame
 
-local intensityCorner = Instance.new("UICorner")
-intensityCorner.CornerRadius = UDim.new(0, 8)
-intensityCorner.Parent = intensityFrame
+local activateCorner = Instance.new("UICorner")
+activateCorner.CornerRadius = UDim.new(0, 8)
+activateCorner.Parent = activateBtn
 
-local intensityLabel = Instance.new("TextLabel")
-intensityLabel.Size = UDim2.new(1, -10, 0, 25)
-intensityLabel.Position = UDim2.new(0, 10, 0, 5)
-intensityLabel.BackgroundTransparency = 1
-intensityLabel.Text = "⚡ Lag Intensity: 50%"
-intensityLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-intensityLabel.TextSize = 14
-intensityLabel.Font = Enum.Font.GothamBold
-intensityLabel.TextXAlignment = Enum.TextXAlignment.Left
-intensityLabel.Parent = intensityFrame
+-- Deactivate Button
+local deactivateBtn = Instance.new("TextButton")
+deactivateBtn.Size = UDim2.new(1, -20, 0, 40)
+deactivateBtn.Position = UDim2.new(0, 10, 0, 160)
+deactivateBtn.BackgroundColor3 = Color3.fromRGB(149, 165, 166)
+deactivateBtn.Text = "✅ DEACTIVATE SERVER EFFECTS"
+deactivateBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+deactivateBtn.TextSize = 14
+deactivateBtn.Font = Enum.Font.GothamBold
+deactivateBtn.Parent = contentFrame
 
-local intensitySlider = Instance.new("Frame")
-intensitySlider.Name = "IntensitySlider"
-intensitySlider.Size = UDim2.new(1, -20, 0, 6)
-intensitySlider.Position = UDim2.new(0, 10, 0, 35)
-intensitySlider.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
-intensitySlider.Parent = intensityFrame
+local deactivateCorner = Instance.new("UICorner")
+deactivateCorner.CornerRadius = UDim.new(0, 8)
+deactivateCorner.Parent = deactivateBtn
 
-local sliderCorner = Instance.new("UICorner")
-sliderCorner.CornerRadius = UDim.new(1, 0)
-sliderCorner.Parent = intensitySlider
-
-local intensityFill = Instance.new("Frame")
-intensityFill.Name = "Fill"
-intensityFill.Size = UDim2.new(0.5, 0, 1, 0)
-intensityFill.BackgroundColor3 = Color3.fromRGB(231, 76, 60)
-intensityFill.BorderSizePixel = 0
-intensityFill.Parent = intensitySlider
-
-local fillCorner = Instance.new("UICorner")
-fillCorner.CornerRadius = UDim.new(1, 0)
-fillCorner.Parent = intensityFill
-
-local intensityHandle = Instance.new("Frame")
-intensityHandle.Name = "Handle"
-intensityHandle.Size = UDim2.new(0, 16, 0, 16)
-intensityHandle.Position = UDim2.new(0.5, -8, 0.5, -8)
-intensityHandle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-intensityHandle.Parent = intensitySlider
-
-local handleCorner = Instance.new("UICorner")
-handleCorner.CornerRadius = UDim.new(1, 0)
-handleCorner.Parent = intensityHandle
-
--- Lag Method Selection
-local methodFrame = Instance.new("Frame")
-methodFrame.Size = UDim2.new(1, -20, 0, 90)
-methodFrame.Position = UDim2.new(0, 10, 0, 140)
-methodFrame.BackgroundColor3 = Color3.fromRGB(45, 45, 55)
-methodFrame.Parent = contentFrame
-
-local methodCorner = Instance.new("UICorner")
-methodCorner.CornerRadius = UDim.new(0, 8)
-methodCorner.Parent = methodFrame
-
-local methodLabel = Instance.new("TextLabel")
-methodLabel.Size = UDim2.new(1, -10, 0, 25)
-methodLabel.Position = UDim2.new(0, 10, 0, 5)
-methodLabel.BackgroundTransparency = 1
-methodLabel.Text = "🎯 Lag Method"
-methodLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-methodLabel.TextSize = 14
-methodLabel.Font = Enum.Font.GothamBold
-methodLabel.TextXAlignment = Enum.TextXAlignment.Left
-methodLabel.Parent = methodFrame
-
--- Method Buttons
-local method1 = Instance.new("TextButton")
-method1.Size = UDim2.new(1, -20, 0, 25)
-method1.Position = UDim2.new(0, 10, 0, 35)
-method1.BackgroundColor3 = Color3.fromRGB(52, 152, 219)
-method1.Text = "🌀 Particle Spam"
-method1.TextColor3 = Color3.fromRGB(255, 255, 255)
-method1.TextSize = 12
-method1.Font = Enum.Font.GothamBold
-method1.Parent = methodFrame
-
-local method2 = Instance.new("TextButton")
-method2.Size = UDim2.new(1, -20, 0, 25)
-method2.Position = UDim2.new(0, 10, 0, 65)
-method2.BackgroundColor3 = Color3.fromRGB(149, 165, 166)
-method2.Text = "📡 Network Flood"
-method2.TextColor3 = Color3.fromRGB(255, 255, 255)
-method2.TextSize = 12
-method2.Font = Enum.Font.GothamBold
-method2.Parent = methodFrame
-
-local method1Corner = Instance.new("UICorner")
-method1Corner.CornerRadius = UDim.new(0, 6)
-method1Corner.Parent = method1
-
-local method2Corner = Instance.new("UICorner")
-method2Corner.CornerRadius = UDim.new(0, 6)
-method2Corner.Parent = method2
-
--- Control Buttons
-local startBtn = Instance.new("TextButton")
-startBtn.Name = "StartButton"
-startBtn.Size = UDim2.new(1, -20, 0, 45)
-startBtn.Position = UDim2.new(0, 10, 0, 240)
-startBtn.BackgroundColor3 = Color3.fromRGB(46, 204, 113)
-startBtn.Text = "▶️ START LAG"
-startBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-startBtn.TextSize = 16
-startBtn.Font = Enum.Font.GothamBold
-startBtn.Parent = contentFrame
-
-local startCorner = Instance.new("UICorner")
-startCorner.CornerRadius = UDim.new(0, 8)
-startCorner.Parent = startBtn
-
-local stopBtn = Instance.new("TextButton")
-stopBtn.Name = "StopButton"
-stopBtn.Size = UDim2.new(1, -20, 0, 35)
-stopBtn.Position = UDim2.new(0, 10, 0, 295)
-stopBtn.BackgroundColor3 = Color3.fromRGB(149, 165, 166)
-stopBtn.Text = "⏹️ STOP LAG"
-stopBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-stopBtn.TextSize = 14
-stopBtn.Font = Enum.Font.GothamBold
-stopBtn.Parent = contentFrame
-
-local stopCorner = Instance.new("UICorner")
-stopCorner.CornerRadius = UDim.new(0, 8)
-stopCorner.Parent = stopBtn
-
--- Floating Button
-local floatingBtn = Instance.new("TextButton")
-floatingBtn.Name = "FloatingButton"
-floatingBtn.Size = UDim2.new(0, 60, 0, 60)
-floatingBtn.Position = UDim2.new(0, 20, 0, 20)
-floatingBtn.BackgroundColor3 = Color3.fromRGB(231, 76, 60)
-floatingBtn.Text = "⚡"
-floatingBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-floatingBtn.TextSize = 24
-floatingBtn.Font = Enum.Font.GothamBold
-floatingBtn.Visible = false
-floatingBtn.ZIndex = 10
-floatingBtn.Parent = screenGui
-
-local floatingCorner = Instance.new("UICorner")
-floatingCorner.CornerRadius = UDim.new(1, 0)
-floatingCorner.Parent = floatingBtn
-
--- ========== DRAG FUNCTIONALITY ==========
-
-local dragging = false
-local dragInput
-local dragStart
-local startPos
-
-local function update(input)
-    local delta = input.Position - dragStart
-    mainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-end
-
-titleBar.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        dragging = true
-        dragStart = input.Position
-        startPos = mainFrame.Position
-        
-        input.Changed:Connect(function()
-            if input.UserInputState == Enum.UserInputState.End then
-                dragging = false
-            end
-        end)
-    end
+-- Button Functions
+activateBtn.MouseButton1Click:Connect(function()
+    activateServerWideSystem()
+    statusLabel.Text = "🟢 SERVER OVERRIDE ACTIVE\n\n• All objects collected around you\n• Global environment effects active\n• All players affected"
 end)
 
-titleBar.InputChanged:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-        dragInput = input
-    end
+deactivateBtn.MouseButton1Click:Connect(function()
+    deactivateServerWideSystem()
+    statusLabel.Text = "🔴 SERVER-WIDE SYSTEM READY\n\nEnvironment restored\nServer returned to normal"
 end)
 
-UserInputService.InputChanged:Connect(function(input)
-    if input == dragInput and dragging then
-        update(input)
-    end
-end)
-
--- Floating Button Drag
-local floatingDragging = false
-local floatingDragInput
-local floatingDragStart
-local floatingStartPos
-
-local function updateFloating(input)
-    local delta = input.Position - floatingDragStart
-    floatingBtn.Position = UDim2.new(floatingStartPos.X.Scale, floatingStartPos.X.Offset + delta.X, floatingStartPos.Y.Scale, floatingStartPos.Y.Offset + delta.Y)
-end
-
-floatingBtn.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        floatingDragging = true
-        floatingDragStart = input.Position
-        floatingStartPos = floatingBtn.Position
-        
-        input.Changed:Connect(function()
-            if input.UserInputState == Enum.UserInputState.End then
-                floatingDragging = false
-            end
-        end)
-    end
-end)
-
-floatingBtn.InputChanged:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-        floatingDragInput = input
-    end
-end)
-
-UserInputService.InputChanged:Connect(function(input)
-    if input == floatingDragInput and floatingDragging then
-        updateFloating(input)
-    end
-end)
-
--- ========== LAG FUNCTIONALITY ==========
-
--- Intensity Slider
-local draggingSlider = false
-
-intensitySlider.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        draggingSlider = true
-    end
-end)
-
-UserInputService.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        draggingSlider = false
-    end
-end)
-
-RunService.RenderStepped:Connect(function()
-    if draggingSlider then
-        local mouse = player:GetMouse()
-        local relativePos = math.clamp((mouse.X - intensitySlider.AbsolutePosition.X) / intensitySlider.AbsoluteSize.X, 0, 1)
-        
-        intensityFill.Size = UDim2.new(relativePos, 0, 1, 0)
-        intensityHandle.Position = UDim2.new(relativePos, -8, 0.5, -8)
-        
-        lagIntensity = math.floor(relativePos * 100)
-        intensityLabel.Text = "⚡ Lag Intensity: " .. lagIntensity .. "%"
-    end
-end)
-
--- Method Selection
-method1.MouseButton1Click:Connect(function()
-    lagMethod = "Particles"
-    method1.BackgroundColor3 = Color3.fromRGB(52, 152, 219)
-    method2.BackgroundColor3 = Color3.fromRGB(149, 165, 166)
-    statusLabel.Text = "🎯 Method: Particle Spam"
-end)
-
-method2.MouseButton1Click:Connect(function()
-    lagMethod = "Network"
-    method2.BackgroundColor3 = Color3.fromRGB(52, 152, 219)
-    method1.BackgroundColor3 = Color3.fromRGB(149, 165, 166)
-    statusLabel.Text = "🎯 Method: Network Flood"
-end)
-
--- Lag Functions
-local function createParticleLag()
-    while isLagging do
-        for i = 1, math.floor(lagIntensity / 10) + 1 do
-            local part = Instance.new("Part")
-            part.Name = "LagPart_" .. tick()
-            part.Size = Vector3.new(1, 1, 1)
-            part.Position = Vector3.new(
-                math.random(-100, 100),
-                math.random(10, 50),
-                math.random(-100, 100)
-            )
-            part.Anchored = true
-            part.CanCollide = false
-            part.Parent = workspace
-            
-            -- Add some effects
-            local fire = Instance.new("Fire")
-            fire.Parent = part
-            
-            local sparkles = Instance.new("Sparkles")
-            sparkles.Parent = part
-            
-            -- Auto clean after 2 seconds
-            game:GetService("Debris"):AddItem(part, 2)
-        end
-        wait(0.1)
-    end
-end
-
-local function createNetworkLag()
-    while isLagging do
-        -- Find RemoteEvents to spam
-        for _, obj in pairs(game:GetDescendants()) do
-            if obj:IsA("RemoteEvent") and isLagging then
-                for i = 1, math.floor(lagIntensity / 20) + 1 do
-                    pcall(function()
-                        obj:FireServer("LAG_" .. tick())
-                    end)
-                end
-            end
-        end
-        
-        -- Spam some properties
-        local character = player.Character
-        if character then
-            for _, part in pairs(character:GetDescendants()) do
-                if part:IsA("BasePart") and isLagging then
-                    pcall(function()
-                        part.Transparency = math.random()
-                        part.Color = Color3.new(math.random(), math.random(), math.random())
-                    end)
-                end
-            end
-        end
-        
-        wait(0.05)
-    end
-end
-
-local function startLag()
-    if isLagging then return end
-    
-    isLagging = true
-    statusLabel.Text = "🟢 LAGGING - Intensity: " .. lagIntensity .. "%"
-    statusLabel.BackgroundColor3 = Color3.fromRGB(46, 204, 113)
-    startBtn.BackgroundColor3 = Color3.fromRGB(149, 165, 166)
-    stopBtn.BackgroundColor3 = Color3.fromRGB(231, 76, 60)
-    
-    -- Clear previous threads
-    for _, thread in pairs(lagThreads) do
-        coroutine.close(thread)
-    end
-    lagThreads = {}
-    
-    -- Start lag based on method
-    if lagMethod == "Particles" then
-        local thread = coroutine.create(createParticleLag)
-        coroutine.resume(thread)
-        table.insert(lagThreads, thread)
-    else
-        local thread = coroutine.create(createNetworkLag)
-        coroutine.resume(thread)
-        table.insert(lagThreads, thread)
-    end
-    
-    -- Additional stress threads
-    for i = 1, math.floor(lagIntensity / 25) + 1 do
-        local stressThread = coroutine.create(function()
-            while isLagging do
-                -- Heavy calculations
-                local x = 0
-                for j = 1, 10000 do
-                    x = x + math.sqrt(j)
-                end
-                wait(0.1)
-            end
-        end)
-        coroutine.resume(stressThread)
-        table.insert(lagThreads, stressThread)
-    end
-    
-    print("⚡ Auto Lag Started - Method: " .. lagMethod .. " - Intensity: " .. lagIntensity .. "%")
-end
-
-local function stopLag()
-    if not isLagging then return end
-    
-    isLagging = false
-    statusLabel.Text = "🔴 Lag: OFF"
-    statusLabel.BackgroundColor3 = Color3.fromRGB(45, 45, 55)
-    startBtn.BackgroundColor3 = Color3.fromRGB(46, 204, 113)
-    stopBtn.BackgroundColor3 = Color3.fromRGB(149, 165, 166)
-    
-    -- Stop all lag threads
-    for _, thread in pairs(lagThreads) do
-        coroutine.close(thread)
-    end
-    lagThreads = {}
-    
-    -- Clean up lag parts
-    for _, obj in pairs(workspace:GetDescendants()) do
-        if string.find(obj.Name, "LagPart_") then
-            obj:Destroy()
-        end
-    end
-    
-    print("⚡ Auto Lag Stopped")
-end
-
--- Control Buttons
-startBtn.MouseButton1Click:Connect(function()
-    startLag()
-end)
-
-stopBtn.MouseButton1Click:Connect(function()
-    stopLag()
-end)
-
--- Auto-stop when character dies
-player.CharacterAdded:Connect(function()
-    if isLagging then
-        stopLag()
-    end
-end)
-
--- Window Management
 closeBtn.MouseButton1Click:Connect(function()
-    stopLag()
-    mainFrame.Visible = false
-    floatingBtn.Visible = true
+    deactivateServerWideSystem()
+    screenGui:Destroy()
 end)
 
-floatingBtn.MouseButton1Click:Connect(function()
-    mainFrame.Visible = true
-    floatingBtn.Visible = false
+-- Auto-deactivate when character dies
+player.CharacterAdded:Connect(function()
+    wait(2)
+    deactivateServerWideSystem()
 end)
 
--- Touch Feedback
-local function addTouchFeedback(button)
-    button.MouseButton1Down:Connect(function()
-        button.BackgroundTransparency = 0.3
-    end)
-    
-    button.MouseButton1Up:Connect(function()
-        button.BackgroundTransparency = 0
-    end)
-    
-    button.MouseLeave:Connect(function()
-        button.BackgroundTransparency = 0
-    end)
-end
-
--- Add feedback to all buttons
-for _, button in pairs(contentFrame:GetDescendants()) do
-    if button:IsA("TextButton") then
-        addTouchFeedback(button)
-    end
-end
-addTouchFeedback(closeBtn)
-addTouchFeedback(floatingBtn)
-
--- Initialize
-method1.BackgroundColor3 = Color3.fromRGB(52, 152, 219) -- Default method
-print("⚡ Auto Lag Server GUI Loaded!")
-print("🎯 Drag the title bar to move the window")
-print("⚠️ Use responsibly - may cause performance issues")
+print("🌍 Server-Wide Unauthorized Access System Loaded!")
+print("🔧 Edit CONFIG table with your Catbox.moe links")
+print("🚨 Effects will be visible to ALL players on the server")
