@@ -1,441 +1,174 @@
--- SERVER-WIDE Unauthorized Access System
--- Effects Visible to ALL Players - Delta Impact
+-- FE Magnet Parts System
+-- All Players Visible - Safe from Kicks
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
-local Lighting = game:GetService("Lighting")
-local SoundService = game:GetService("SoundService")
-local TweenService = game:GetService("TweenService")
 local player = Players.LocalPlayer
 
--- Configuration - EDIT THESE FOR CUSTOM EFFECTS
+-- Configuration
 local CONFIG = {
-    -- Customize your jumpscare sound (Catbox.moe link)
-    JumpscareSound = "https://files.catbox.moe/85qwg0.mp3", -- Replace with your sound link
-    
-    -- Customize your jumpscare image (Catbox.moe link) 
-    JumpscareImage = "https://files.catbox.moe/b0k250.jpg", -- Replace with your image link
-    
-    -- Server-wide effect settings
-    SkyColor = Color3.fromRGB(255, 0, 0),
-    FogColor = Color3.fromRGB(255, 0, 0),
-    FogEnd = 50,
-    CircleRadius = 15,
-    ObjectHeight = 3
+    MagnetPower = 5, -- Kecepatan mendekat (lambat biar natural)
+    MagnetRange = 50, -- Jarak magnet aktif
+    AttractDelay = 0.1, -- Delay antara pergerakan
+    Blacklist = {"Baseplate", "Terrain", "SpawnLocation"} -- Part yang tidak akan tertarik
 }
 
 -- System Variables
-local isActive = false
-local stolenObjects = {}
-local effectParts = {}
-local serverImpactThreads = {}
+local isMagnetActive = false
+local attractedParts = {}
+local magnetConnections = {}
 
--- Server-Wide Effect Functions
-local function applyServerWideEffects()
-    -- Change lighting for ALL players
-    Lighting.Brightness = 2
-    Lighting.OutdoorAmbient = CONFIG.SkyColor
-    Lighting.ColorShift_Bottom = CONFIG.SkyColor
-    Lighting.ColorShift_Top = CONFIG.SkyColor
-    Lighting.FogColor = CONFIG.FogColor
-    Lighting.FogEnd = CONFIG.FogEnd
-    Lighting.Ambient = CONFIG.SkyColor
-    
-    -- Change skybox for ALL players
-    local sky = Lighting:FindFirstChildOfClass("Sky")
-    if sky then
-        sky.SkyboxBk = "http://www.roblox.com/asset/?id=271042516" -- Red sky
-        sky.SkyboxDn = "http://www.roblox.com/asset/?id=271042516"
-        sky.SkyboxFt = "http://www.roblox.com/asset/?id=271042516"
-        sky.SkyboxLf = "http://www.roblox.com/asset/?id=271042516"
-        sky.SkyboxRt = "http://www.roblox.com/asset/?id=271042516"
-        sky.SkyboxUp = "http://www.roblox.com/asset/?id=271042516"
-    end
-    
-    -- Add red screen effect for ALL players
-    local redEffect = Instance.new("ColorCorrectionEffect")
-    redEffect.Name = "GlobalRedEffect"
-    redEffect.Saturation = -0.7
-    redEffect.TintColor = Color3.fromRGB(255, 50, 50)
-    redEffect.Contrast = 0.2
-    redEffect.Parent = Lighting
-    
-    -- Add bloom effect for ALL players
-    local bloom = Instance.new("BloomEffect")
-    bloom.Name = "GlobalBloom"
-    bloom.Intensity = 1
-    bloom.Size = 24
-    bloom.Threshold = 0.7
-    bloom.Parent = Lighting
-    
-    -- Server-wide sound
-    local globalSound = Instance.new("Sound")
-    globalSound.Name = "GlobalAmbient"
-    globalSound.SoundId = "rbxassetid://9111268332" -- Eerie ambient sound
-    globalSound.Looped = true
-    globalSound.Volume = 0.5
-    globalSound.Parent = Lighting
-    globalSound:Play()
-end
-
--- Collect valuable objects from entire server
-local function collectServerObjects()
-    local objects = {}
-    
-    -- Scan entire workspace for valuable objects
-    for _, obj in pairs(workspace:GetDescendants()) do
-        -- Money/Currency objects
-        if obj:IsA("Part") and (
-            string.find(string.lower(obj.Name), "coin") or
-            string.find(string.lower(obj.Name), "money") or
-            string.find(string.lower(obj.Name), "cash") or
-            string.find(string.lower(obj.Name), "gem") or
-            string.find(string.lower(obj.Name), "diamond") or
-            string.find(string.lower(obj.Name), "treasure") or
-            string.find(string.lower(obj.Name), "reward") or
-            string.find(string.lower(obj.Name), "crystal") or
-            obj.BrickColor == BrickColor.new("Bright yellow") or
-            obj.BrickColor == BrickColor.new("Bright orange") or
-            obj.BrickColor == BrickColor.new("Bright green") or
-            obj.BrickColor == BrickColor.new("Bright blue")
-        ) then
-            table.insert(objects, obj)
-        end
-        
-        -- Tools and weapons
-        if obj:IsA("Tool") or obj:IsA("HopperBin") then
-            table.insert(objects, obj)
-        end
-        
-        -- Spawn locations
-        if obj:IsA("SpawnLocation") then
-            table.insert(objects, obj)
-        end
-        
-        -- Vehicle seats
-        if obj:IsA("VehicleSeat") then
-            table.insert(objects, obj)
+-- Check if part should be attracted
+local function shouldAttractPart(part)
+    -- Skip if part is in blacklist
+    for _, blacklistedName in ipairs(CONFIG.Blacklist) do
+        if string.lower(part.Name) == string.lower(blacklistedName) then
+            return false
         end
     end
     
-    return objects
+    -- Skip if part is too big (probably structural)
+    if part.Size.Magnitude > 20 then
+        return false
+    end
+    
+    -- Skip if part is welded or anchored (probably important)
+    if part.Anchored then
+        return false
+    end
+    
+    -- Skip if part is in player's character
+    if part:IsDescendantOf(player.Character) then
+        return false
+    end
+    
+    return true
 end
 
--- Create multiple circles around player for ALL objects
-local function createServerWideCircleFormation(objects)
+-- Find parts in range that can be attracted
+local function findPartsInRange()
+    local parts = {}
     local character = player.Character
-    if not character then return end
+    if not character then return parts end
+    
+    local rootPart = character:FindFirstChild("HumanoidRootPart")
+    if not rootPart then return parts end
+    
+    local playerPosition = rootPart.Position
+    
+    for _, part in pairs(workspace:GetDescendants()) do
+        if part:IsA("BasePart") and shouldAttractPart(part) then
+            local distance = (part.Position - playerPosition).Magnitude
+            if distance <= CONFIG.MagnetRange then
+                table.insert(parts, {
+                    Part = part,
+                    Distance = distance,
+                    OriginalPosition = part.Position
+                })
+            end
+        end
+    end
+    
+    return parts
+end
+
+-- Attract part towards player smoothly
+local function attractPart(partInfo)
+    local part = partInfo.Part
+    local character = player.Character
+    if not character or not part or part.Parent == nil then return end
     
     local rootPart = character:FindFirstChild("HumanoidRootPart")
     if not rootPart then return end
     
-    local center = rootPart.Position
-    local count = #objects
+    -- Calculate direction to player
+    local direction = (rootPart.Position - part.Position).Unit
+    local moveDistance = CONFIG.MagnetPower * 0.1 -- Very slow movement
     
-    -- Create multiple concentric circles
-    local circles = {
-        {radius = CONFIG.CircleRadius, height = CONFIG.ObjectHeight},
-        {radius = CONFIG.CircleRadius + 8, height = CONFIG.ObjectHeight + 2},
-        {radius = CONFIG.CircleRadius + 16, height = CONFIG.ObjectHeight + 4}
-    }
+    -- Move part towards player
+    part.Velocity = direction * moveDistance
     
-    for i, obj in ipairs(objects) do
-        local circleIndex = ((i-1) % #circles) + 1
-        local circle = circles[circleIndex]
-        local angle = (i / math.max(1, count/#circles)) * math.pi * 2
-        
-        local x = center.X + math.cos(angle) * circle.radius
-        local z = center.Z + math.sin(angle) * circle.radius
-        local y = center.Y + circle.height
-        
-        -- Move object to circle position (SERVER-VISIBLE)
-        if obj:IsA("BasePart") then
-            obj.CFrame = CFrame.new(Vector3.new(x, y, z))
-            obj.Anchored = true
-            obj.CanCollide = false
-            
-            -- Make objects glow for visibility
-            local pointLight = Instance.new("PointLight")
-            pointLight.Brightness = 2
-            pointLight.Range = 8
-            pointLight.Color = Color3.fromRGB(255, 0, 0)
-            pointLight.Parent = obj
-            
-        elseif obj:IsA("Tool") then
-            -- For tools, create a visible holder
-            local holder = Instance.new("Part")
-            holder.Name = "ServerObjectHolder"
-            holder.Size = Vector3.new(3, 3, 3)
-            holder.Position = Vector3.new(x, y, z)
-            holder.Anchored = true
-            holder.CanCollide = false
-            holder.Material = Enum.Material.Neon
-            holder.BrickColor = BrickColor.new("Bright red")
-            holder.Parent = workspace
-            
-            local light = Instance.new("PointLight")
-            light.Brightness = 3
-            light.Range = 12
-            light.Color = Color3.fromRGB(255, 0, 0)
-            light.Parent = holder
-            
-            obj.Parent = holder
-        end
-        
-        table.insert(stolenObjects, obj)
-        
-        -- Add floating effect (VISIBLE TO ALL)
-        local floatThread = coroutine.create(function()
-            local startY = y
-            while isActive and obj.Parent do
-                local offset = math.sin(tick() * 3 + i) * 1.5
-                local rotation = tick() * 2 + i
-                
-                if obj:IsA("BasePart") then
-                    obj.Position = Vector3.new(x, startY + offset, z)
-                    obj.CFrame = obj.CFrame * CFrame.Angles(0, rotation * 0.1, 0)
-                elseif obj.Parent and obj.Parent.Name == "ServerObjectHolder" then
-                    obj.Parent.Position = Vector3.new(x, startY + offset, z)
-                    obj.Parent.CFrame = obj.Parent.CFrame * CFrame.Angles(0, rotation * 0.1, 0)
-                end
-                RunService.Heartbeat:Wait()
-            end
-        end)
-        coroutine.resume(floatThread)
-        table.insert(serverImpactThreads, floatThread)
-    end
+    -- Add slight rotation for visual effect
+    part.RotVelocity = Vector3.new(
+        math.random(-1, 1) * 0.5,
+        math.random(-1, 1) * 0.5,
+        math.random(-1, 1) * 0.5
+    )
 end
 
--- Global Jumpscare for ALL Players
-local function triggerGlobalJumpscare()
-    -- Create global sound that ALL players hear
-    local globalSound = Instance.new("Sound")
-    globalSound.Name = "GlobalJumpscareSound"
-    globalSound.SoundId = CONFIG.JumpscareSound
-    globalSound.Volume = 1
-    globalSound.Parent = workspace
-    globalSound:Play()
+-- Main magnet loop
+local function startMagnetSystem()
+    if isMagnetActive then return end
     
-    -- Create jumpscare GUI for ALL players
-    for _, otherPlayer in pairs(Players:GetPlayers()) do
-        coroutine.wrap(function()
-            local gui = Instance.new("ScreenGui")
-            gui.Name = "GlobalJumpscareGUI"
-            gui.ResetOnSpawn = false
-            
-            local success, result = pcall(function()
-                gui.Parent = otherPlayer.PlayerGui
-            end)
-            
-            if success then
-                local image = Instance.new("ImageLabel")
-                image.Size = UDim2.new(1, 0, 1, 0)
-                image.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-                image.Image = CONFIG.JumpscareImage
-                image.ScaleType = Enum.ScaleType.Fit
-                image.Parent = gui
-                
-                -- Animate the image
-                image.ImageTransparency = 1
-                
-                local fadeIn = TweenService:Create(image, TweenInfo.new(0.1), {ImageTransparency = 0})
-                local fadeOut = TweenService:Create(image, TweenInfo.new(0.5), {ImageTransparency = 1})
-                
-                fadeIn:Play()
-                wait(2)
-                fadeOut:Play()
-                wait(0.5)
-                gui:Destroy()
-            end
-        end)()
-    end
+    isMagnetActive = true
+    print("🧲 Magnet system activated")
     
-    -- Clean up sound
-    wait(3)
-    globalSound:Destroy()
-end
-
--- Server-Wide Unauthorized Access
-local function executeServerWideUnauthorizedAccess()
-    -- Method 1: Mass RemoteEvent firing
-    for _, obj in pairs(game:GetDescendants()) do
-        if obj:IsA("RemoteEvent") then
-            pcall(function()
-                -- Fire multiple payloads to affect server
-                for i = 1, 20 do
-                    obj:FireServer("ServerOverride", 999999, player.UserId)
-                    obj:FireServer("GiveAll", "AllPlayers")
-                    obj:FireServer("AdminOverride", true)
-                end
-            end)
+    local magnetLoop
+    magnetLoop = RunService.Heartbeat:Connect(function()
+        if not isMagnetActive or not player.Character then
+            magnetLoop:Disconnect()
+            return
         end
-    end
-    
-    -- Method 2: Mass value manipulation
-    for _, obj in pairs(game:GetDescendants()) do
-        pcall(function()
-            if obj:IsA("IntValue") or obj:IsA("NumberValue") then
-                if string.find(string.lower(obj.Name), "money") or
-                   string.find(string.lower(obj.Name), "coin") or
-                   string.find(string.lower(obj.Name), "cash") or
-                   string.find(string.lower(obj.Name), "score") then
-                    obj.Value = 999999
-                end
+        
+        -- Find parts in range
+        local partsInRange = findPartsInRange()
+        
+        -- Attract each part
+        for _, partInfo in ipairs(partsInRange) do
+            if not attractedParts[partInfo.Part] then
+                attractedParts[partInfo.Part] = true
+                
+                -- Apply attraction
+                attractPart(partInfo)
             end
-        end)
-    end
-    
-    -- Method 3: Server script manipulation attempt
-    pcall(function()
-        -- Try to access server scripts
-        for _, script in pairs(game:GetDescendants()) do
-            if script:IsA("Script") and not script:IsA("LocalScript") then
-                if string.find(string.lower(script.Name), "data") or
-                   string.find(string.lower(script.Name), "save") or
-                   string.find(string.lower(script.Name), "manager") then
-                    -- Attempt to disable or affect server scripts
-                    script.Disabled = true
-                end
+        end
+        
+        -- Clean up attracted parts that are no longer in range
+        for part, _ in pairs(attractedParts) do
+            if not part or part.Parent == nil then
+                attractedParts[part] = nil
             end
         end
     end)
+    
+    table.insert(magnetConnections, magnetLoop)
 end
 
--- Continuous Server-Wide Effects
-local function startServerWideEffects()
-    -- Pulsing lighting effects
-    local pulseThread = coroutine.create(function()
-        while isActive do
-            Lighting.Brightness = 2 + math.sin(tick() * 3) * 0.8
-            Lighting.OutdoorAmbient = Color3.fromRGB(
-                255,
-                math.sin(tick() * 2) * 50 + 50,
-                math.sin(tick() * 2) * 50 + 50
-            )
-            RunService.Heartbeat:Wait()
-        end
-    end)
-    coroutine.resume(pulseThread)
-    table.insert(serverImpactThreads, pulseThread)
+-- Stop magnet system
+local function stopMagnetSystem()
+    if not isMagnetActive then return end
     
-    -- Global screen shake for all players
-    local shakeThread = coroutine.create(function()
-        while isActive do
-            for _, otherPlayer in pairs(Players:GetPlayers()) do
-                coroutine.wrap(function()
-                    local camera = workspace.CurrentCamera
-                    if camera then
-                        local shake = Vector3.new(
-                            math.random(-2, 2) * 0.1,
-                            math.random(-2, 2) * 0.1,
-                            math.random(-2, 2) * 0.1
-                        )
-                        camera.CFrame = camera.CFrame + shake
-                    end
-                end)()
-            end
-            RunService.Heartbeat:Wait()
-        end
-    end)
-    coroutine.resume(shakeThread)
-    table.insert(serverImpactThreads, shakeThread)
-end
-
--- Main Activation Function
-local function activateServerWideSystem()
-    if isActive then return end
+    isMagnetActive = false
+    print("✅ Magnet system deactivated")
     
-    isActive = true
-    print("🌍 SERVER-WIDE UNAUTHORIZED ACCESS ACTIVATED!")
-    
-    -- Execute server-wide unauthorized access
-    executeServerWideUnauthorizedAccess()
-    
-    -- Apply effects visible to ALL players
-    applyServerWideEffects()
-    
-    -- Collect and move ALL server objects
-    local objects = collectServerObjects()
-    createServerWideCircleFormation(objects)
-    
-    -- Trigger global jumpscare
-    triggerGlobalJumpscare()
-    
-    -- Start continuous effects
-    startServerWideEffects()
-end
-
--- Deactivation Function
-local function deactivateServerWideSystem()
-    if not isActive then return end
-    
-    isActive = false
-    print("✅ Server-wide system deactivated")
-    
-    -- Stop all effect threads
-    for _, thread in pairs(serverImpactThreads) do
-        coroutine.close(thread)
-    end
-    serverImpactThreads = {}
-    
-    -- Restore objects to original positions
-    for _, obj in pairs(stolenObjects) do
-        pcall(function()
-            if obj and obj.Parent then
-                if obj:IsA("BasePart") then
-                    obj.Anchored = false
-                    -- Remove effects
-                    local light = obj:FindFirstChildOfClass("PointLight")
-                    if light then light:Destroy() end
-                elseif obj:IsA("Tool") and obj.Parent.Name == "ServerObjectHolder" then
-                    obj.Parent:Destroy()
-                    obj.Parent = player.Backpack or workspace
-                end
-            end
-        end)
-    end
-    
-    -- Clean up object holders
-    for _, obj in pairs(workspace:GetDescendants()) do
-        if obj.Name == "ServerObjectHolder" then
-            obj:Destroy()
+    -- Stop all velocities
+    for part, _ in pairs(attractedParts) do
+        if part and part.Parent then
+            part.Velocity = Vector3.new(0, 0, 0)
+            part.RotVelocity = Vector3.new(0, 0, 0)
         end
     end
     
-    -- Restore server environment
-    Lighting.Brightness = 1
-    Lighting.OutdoorAmbient = Color3.fromRGB(127, 127, 127)
-    Lighting.ColorShift_Bottom = Color3.fromRGB(0, 0, 0)
-    Lighting.ColorShift_Top = Color3.fromRGB(0, 0, 0)
-    Lighting.FogColor = Color3.fromRGB(191, 191, 191)
-    Lighting.FogEnd = 100000
-    Lighting.Ambient = Color3.fromRGB(0, 0, 0)
+    -- Disconnect all connections
+    for _, connection in ipairs(magnetConnections) do
+        connection:Disconnect()
+    end
+    magnetConnections = {}
     
-    -- Remove global effects
-    local redEffect = Lighting:FindFirstChild("GlobalRedEffect")
-    if redEffect then redEffect:Destroy() end
-    
-    local bloom = Lighting:FindFirstChild("GlobalBloom")
-    if bloom then bloom:Destroy() end
-    
-    local ambientSound = Lighting:FindFirstChild("GlobalAmbient")
-    if ambientSound then ambientSound:Destroy() end
-    
-    -- Clear tables
-    stolenObjects = {}
-    effectParts = {}
+    -- Clear attracted parts
+    attractedParts = {}
 end
 
--- GUI for Control
+-- GUI for control
 local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "ServerWideAccessController"
+screenGui.Name = "RapipppModss V3.0"
 screenGui.ResetOnSpawn = false
 screenGui.Parent = player.PlayerGui
 
 local mainFrame = Instance.new("Frame")
-mainFrame.Size = UDim2.new(0, 350, 0, 250)
+mainFrame.Size = UDim2.new(0, 280, 0, 200)
 mainFrame.Position = UDim2.new(0, 50, 0, 50)
-mainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
+mainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
 mainFrame.BorderSizePixel = 0
 mainFrame.Parent = screenGui
 
@@ -446,7 +179,7 @@ mainCorner.Parent = mainFrame
 -- Title Bar
 local titleBar = Instance.new("TextButton")
 titleBar.Size = UDim2.new(1, 0, 0, 40)
-titleBar.BackgroundColor3 = Color3.fromRGB(231, 76, 60)
+titleBar.BackgroundColor3 = Color3.fromRGB(52, 152, 219)
 titleBar.BorderSizePixel = 0
 titleBar.Text = ""
 titleBar.AutoButtonColor = false
@@ -456,7 +189,7 @@ local title = Instance.new("TextLabel")
 title.Size = UDim2.new(1, -50, 1, 0)
 title.Position = UDim2.new(0, 10, 0, 0)
 title.BackgroundTransparency = 1
-title.Text = "🌍 SERVER OVERRIDE"
+title.Text = "🧲 Part Magnet System"
 title.TextColor3 = Color3.fromRGB(255, 255, 255)
 title.TextSize = 16
 title.Font = Enum.Font.GothamBold
@@ -467,7 +200,7 @@ title.Parent = titleBar
 local closeBtn = Instance.new("TextButton")
 closeBtn.Size = UDim2.new(0, 30, 0, 30)
 closeBtn.Position = UDim2.new(1, -35, 0.5, -15)
-closeBtn.BackgroundColor3 = Color3.fromRGB(255, 59, 59)
+closeBtn.BackgroundColor3 = Color3.fromRGB(149, 165, 166)
 closeBtn.Text = "✕"
 closeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 closeBtn.TextSize = 14
@@ -478,19 +211,19 @@ local closeCorner = Instance.new("UICorner")
 closeCorner.CornerRadius = UDim.new(0, 6)
 closeCorner.Parent = closeBtn
 
--- Content
+-- Content Frame
 local contentFrame = Instance.new("Frame")
 contentFrame.Size = UDim2.new(1, 0, 1, -40)
 contentFrame.Position = UDim2.new(0, 0, 0, 40)
 contentFrame.BackgroundTransparency = 1
 contentFrame.Parent = mainFrame
 
--- Status
+-- Status Display
 local statusLabel = Instance.new("TextLabel")
-statusLabel.Size = UDim2.new(1, -20, 0, 80)
+statusLabel.Size = UDim2.new(1, -20, 0, 60)
 statusLabel.Position = UDim2.new(0, 10, 0, 10)
 statusLabel.BackgroundColor3 = Color3.fromRGB(45, 45, 55)
-statusLabel.Text = "🔴 SERVER-WIDE SYSTEM READY\n\nEdit CONFIG table with your Catbox.moe links\nEffects will be visible to ALL players"
+statusLabel.Text = "🔴 Magnet: OFF\nParts will slowly move towards you\nVisible to all players"
 statusLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 statusLabel.TextSize = 12
 statusLabel.Font = Enum.Font.Gotham
@@ -503,14 +236,14 @@ local statusCorner = Instance.new("UICorner")
 statusCorner.CornerRadius = UDim.new(0, 8)
 statusCorner.Parent = statusLabel
 
--- Activate Button
+-- Control Buttons
 local activateBtn = Instance.new("TextButton")
-activateBtn.Size = UDim2.new(1, -20, 0, 50)
-activateBtn.Position = UDim2.new(0, 10, 0, 100)
-activateBtn.BackgroundColor3 = Color3.fromRGB(231, 76, 60)
-activateBtn.Text = "🌍 ACTIVATE SERVER OVERRIDE"
+activateBtn.Size = UDim2.new(1, -20, 0, 40)
+activateBtn.Position = UDim2.new(0, 10, 0, 80)
+activateBtn.BackgroundColor3 = Color3.fromRGB(46, 204, 113)
+activateBtn.Text = "🧲 ACTIVATE MAGNET"
 activateBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-activateBtn.TextSize = 16
+activateBtn.TextSize = 14
 activateBtn.Font = Enum.Font.GothamBold
 activateBtn.Parent = contentFrame
 
@@ -518,12 +251,11 @@ local activateCorner = Instance.new("UICorner")
 activateCorner.CornerRadius = UDim.new(0, 8)
 activateCorner.Parent = activateBtn
 
--- Deactivate Button
 local deactivateBtn = Instance.new("TextButton")
 deactivateBtn.Size = UDim2.new(1, -20, 0, 40)
-deactivateBtn.Position = UDim2.new(0, 10, 0, 160)
+deactivateBtn.Position = UDim2.new(0, 10, 0, 130)
 deactivateBtn.BackgroundColor3 = Color3.fromRGB(149, 165, 166)
-deactivateBtn.Text = "✅ DEACTIVATE SERVER EFFECTS"
+deactivateBtn.Text = "✅ STOP MAGNET"
 deactivateBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 deactivateBtn.TextSize = 14
 deactivateBtn.Font = Enum.Font.GothamBold
@@ -535,26 +267,76 @@ deactivateCorner.Parent = deactivateBtn
 
 -- Button Functions
 activateBtn.MouseButton1Click:Connect(function()
-    activateServerWideSystem()
-    statusLabel.Text = "🟢 SERVER OVERRIDE ACTIVE\n\n• All objects collected around you\n• Global environment effects active\n• All players affected"
+    startMagnetSystem()
+    statusLabel.Text = "🟢 Magnet: ACTIVE\nParts are slowly moving towards you\nAll players can see this effect"
+    activateBtn.BackgroundColor3 = Color3.fromRGB(149, 165, 166)
+    deactivateBtn.BackgroundColor3 = Color3.fromRGB(46, 204, 113)
 end)
 
 deactivateBtn.MouseButton1Click:Connect(function()
-    deactivateServerWideSystem()
-    statusLabel.Text = "🔴 SERVER-WIDE SYSTEM READY\n\nEnvironment restored\nServer returned to normal"
+    stopMagnetSystem()
+    statusLabel.Text = "🔴 Magnet: OFF\nParts will slowly move towards you\nVisible to all players"
+    activateBtn.BackgroundColor3 = Color3.fromRGB(46, 204, 113)
+    deactivateBtn.BackgroundColor3 = Color3.fromRGB(149, 165, 166)
 end)
 
 closeBtn.MouseButton1Click:Connect(function()
-    deactivateServerWideSystem()
+    stopMagnetSystem()
     screenGui:Destroy()
 end)
 
--- Auto-deactivate when character dies
-player.CharacterAdded:Connect(function()
-    wait(2)
-    deactivateServerWideSystem()
+-- Auto stop when character dies
+player.CharacterAdded:Connect(function(character)
+    -- Wait for character to load
+    character:WaitForChild("HumanoidRootPart")
+    
+    -- Auto restart magnet if it was active
+    if isMagnetActive then
+        wait(2)
+        startMagnetSystem()
+    end
 end)
 
-print("🌍 Server-Wide Unauthorized Access System Loaded!")
-print("🔧 Edit CONFIG table with your Catbox.moe links")
-print("🚨 Effects will be visible to ALL players on the server")
+player.CharacterRemoving:Connect(function()
+    stopMagnetSystem()
+end)
+
+-- Drag functionality
+local dragging = false
+local dragInput, dragStart, startPos
+
+local function update(input)
+    local delta = input.Position - dragStart
+    mainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+end
+
+titleBar.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+        dragStart = input.Position
+        startPos = mainFrame.Position
+        
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
+        end)
+    end
+end)
+
+titleBar.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+        dragInput = input
+    end
+end)
+
+game:GetService("UserInputService").InputChanged:Connect(function(input)
+    if input == dragInput and dragging then
+        update(input)
+    end
+end)
+
+print("🧲 FE Magnet System Loaded!")
+print("✅ Safe from kicks - Uses legitimate physics")
+print("👁️ All players can see parts moving towards you")
+print("⚡ Magnet power: " .. CONFIG.MagnetPower .. " (Slow and natural)")
