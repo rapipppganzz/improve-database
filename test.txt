@@ -1,29 +1,37 @@
--- FE Unauthorized Parts Magnet System - Delta Android Version
--- All Objects Move to Player - FE Visible
+-- FE UNAUTHORIZED MAGNET SYSTEM - DELTA ANDROID ANTI LAG
+-- Advanced Version with Rope Support & Speed Control
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local player = Players.LocalPlayer
 
--- Configuration untuk Android
+-- Advanced Configuration
 local CONFIG = {
-    AttractSpeed = 0.8, -- Kecepatan lebih rendah untuk mobile
-    AttractRange = 50, -- Jarak lebih pendek
-    UpdateDelay = 0.15, -- Delay lebih lama
-    Blacklist = {"Baseplate", "Terrain", "SpawnLocation", "Floor", "Wall", "Camera"}
+    MaxSpeed = 120, -- Kecepatan maksimum (bisa diatur di GUI)
+    BaseSpeed = 80, -- Kecepatan dasar
+    MaxRange = 200, -- Jarak maksimum (bisa diatur di GUI)
+    BaseRange = 100, -- Jarak dasar
+    UpdateRate = 0.08, -- Rate update lebih cepat
+    MaxPartsPerFrame = 1000, -- Batasi part per frame untuk anti lag
+    AttractRopes = true, -- Attract parts dengan rope/constraint
+    BreakConstraints = true -- Break constraints untuk part yang tertarik
 }
 
 -- System Variables
 local isMagnetActive = false
 local magnetConnection = nil
 local attractedParts = {}
+local partsToAttract = {}
+local currentSpeed = CONFIG.BaseSpeed
+local currentRange = CONFIG.BaseRange
 
--- Simple part filter untuk Android
+-- Advanced Part Detection dengan Rope/Constraint Support
 local function shouldAttractPart(part)
     if not part or part.Parent == nil then return false end
     
     -- Skip blacklisted parts
-    for _, blacklistedName in ipairs(CONFIG.Blacklist) do
+    local blacklist = {"Baseplate", "Terrain", "SpawnLocation", "Floor", "Wall", "Camera", "Light"}
+    for _, blacklistedName in ipairs(blacklist) do
         if string.find(string.lower(part.Name), string.lower(blacklistedName)) then
             return false
         end
@@ -41,15 +49,36 @@ local function shouldAttractPart(part)
         return false
     end
     
-    -- Skip parts yang terlalu besar
-    if part.Size.Magnitude > 50 then
+    -- Skip parts yang terlalu besar (map parts)
+    if part.Size.Magnitude > 100 then
         return false
     end
     
     return true
 end
 
--- Simple movement function untuk Android
+-- Find connected parts (untuk rope/constraint systems)
+local function findConnectedParts(part)
+    local connected = {part}
+    
+    -- Cari constraints yang terhubung
+    for _, constraint in ipairs(workspace:GetDescendants()) do
+        if constraint:IsA("Constraint") then
+            local part0 = constraint.Part0
+            local part1 = constraint.Part1
+            
+            if part0 == part and part1 and shouldAttractPart(part1) then
+                table.insert(connected, part1)
+            elseif part1 == part and part0 and shouldAttractPart(part0) then
+                table.insert(connected, part0)
+            end
+        end
+    end
+    
+    return connected
+end
+
+-- Advanced Movement System dengan High Speed
 local function movePartToPlayer(part)
     if not part or part.Parent == nil then return end
     
@@ -62,51 +91,75 @@ local function movePartToPlayer(part)
     -- Mark as attracted
     attractedParts[part] = true
     
-    -- Simpan properti original
-    local originalAnchored = part.Anchored
-    local originalCanCollide = part.CanCollide
-    
-    -- Setup part untuk movement
+    -- Setup part untuk high-speed movement
     part.Anchored = false
     part.CanCollide = false
     part.Massless = true
     
-    -- Buat velocity object sederhana
+    -- Break constraints jika diperlukan
+    if CONFIG.BreakConstraints then
+        for _, constraint in ipairs(part:GetChildren()) do
+            if constraint:IsA("Constraint") then
+                constraint:Destroy()
+            end
+        end
+    end
+    
+    -- High-performance BodyVelocity
     local bodyVelocity = Instance.new("BodyVelocity")
     bodyVelocity.Velocity = Vector3.new(0, 0, 0)
-    bodyVelocity.MaxForce = Vector3.new(50000, 50000, 50000)
-    bodyVelocity.P = 8000
+    bodyVelocity.MaxForce = Vector3.new(100000, 100000, 100000) -- Force sangat besar
+    bodyVelocity.P = 25000 -- High responsiveness
+    bodyVelocity.Name = "MagnetVelocity"
     bodyVelocity.Parent = part
     
-    -- Movement loop sederhana
+    -- Optimized movement loop
+    local lastUpdate = tick()
     coroutine.wrap(function()
         while isMagnetActive and part and part.Parent and attractedParts[part] do
+            local now = tick()
+            local deltaTime = now - lastUpdate
+            lastUpdate = now
+            
             local character = player.Character
             if not character then break end
             
             local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
             if not humanoidRootPart then break end
             
-            -- Target position dengan offset kecil
-            local targetPosition = humanoidRootPart.Position + Vector3.new(
-                math.random(-3, 3),
-                math.random(1, 3),
-                math.random(-3, 3)
+            -- Calculate target position dengan prediction
+            local humanoid = character:FindFirstChild("Humanoid")
+            local characterVelocity = humanoidRootPart.Velocity
+            local prediction = characterVelocity * deltaTime * 2 -- Predict movement
+            
+            local targetPosition = humanoidRootPart.Position + prediction + Vector3.new(
+                math.random(-2, 2),
+                math.random(2, 4), -- Selalu sedikit di atas
+                math.random(-2, 2)
             )
             
             local direction = (targetPosition - part.Position).Unit
             local distance = (targetPosition - part.Position).Magnitude
             
-            -- Stop jika dekat
-            if distance < 2 then
+            -- Stop jika sangat dekat
+            if distance < 1.5 then
+                bodyVelocity.Velocity = Vector3.new(0, 0, 0)
                 break
             end
             
-            -- Move dengan speed sederhana
-            local speed = math.min(CONFIG.AttractSpeed * 30, distance * 2)
-            bodyVelocity.Velocity = direction * speed
+            -- Adaptive speed berdasarkan distance
+            local adaptiveSpeed = currentSpeed
+            if distance < 10 then
+                adaptiveSpeed = currentSpeed * 0.5 -- Slow down ketika dekat
+            else
+                adaptiveSpeed = currentSpeed * math.min(distance / 20, 2) -- Accelerate
+            end
             
-            wait(CONFIG.UpdateDelay)
+            -- Apply velocity dengan smoothing
+            bodyVelocity.Velocity = direction * adaptiveSpeed
+            
+            -- Optimized wait
+            RunService.Heartbeat:Wait()
         end
         
         -- Cleanup
@@ -114,62 +167,99 @@ local function movePartToPlayer(part)
             bodyVelocity:Destroy()
         end
         
-        -- Reset properties
-        if part and part.Parent then
-            part.Anchored = originalAnchored
-            part.CanCollide = originalCanCollide
-        end
-        
         attractedParts[part] = nil
     end)()
 end
 
--- Main magnet system sederhana
+-- Optimized Scanning System
+local function scanForParts()
+    local character = player.Character
+    if not character then return {} end
+    
+    local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
+    if not humanoidRootPart then return {} end
+    
+    local foundParts = {}
+    local scanCount = 0
+    
+    for _, part in pairs(workspace:GetDescendants()) do
+        if scanCount >= 50 then break end -- Limit scanning
+        
+        if part:IsA("BasePart") and shouldAttractPart(part) then
+            local distance = (part.Position - humanoidRootPart.Position).Magnitude
+            if distance <= currentRange then
+                table.insert(foundParts, part)
+                scanCount += 1
+                
+                -- Attract connected parts jika enabled
+                if CONFIG.AttractRopes then
+                    local connectedParts = findConnectedParts(part)
+                    for _, connectedPart in ipairs(connectedParts) do
+                        if shouldAttractPart(connectedPart) then
+                            table.insert(foundParts, connectedPart)
+                        end
+                    end
+                end
+            end
+        end
+    end
+    
+    return foundParts
+end
+
+-- Main Magnet System yang Dioptimalkan
 local function startMagnetSystem()
     if isMagnetActive then return end
     
     isMagnetActive = true
-    print("🧲 MAGNET AKTIF")
+    print("🚀 UNAUTHORIZED MAGNET SUPER AKTIF!")
     
-    -- Continuous scanning
+    -- Clear previous
+    attractedParts = {}
+    partsToAttract = {}
+    
+    -- Optimized main loop
     magnetConnection = RunService.Heartbeat:Connect(function()
         if not isMagnetActive then return end
         
-        local character = player.Character
-        if not character then return end
-        
-        local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
-        if not humanoidRootPart then return end
-        
-        -- Scan parts dalam range
-        for _, part in pairs(workspace:GetDescendants()) do
-            if part:IsA("BasePart") and shouldAttractPart(part) then
-                local distance = (part.Position - humanoidRootPart.Position).Magnitude
-                if distance <= CONFIG.AttractRange then
-                    movePartToPlayer(part)
-                    wait(0.1) -- Delay antar part
+        -- Scan untuk parts baru setiap 0.5 detik
+        if tick() % 0.5 < 0.016 then
+            local newParts = scanForParts()
+            for _, part in ipairs(newParts) do
+                if not attractedParts[part] then
+                    table.insert(partsToAttract, part)
                 end
+            end
+        end
+        
+        -- Process parts dengan rate limiting
+        local processed = 0
+        while #partsToAttract > 0 and processed < CONFIG.MaxPartsPerFrame do
+            local part = table.remove(partsToAttract, 1)
+            if part and part.Parent then
+                movePartToPlayer(part)
+                processed += 1
             end
         end
     end)
 end
 
--- Stop system
+-- Stop System
 local function stopMagnetSystem()
     if not isMagnetActive then return end
     
     isMagnetActive = false
-    print("🛑 Magnet nonaktif")
+    print("🛑 Magnet system dihentikan")
     
     if magnetConnection then
         magnetConnection:Disconnect()
         magnetConnection = nil
     end
     
-    -- Stop semua parts
+    -- Cleanup semua parts
     for part, _ in pairs(attractedParts) do
         if part and part.Parent then
-            local bodyVelocity = part:FindFirstChild("BodyVelocity")
+            local bodyVelocity = part:FindFirstChild("MagnetVelocity")
             if bodyVelocity then
                 bodyVelocity:Destroy()
             end
@@ -177,107 +267,248 @@ local function stopMagnetSystem()
     end
     
     attractedParts = {}
+    partsToAttract = {}
 end
 
--- Simple GUI untuk Android
+-- Advanced GUI dengan Controls
 local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "MagnetGUI"
+screenGui.Name = "AdvancedMagnetGUI"
 screenGui.ResetOnSpawn = false
 screenGui.Parent = player.PlayerGui
 
--- Main Frame sederhana
+-- Main Container
 local mainFrame = Instance.new("Frame")
-mainFrame.Size = UDim2.new(0, 250, 0, 150)
-mainFrame.Position = UDim2.new(0, 20, 0, 20)
-mainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
+mainFrame.Size = UDim2.new(0, 300, 0, 350)
+mainFrame.Position = UDim2.new(0, 10, 0, 10)
+mainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 25)
 mainFrame.BorderSizePixel = 2
-mainFrame.BorderColor3 = Color3.fromRGB(0, 100, 255)
+mainFrame.BorderColor3 = Color3.fromRGB(0, 150, 255)
 mainFrame.Parent = screenGui
 
-local corner = Instance.new("UICorner")
-corner.CornerRadius = UDim.new(0, 8)
-corner.Parent = mainFrame
+local mainCorner = Instance.new("UICorner")
+mainCorner.CornerRadius = UDim.new(0, 12)
+mainCorner.Parent = mainFrame
 
--- Title
-local title = Instance.new("TextLabel")
-title.Size = UDim2.new(1, 0, 0, 30)
-title.Position = UDim2.new(0, 0, 0, 0)
-title.BackgroundColor3 = Color3.fromRGB(0, 80, 200)
-title.BorderSizePixel = 0
-title.Text = "🧲 MAGNET SYSTEM"
-title.TextColor3 = Color3.fromRGB(255, 255, 255)
-title.TextSize = 14
-title.Font = Enum.Font.GothamBold
-title.Parent = mainFrame
+-- Title Bar
+local titleBar = Instance.new("TextLabel")
+titleBar.Size = UDim2.new(1, 0, 0, 40)
+titleBar.BackgroundColor3 = Color3.fromRGB(0, 100, 200)
+titleBar.BorderSizePixel = 0
+titleBar.Text = "🚀 ADVANCED MAGNET SYSTEM"
+titleBar.TextColor3 = Color3.fromRGB(255, 255, 255)
+titleBar.TextSize = 16
+titleBar.Font = Enum.Font.GothamBold
+titleBar.Parent = mainFrame
 
 local titleCorner = Instance.new("UICorner")
-titleCorner.CornerRadius = UDim.new(0, 8)
-titleCorner.Parent = title
+titleCorner.CornerRadius = UDim.new(0, 12)
+titleCorner.Parent = titleBar
 
--- Status
+-- Content Area
+local contentFrame = Instance.new("Frame")
+contentFrame.Size = UDim2.new(1, 0, 1, -40)
+contentFrame.Position = UDim2.new(0, 0, 0, 40)
+contentFrame.BackgroundTransparency = 1
+contentFrame.Parent = mainFrame
+
+-- Status Display
 local statusLabel = Instance.new("TextLabel")
-statusLabel.Size = UDim2.new(1, -10, 0, 40)
-statusLabel.Position = UDim2.new(0, 5, 0, 35)
-statusLabel.BackgroundTransparency = 1
-statusLabel.Text = "🔴 SYSTEM SIAP\nTekan ACTIVATE untuk mulai"
+statusLabel.Size = UDim2.new(1, -20, 0, 70)
+statusLabel.Position = UDim2.new(0, 10, 0, 10)
+statusLabel.BackgroundColor3 = Color3.fromRGB(25, 25, 40)
+statusLabel.BorderColor3 = Color3.fromRGB(0, 100, 255)
+statusLabel.BorderSizePixel = 1
+statusLabel.Text = "🔴 SYSTEM READY\n• Speed: " .. currentSpeed .. "\n• Range: " .. currentRange .. "\n• Rope Support: ON"
 statusLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 statusLabel.TextSize = 12
 statusLabel.Font = Enum.Font.Gotham
 statusLabel.TextXAlignment = Enum.TextXAlignment.Left
 statusLabel.TextYAlignment = Enum.TextYAlignment.Top
 statusLabel.TextWrapped = true
-statusLabel.Parent = mainFrame
+statusLabel.Parent = contentFrame
 
--- Activate Button
+local statusCorner = Instance.new("UICorner")
+statusCorner.CornerRadius = UDim.new(0, 8)
+statusCorner.Parent = statusLabel
+
+-- Speed Control
+local speedLabel = Instance.new("TextLabel")
+speedLabel.Size = UDim2.new(1, -20, 0, 20)
+speedLabel.Position = UDim2.new(0, 10, 0, 90)
+speedLabel.BackgroundTransparency = 1
+speedLabel.Text = "⚡ SPEED: " .. currentSpeed
+speedLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+speedLabel.TextSize = 12
+speedLabel.Font = Enum.Font.GothamBold
+speedLabel.TextXAlignment = Enum.TextXAlignment.Left
+speedLabel.Parent = contentFrame
+
+local speedSlider = Instance.new("TextButton")
+speedSlider.Size = UDim2.new(1, -20, 0, 25)
+speedSlider.Position = UDim2.new(0, 10, 0, 110)
+speedSlider.BackgroundColor3 = Color3.fromRGB(40, 40, 60)
+speedSlider.Text = "│────────────│"
+speedLabel.TextColor3 = Color3.fromRGB(0, 255, 0)
+speedSlider.TextSize = 14
+speedSlider.Font = Enum.Font.GothamBold
+speedSlider.Parent = contentFrame
+
+local speedCorner = Instance.new("UICorner")
+speedCorner.CornerRadius = UDim.new(0, 6)
+speedCorner.Parent = speedSlider
+
+-- Range Control
+local rangeLabel = Instance.new("TextLabel")
+rangeLabel.Size = UDim2.new(1, -20, 0, 20)
+rangeLabel.Position = UDim2.new(0, 10, 0, 145)
+rangeLabel.BackgroundTransparency = 1
+rangeLabel.Text = "📡 RANGE: " .. currentRange
+rangeLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+rangeLabel.TextSize = 12
+rangeLabel.Font = Enum.Font.GothamBold
+rangeLabel.TextXAlignment = Enum.TextXAlignment.Left
+rangeLabel.Parent = contentFrame
+
+local rangeSlider = Instance.new("TextButton")
+rangeSlider.Size = UDim2.new(1, -20, 0, 25)
+rangeSlider.Position = UDim2.new(0, 10, 0, 165)
+rangeSlider.BackgroundColor3 = Color3.fromRGB(40, 40, 60)
+rangeSlider.Text = "│────────────│"
+rangeSlider.TextColor3 = Color3.fromRGB(0, 255, 255)
+rangeSlider.TextSize = 14
+rangeSlider.Font = Enum.Font.GothamBold
+rangeSlider.Parent = contentFrame
+
+local rangeCorner = Instance.new("UICorner")
+rangeCorner.CornerRadius = UDim.new(0, 6)
+rangeCorner.Parent = rangeSlider
+
+-- Control Buttons
 local activateBtn = Instance.new("TextButton")
-activateBtn.Size = UDim2.new(1, -10, 0, 30)
-activateBtn.Position = UDim2.new(0, 5, 0, 80)
-activateBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 255)
-activateBtn.Text = "⚡ ACTIVATE"
+activateBtn.Size = UDim2.new(1, -20, 0, 35)
+activateBtn.Position = UDim2.new(0, 10, 0, 200)
+activateBtn.BackgroundColor3 = Color3.fromRGB(0, 200, 0)
+activateBtn.BorderSizePixel = 2
+activateBtn.BorderColor3 = Color3.fromRGB(0, 255, 0)
+activateBtn.Text = "🚀 ACTIVATE SUPER MAGNET"
 activateBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 activateBtn.TextSize = 14
 activateBtn.Font = Enum.Font.GothamBold
-activateBtn.Parent = mainFrame
+activateBtn.Parent = contentFrame
 
-local btnCorner = Instance.new("UICorner")
-btnCorner.CornerRadius = UDim.new(0, 6)
-btnCorner.Parent = activateBtn
+local activateCorner = Instance.new("UICorner")
+activateCorner.CornerRadius = UDim.new(0, 8)
+activateCorner.Parent = activateBtn
 
--- Deactivate Button
 local deactivateBtn = Instance.new("TextButton")
-deactivateBtn.Size = UDim2.new(1, -10, 0, 30)
-deactivateBtn.Position = UDim2.new(0, 5, 0, 115)
-deactivateBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 80)
-deactivateBtn.Text = "🛑 DEACTIVATE"
-deactivateBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
+deactivateBtn.Size = UDim2.new(1, -20, 0, 35)
+deactivateBtn.Position = UDim2.new(0, 10, 0, 245)
+deactivateBtn.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
+deactivateBtn.BorderSizePixel = 2
+deactivateBtn.BorderColor3 = Color3.fromRGB(255, 0, 0)
+deactivateBtn.Text = "🛑 EMERGENCY STOP"
+deactivateBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 deactivateBtn.TextSize = 14
 deactivateBtn.Font = Enum.Font.GothamBold
-deactivateBtn.Parent = mainFrame
+deactivateBtn.Parent = contentFrame
 
 local deactivateCorner = Instance.new("UICorner")
-deactivateCorner.CornerRadius = UDim.new(0, 6)
+deactivateCorner.CornerRadius = UDim.new(0, 8)
 deactivateCorner.Parent = deactivateBtn
 
--- Button functions
+-- Toggle Button untuk Rope Support
+local ropeToggle = Instance.new("TextButton")
+ropeToggle.Size = UDim2.new(1, -20, 0, 25)
+ropeToggle.Position = UDim2.new(0, 10, 0, 290)
+ropeToggle.BackgroundColor3 = Color3.fromRGB(0, 150, 255)
+ropeToggle.Text = "🔗 ROPE SUPPORT: ON"
+ropeToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
+ropeToggle.TextSize = 12
+ropeToggle.Font = Enum.Font.GothamBold
+ropeToggle.Parent = contentFrame
+
+local toggleCorner = Instance.new("UICorner")
+toggleCorner.CornerRadius = UDim.new(0, 6)
+toggleCorner.Parent = ropeToggle
+
+-- Slider Functionality
+local function updateSpeed(value)
+    currentSpeed = math.floor(20 + (value * 100))
+    speedLabel.Text = "⚡ SPEED: " .. currentSpeed
+    CONFIG.BaseSpeed = currentSpeed
+end
+
+local function updateRange(value)
+    currentRange = math.floor(20 + (value * 180))
+    rangeLabel.Text = "📡 RANGE: " .. currentRange
+    CONFIG.BaseRange = currentRange
+end
+
+-- Slider Controls
+speedSlider.MouseButton1Down:Connect(function()
+    local connection
+    connection = RunService.Heartbeat:Connect(function()
+        local mouse = game:GetService("Players").LocalPlayer:GetMouse()
+        local x = math.clamp((mouse.X - speedSlider.AbsolutePosition.X) / speedSlider.AbsoluteSize.X, 0, 1)
+        updateSpeed(x)
+        
+        -- Update slider visual
+        local bars = math.floor(x * 12)
+        local visual = "│" .. string.rep("─", bars) .. "○" .. string.rep(" ", 11 - bars) .. "│"
+        speedSlider.Text = visual
+    end)
+    
+    game:GetService("UserInputService").InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            connection:Disconnect()
+        end
+    end)
+end)
+
+rangeSlider.MouseButton1Down:Connect(function()
+    local connection
+    connection = RunService.Heartbeat:Connect(function()
+        local mouse = game:GetService("Players").LocalPlayer:GetMouse()
+        local x = math.clamp((mouse.X - rangeSlider.AbsolutePosition.X) / rangeSlider.AbsoluteSize.X, 0, 1)
+        updateRange(x)
+        
+        -- Update slider visual
+        local bars = math.floor(x * 12)
+        local visual = "│" .. string.rep("─", bars) .. "○" .. string.rep(" ", 11 - bars) .. "│"
+        rangeSlider.Text = visual
+    end)
+    
+    game:GetService("UserInputService").InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            connection:Disconnect()
+        end
+    end)
+end)
+
+-- Button Functions
 activateBtn.MouseButton1Click:Connect(function()
     startMagnetSystem()
-    statusLabel.Text = "🟢 MAGNET AKTIF\nSemua part bergerak ke kamu\nFE - Visible semua player"
-    activateBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 80)
-    deactivateBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 255)
+    statusLabel.Text = "🟢 SUPER MAGNET AKTIF!\n• Speed: " .. currentSpeed .. "\n• Range: " .. currentRange .. "\n• Parts attracted: " .. #partsToAttract
+    activateBtn.BackgroundColor3 = Color3.fromRGB(0, 100, 0)
 end)
 
 deactivateBtn.MouseButton1Click:Connect(function()
     stopMagnetSystem()
-    statusLabel.Text = "🔴 SYSTEM SIAP\nTekan ACTIVATE untuk mulai"
-    activateBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 255)
-    deactivateBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 80)
+    statusLabel.Text = "🔴 SYSTEM READY\n• Speed: " .. currentSpeed .. "\n• Range: " .. currentRange .. "\n• Rope Support: " .. (CONFIG.AttractRopes and "ON" or "OFF")
+    activateBtn.BackgroundColor3 = Color3.fromRGB(0, 200, 0)
 end)
 
--- Drag functionality sederhana
+ropeToggle.MouseButton1Click:Connect(function()
+    CONFIG.AttractRopes = not CONFIG.AttractRopes
+    ropeToggle.Text = "🔗 ROPE SUPPORT: " .. (CONFIG.AttractRopes and "ON" or "OFF")
+    ropeToggle.BackgroundColor3 = CONFIG.AttractRopes and Color3.fromRGB(0, 150, 255) or Color3.fromRGB(150, 150, 150)
+end)
+
+-- Drag Functionality
 local dragging = false
 local dragStart, startPos
 
-title.InputBegan:Connect(function(input)
+titleBar.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.Touch then
         dragging = true
         dragStart = input.Position
@@ -285,26 +516,27 @@ title.InputBegan:Connect(function(input)
     end
 end)
 
-title.InputChanged:Connect(function(input)
+titleBar.InputChanged:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.Touch and dragging then
         local delta = input.Position - dragStart
         mainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
     end
 end)
 
-title.InputEnded:Connect(function(input)
+titleBar.InputEnded:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.Touch then
         dragging = false
     end
 end)
 
--- Auto stop ketika character mati
+-- Auto cleanup
 player.CharacterAdded:Connect(function(character)
     character:WaitForChild("Humanoid").Died:Connect(function()
         stopMagnetSystem()
     end)
 end)
 
-print("✅ Magnet System Loaded untuk Delta Android!")
-print("⚡ Tekan ACTIVATE untuk mulai menarik part")
-print("📱 Dioptimalkan untuk mobile performance")
+print("✅ ADVANCED MAGNET SYSTEM LOADED!")
+print("🚀 Features: High Speed, Rope Support, Anti Lag")
+print("⚡ Use sliders to adjust speed and range")
+print("🔗 Rope support enabled for ladders and connected objects")
