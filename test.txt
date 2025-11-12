@@ -1,5 +1,5 @@
--- FE Magnet Parts System - Fixed Version
--- Parts physically move to player - All Players Visible
+-- FE Unauthorized Parts Magnet System
+-- All Objects Move to Player - FE Visible
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -8,35 +8,26 @@ local player = Players.LocalPlayer
 
 -- Configuration
 local CONFIG = {
-    MagnetPower = 10, -- Kecepatan mendekat
-    MagnetRange = 30, -- Jarak magnet aktif
-    AttractSpeed = 0.5, -- Kecepatan tween
-    Blacklist = {"Baseplate", "Terrain", "SpawnLocation", "Floor"} -- Part yang tidak tertarik
+    AttractSpeed = 1, -- Kecepatan mendekat
+    AttractRange = 100, -- Jarak magnet aktif
+    UpdateDelay = 0.1, -- Delay update
+    Blacklist = {"Baseplate", "Terrain", "SpawnLocation", "Floor", "Wall"} -- Part yang tidak tertarik
 }
 
 -- System Variables
 local isMagnetActive = false
+local magnetConnection = nil
 local attractedParts = {}
-local magnetConnections = {}
-local floatingButton
 
 -- Check if part should be attracted
 local function shouldAttractPart(part)
-    -- Skip if part is in blacklist
+    if not part or part.Parent == nil then return false end
+    
+    -- Skip blacklisted parts
     for _, blacklistedName in ipairs(CONFIG.Blacklist) do
         if string.find(string.lower(part.Name), string.lower(blacklistedName)) then
             return false
         end
-    end
-    
-    -- Skip if part is too big (probably structural)
-    if part.Size.Magnitude > 15 then
-        return false
-    end
-    
-    -- Skip if part is welded or anchored (probably important)
-    if part.Anchored then
-        return false
     end
     
     -- Skip if part is in player's character
@@ -52,84 +43,83 @@ local function shouldAttractPart(part)
     return true
 end
 
--- Find parts in range that can be attracted
-local function findPartsInRange()
+-- Find all parts that can be attracted
+local function findAllAttractableParts()
     local parts = {}
-    local character = player.Character
-    if not character then return parts end
     
-    local rootPart = character:FindFirstChild("HumanoidRootPart")
-    if not rootPart then return parts end
-    
-    local playerPosition = rootPart.Position
-    
-    for _, part in pairs(workspace:GetDescendants()) do
-        if part:IsA("BasePart") and shouldAttractPart(part) then
-            local distance = (part.Position - playerPosition).Magnitude
-            if distance <= CONFIG.MagnetRange then
-                table.insert(parts, part)
-            end
+    for _, obj in pairs(workspace:GetDescendants()) do
+        if obj:IsA("BasePart") and shouldAttractPart(obj) then
+            table.insert(parts, obj)
         end
     end
     
     return parts
 end
 
--- Move part towards player using BodyVelocity (FE compatible)
-local function attractPart(part)
+-- Move part to player using CFrame (FE compatible)
+local function movePartToPlayer(part)
     if not part or part.Parent == nil then return end
     
     local character = player.Character
     if not character then return end
     
-    local rootPart = character:FindFirstChild("HumanoidRootPart")
-    if not rootPart then return end
+    local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
+    if not humanoidRootPart then return end
     
     -- Mark as attracted
     attractedParts[part] = true
     
-    -- Create BodyVelocity for smooth movement
+    -- Store original properties
+    local originalCFrame = part.CFrame
+    local originalAnchored = part.Anchored
+    
+    -- Make part movable
+    part.Anchored = false
+    part.CanCollide = false
+    
+    -- Create body mover for smooth movement
     local bodyVelocity = Instance.new("BodyVelocity")
-    bodyVelocity.Name = "MagnetVelocity"
     bodyVelocity.Velocity = Vector3.new(0, 0, 0)
-    bodyVelocity.MaxForce = Vector3.new(4000, 4000, 4000) -- Reduced force for subtle movement
+    bodyVelocity.MaxForce = Vector3.new(40000, 40000, 40000)
+    bodyVelocity.P = 1250
     bodyVelocity.Parent = part
     
-    -- Create BodyGyro for stability
     local bodyGyro = Instance.new("BodyGyro")
-    bodyGyro.Name = "MagnetGyro"
-    bodyGyro.MaxTorque = Vector3.new(4000, 4000, 4000)
-    bodyGyro.P = 1000
-    bodyGyro.D = 100
+    bodyGyro.MaxTorque = Vector3.new(40000, 40000, 40000)
+    bodyGyro.P = 3000
     bodyGyro.Parent = part
     
-    -- Movement loop
-    local attractionThread = coroutine.create(function()
+    -- Movement coroutine
+    coroutine.wrap(function()
         while isMagnetActive and part and part.Parent and attractedParts[part] do
             local character = player.Character
             if not character then break end
             
-            local rootPart = character:FindFirstChild("HumanoidRootPart")
-            if not rootPart then break end
+            local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
+            if not humanoidRootPart then break end
             
-            -- Calculate direction to player
-            local direction = (rootPart.Position - part.Position).Unit
-            local distance = (rootPart.Position - part.Position).Magnitude
+            -- Calculate direction and distance to player
+            local targetPosition = humanoidRootPart.Position + Vector3.new(
+                math.random(-5, 5),
+                math.random(2, 5),
+                math.random(-5, 5)
+            )
             
-            -- Stop if very close to player
+            local direction = (targetPosition - part.Position).Unit
+            local distance = (targetPosition - part.Position).Magnitude
+            
+            -- Stop if very close
             if distance < 3 then
                 bodyVelocity.Velocity = Vector3.new(0, 0, 0)
                 break
             end
             
-            -- Move towards player
-            bodyVelocity.Velocity = direction * CONFIG.MagnetPower
+            -- Move towards player with smooth acceleration
+            local speed = math.min(CONFIG.AttractSpeed * 10, distance * 2)
+            bodyVelocity.Velocity = direction * speed
             
-            -- Add slight floating effect
-            local floatOffset = math.sin(tick() * 3) * 0.3
-            bodyVelocity.Velocity = bodyVelocity.Velocity + Vector3.new(0, floatOffset, 0)
-            
-            RunService.Heartbeat:Wait()
+            -- Add floating effect
+            wait(CONFIG.UpdateDelay)
         end
         
         -- Cleanup
@@ -139,36 +129,51 @@ local function attractPart(part)
         if bodyGyro and bodyGyro.Parent then
             bodyGyro:Destroy()
         end
+        
+        -- Restore original state if part still exists
+        if part and part.Parent then
+            part.Anchored = originalAnchored
+            part.CanCollide = true
+        end
+        
         attractedParts[part] = nil
-    end)
-    
-    coroutine.resume(attractionThread)
+    end)()
 end
 
--- Main magnet loop
+-- Main magnet system
 local function startMagnetSystem()
     if isMagnetActive then return end
     
     isMagnetActive = true
-    print("🧲 Magnet system activated")
+    print("🧲 UNAUTHORIZED MAGNET ACTIVATED")
     
-    local magnetLoop
-    magnetLoop = RunService.Heartbeat:Connect(function()
-        if not isMagnetActive or not player.Character then
-            if magnetLoop then
-                magnetLoop:Disconnect()
-            end
-            return
-        end
+    -- Get all parts at once
+    local allParts = findAllAttractableParts()
+    print("📦 Found " .. #allParts .. " parts to attract")
+    
+    -- Start attracting all parts
+    for _, part in ipairs(allParts) do
+        movePartToPlayer(part)
+    end
+    
+    -- Continuous scanning for new parts
+    magnetConnection = RunService.Heartbeat:Connect(function()
+        if not isMagnetActive or not player.Character then return end
         
-        -- Find and attract new parts in range
-        local partsInRange = findPartsInRange()
-        for _, part in ipairs(partsInRange) do
-            attractPart(part)
+        -- Find new parts that entered range
+        local character = player.Character
+        local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
+        if not humanoidRootPart then return end
+        
+        for _, part in pairs(workspace:GetDescendants()) do
+            if part:IsA("BasePart") and shouldAttractPart(part) then
+                local distance = (part.Position - humanoidRootPart.Position).Magnitude
+                if distance <= CONFIG.AttractRange then
+                    movePartToPlayer(part)
+                end
+            end
         end
     end)
-    
-    table.insert(magnetConnections, magnetLoop)
 end
 
 -- Stop magnet system
@@ -178,129 +183,43 @@ local function stopMagnetSystem()
     isMagnetActive = false
     print("✅ Magnet system deactivated")
     
-    -- Stop all movements
+    -- Stop connection
+    if magnetConnection then
+        magnetConnection:Disconnect()
+        magnetConnection = nil
+    end
+    
+    -- Stop all part movements
     for part, _ in pairs(attractedParts) do
         if part and part.Parent then
-            local bodyVelocity = part:FindFirstChild("MagnetVelocity")
+            local bodyVelocity = part:FindFirstChild("BodyVelocity")
             if bodyVelocity then
                 bodyVelocity:Destroy()
             end
-            local bodyGyro = part:FindFirstChild("MagnetGyro")
+            local bodyGyro = part:FindFirstChild("BodyGyro")
             if bodyGyro then
                 bodyGyro:Destroy()
             end
         end
     end
     
-    -- Disconnect all connections
-    for _, connection in ipairs(magnetConnections) do
-        connection:Disconnect()
-    end
-    magnetConnections = {}
-    
     -- Clear attracted parts
     attractedParts = {}
 end
 
--- Create floating button when GUI is closed
-local function createFloatingButton()
-    floatingButton = Instance.new("TextButton")
-    floatingButton.Name = "FloatingMagnetButton"
-    floatingButton.Size = UDim2.new(0, 60, 0, 60)
-    floatingButton.Position = UDim2.new(0, 20, 0, 20)
-    floatingButton.BackgroundColor3 = Color3.fromRGB(0, 100, 255)
-    floatingButton.Text = "🧲"
-    floatingButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-    floatingButton.TextSize = 20
-    floatingButton.Font = Enum.Font.GothamBold
-    floatingButton.Visible = false
-    floatingButton.ZIndex = 10
-    floatingButton.Parent = screenGui
-    
-    local floatingCorner = Instance.new("UICorner")
-    floatingCorner.CornerRadius = UDim.new(1, 0)
-    floatingCorner.Parent = floatingButton
-    
-    -- Add your custom logo here (replace the catbox.moe link)
-    local logoImage = Instance.new("ImageLabel")
-    logoImage.Size = UDim2.new(1, 0, 1, 0)
-    logoImage.BackgroundTransparency = 1
-    logoImage.Image = "https://files.catbox.moe/b0k250.jpg" -- Replace with your logo
-    logoImage.Visible = false
-    logoImage.Parent = floatingButton
-    
-    -- Drag functionality for floating button
-    local floatingDragging = false
-    local floatingDragInput, floatingDragStart, floatingStartPos
-    
-    local function updateFloating(input)
-        local delta = input.Position - floatingDragStart
-        floatingButton.Position = UDim2.new(floatingStartPos.X.Scale, floatingStartPos.X.Offset + delta.X, floatingStartPos.Y.Scale, floatingStartPos.Y.Offset + delta.Y)
-    end
-    
-    floatingButton.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            floatingDragging = true
-            floatingDragStart = input.Position
-            floatingStartPos = floatingButton.Position
-            
-            input.Changed:Connect(function()
-                if input.UserInputState == Enum.UserInputState.End then
-                    floatingDragging = false
-                end
-            end)
-        end
-    end)
-    
-    floatingButton.InputChanged:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-            floatingDragInput = input
-        end
-    end)
-    
-    game:GetService("UserInputService").InputChanged:Connect(function(input)
-        if input == floatingDragInput and floatingDragging then
-            updateFloating(input)
-        end
-    end)
-    
-    -- Show logo when clicked
-    floatingButton.MouseButton1Click:Connect(function()
-        logoImage.Visible = not logoImage.Visible
-        if logoImage.Visible then
-            floatingButton.Text = ""
-            wait(3)
-            logoImage.Visible = false
-            floatingButton.Text = "🧲"
-        end
-    end)
-    
-    -- Double click to show main GUI
-    local lastClickTime = 0
-    floatingButton.MouseButton1Click:Connect(function()
-        local currentTime = tick()
-        if currentTime - lastClickTime < 0.5 then
-            -- Double click detected
-            mainFrame.Visible = true
-            floatingButton.Visible = false
-        end
-        lastClickTime = currentTime
-    end)
-end
-
 -- Create GUI
 local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "MagnetSystemGUI"
+screenGui.Name = "UnauthorizedMagnetGUI"
 screenGui.ResetOnSpawn = false
 screenGui.Parent = player.PlayerGui
 
--- Main Frame with Dark Blue Theme
+-- Main Frame - Dark with Blue Stroke
 local mainFrame = Instance.new("Frame")
 mainFrame.Size = UDim2.new(0, 280, 0, 200)
 mainFrame.Position = UDim2.new(0, 50, 0, 50)
-mainFrame.BackgroundColor3 = Color3.fromRGB(15, 25, 45) -- Dark blue background
-mainFrame.BorderSizePixel = 1
-mainFrame.BorderColor3 = Color3.fromRGB(0, 100, 255) -- Blue stroke
+mainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 25)
+mainFrame.BorderSizePixel = 2
+mainFrame.BorderColor3 = Color3.fromRGB(0, 100, 255)
 mainFrame.Parent = screenGui
 
 local mainCorner = Instance.new("UICorner")
@@ -310,7 +229,7 @@ mainCorner.Parent = mainFrame
 -- Title Bar
 local titleBar = Instance.new("TextButton")
 titleBar.Size = UDim2.new(1, 0, 0, 40)
-titleBar.BackgroundColor3 = Color3.fromRGB(0, 80, 200) -- Darker blue
+titleBar.BackgroundColor3 = Color3.fromRGB(0, 80, 200)
 titleBar.BorderSizePixel = 0
 titleBar.Text = ""
 titleBar.AutoButtonColor = false
@@ -320,9 +239,9 @@ local title = Instance.new("TextLabel")
 title.Size = UDim2.new(1, -50, 1, 0)
 title.Position = UDim2.new(0, 10, 0, 0)
 title.BackgroundTransparency = 1
-title.Text = "🧲 Part Magnet"
+title.Text = "⚠️ UNAUTHORIZED MAGNET"
 title.TextColor3 = Color3.fromRGB(255, 255, 255)
-title.TextSize = 16
+title.TextSize = 14
 title.Font = Enum.Font.GothamBold
 title.TextXAlignment = Enum.TextXAlignment.Left
 title.Parent = titleBar
@@ -331,7 +250,7 @@ title.Parent = titleBar
 local closeBtn = Instance.new("TextButton")
 closeBtn.Size = UDim2.new(0, 30, 0, 30)
 closeBtn.Position = UDim2.new(1, -35, 0.5, -15)
-closeBtn.BackgroundColor3 = Color3.fromRGB(0, 100, 255) -- Blue
+closeBtn.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
 closeBtn.Text = "✕"
 closeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 closeBtn.TextSize = 14
@@ -353,10 +272,10 @@ contentFrame.Parent = mainFrame
 local statusLabel = Instance.new("TextLabel")
 statusLabel.Size = UDim2.new(1, -20, 0, 60)
 statusLabel.Position = UDim2.new(0, 10, 0, 10)
-statusLabel.BackgroundColor3 = Color3.fromRGB(25, 35, 65) -- Dark blue
-statusLabel.BorderColor3 = Color3.fromRGB(0, 100, 255) -- Blue stroke
+statusLabel.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
+statusLabel.BorderColor3 = Color3.fromRGB(0, 100, 255)
 statusLabel.BorderSizePixel = 1
-statusLabel.Text = "🔴 Magnet: OFF\nParts move slowly towards you\nFE - Visible to all players"
+statusLabel.Text = "🔴 SYSTEM READY\nAll unauthorized parts will move to you\nFE - Visible to all players"
 statusLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 statusLabel.TextSize = 12
 statusLabel.Font = Enum.Font.Gotham
@@ -373,10 +292,10 @@ statusCorner.Parent = statusLabel
 local activateBtn = Instance.new("TextButton")
 activateBtn.Size = UDim2.new(1, -20, 0, 40)
 activateBtn.Position = UDim2.new(0, 10, 0, 80)
-activateBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 255) -- Bright blue
+activateBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 255)
 activateBtn.BorderColor3 = Color3.fromRGB(0, 100, 255)
 activateBtn.BorderSizePixel = 1
-activateBtn.Text = "🧲 ACTIVATE MAGNET"
+activateBtn.Text = "⚠️ ACTIVATE UNAUTHORIZED"
 activateBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 activateBtn.TextSize = 14
 activateBtn.Font = Enum.Font.GothamBold
@@ -389,10 +308,10 @@ activateCorner.Parent = activateBtn
 local deactivateBtn = Instance.new("TextButton")
 deactivateBtn.Size = UDim2.new(1, -20, 0, 40)
 deactivateBtn.Position = UDim2.new(0, 10, 0, 130)
-deactivateBtn.BackgroundColor3 = Color3.fromRGB(40, 60, 100) -- Dark blue
+deactivateBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 60)
 activateBtn.BorderColor3 = Color3.fromRGB(0, 100, 255)
 activateBtn.BorderSizePixel = 1
-deactivateBtn.Text = "✅ STOP MAGNET"
+deactivateBtn.Text = "✅ DEACTIVATE"
 deactivateBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
 deactivateBtn.TextSize = 14
 deactivateBtn.Font = Enum.Font.GothamBold
@@ -402,46 +321,78 @@ local deactivateCorner = Instance.new("UICorner")
 deactivateCorner.CornerRadius = UDim.new(0, 8)
 deactivateCorner.Parent = deactivateBtn
 
+-- Floating Button
+local floatingButton = Instance.new("TextButton")
+floatingButton.Name = "FloatingMagnetButton"
+floatingButton.Size = UDim2.new(0, 60, 0, 60)
+floatingButton.Position = UDim2.new(0, 20, 0, 20)
+floatingButton.BackgroundColor3 = Color3.fromRGB(0, 100, 255)
+floatingButton.BorderColor3 = Color3.fromRGB(0, 150, 255)
+floatingButton.BorderSizePixel = 2
+floatingButton.Text = "⚠️"
+floatingButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+floatingButton.TextSize = 20
+floatingButton.Font = Enum.Font.GothamBold
+floatingButton.Visible = false
+floatingButton.ZIndex = 10
+floatingButton.Parent = screenGui
+
+local floatingCorner = Instance.new("UICorner")
+floatingCorner.CornerRadius = UDim.new(1, 0)
+floatingCorner.Parent = floatingButton
+
+-- Logo Display
+local logoImage = Instance.new("ImageLabel")
+logoImage.Size = UDim2.new(1, 0, 1, 0)
+logoImage.BackgroundTransparency = 1
+logoImage.Image = "https://files.catbox.moe/b0k250.jpg" -- GANTI DENGAN LOGO ANDA
+logoImage.Visible = false
+logoImage.Parent = floatingButton
+
 -- Button Functions
 activateBtn.MouseButton1Click:Connect(function()
     startMagnetSystem()
-    statusLabel.Text = "🟢 Magnet: ACTIVE\nParts moving towards you\nFE - All players can see"
-    activateBtn.BackgroundColor3 = Color3.fromRGB(40, 60, 100)
+    statusLabel.Text = "🟢 UNAUTHORIZED ACTIVE\nAll parts moving to you\nFE - All players can see"
+    activateBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 60)
     deactivateBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 255)
 end)
 
 deactivateBtn.MouseButton1Click:Connect(function()
     stopMagnetSystem()
-    statusLabel.Text = "🔴 Magnet: OFF\nParts move slowly towards you\nFE - Visible to all players"
+    statusLabel.Text = "🔴 SYSTEM READY\nAll unauthorized parts will move to you\nFE - Visible to all players"
     activateBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 255)
-    deactivateBtn.BackgroundColor3 = Color3.fromRGB(40, 60, 100)
+    deactivateBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 60)
 end)
 
 closeBtn.MouseButton1Click:Connect(function()
     stopMagnetSystem()
     mainFrame.Visible = false
-    if floatingButton then
-        floatingButton.Visible = true
+    floatingButton.Visible = true
+end)
+
+-- Floating button functionality
+floatingButton.MouseButton1Click:Connect(function()
+    logoImage.Visible = not logoImage.Visible
+    if logoImage.Visible then
+        floatingButton.Text = ""
+        wait(3)
+        logoImage.Visible = false
+        floatingButton.Text = "⚠️"
     end
 end)
 
--- Create floating button
-createFloatingButton()
-
--- Auto stop when character dies
-player.CharacterAdded:Connect(function(character)
-    character:WaitForChild("HumanoidRootPart")
-    if isMagnetActive then
-        wait(2)
-        startMagnetSystem()
+-- Double click to show main GUI
+local lastClickTime = 0
+floatingButton.MouseButton1Click:Connect(function()
+    local currentTime = tick()
+    if currentTime - lastClickTime < 0.5 then
+        mainFrame.Visible = true
+        floatingButton.Visible = false
     end
+    lastClickTime = currentTime
 end)
 
-player.CharacterRemoving:Connect(function()
-    stopMagnetSystem()
-end)
-
--- Drag functionality for main GUI
+-- Drag functionality
 local dragging = false
 local dragInput, dragStart, startPos
 
@@ -476,8 +427,56 @@ game:GetService("UserInputService").InputChanged:Connect(function(input)
     end
 end)
 
-print("Magnet System Loaded!")
-print("✅ Parts physically move to player position")
-print("👁️ All players can see the effect")
-print("🎨 Dark blue theme with blue strokes")
-print("🔧 Double click floating button to reopen GUI")
+-- Floating button drag
+local floatingDragging = false
+local floatingDragInput, floatingDragStart, floatingStartPos
+
+local function updateFloating(input)
+    local delta = input.Position - floatingDragStart
+    floatingButton.Position = UDim2.new(floatingStartPos.X.Scale, floatingStartPos.X.Offset + delta.X, floatingStartPos.Y.Scale, floatingStartPos.Y.Offset + delta.Y)
+end
+
+floatingButton.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        floatingDragging = true
+        floatingDragStart = input.Position
+        floatingStartPos = floatingButton.Position
+        
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                floatingDragging = false
+            end
+        end)
+    end
+end)
+
+floatingButton.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+        floatingDragInput = input
+    end
+end)
+
+game:GetService("UserInputService").InputChanged:Connect(function(input)
+    if input == floatingDragInput and floatingDragging then
+        updateFloating(input)
+    end
+end)
+
+-- Auto stop when character dies
+player.CharacterAdded:Connect(function(character)
+    character:WaitForChild("HumanoidRootPart")
+    if isMagnetActive then
+        wait(2)
+        startMagnetSystem()
+    end
+end)
+
+player.CharacterRemoving:Connect(function()
+    stopMagnetSystem()
+end)
+
+print("⚠️ UNAUTHORIZED MAGNET SYSTEM LOADED!")
+print("✅ All parts will physically move to player")
+print("👁️ FE Compatible - All players can see")
+print("🎨 Dark theme with blue strokes")
+print("🔧 Replace logo link with your Catbox.moe image")
