@@ -1,19 +1,20 @@
--- WORKING Mobile Mountain Tools with ALL FEATURES
--- Simple Drag System - Guaranteed Working
+-- Auto Lag Server GUI
+-- Compact Mobile Design with Drag Functionality
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local player = Players.LocalPlayer
 
--- Variables
-local isRunning = false
-local currentCheckpoint = 1
-local checkpoints = {}
+-- Lag Variables
+local isLagging = false
+local lagIntensity = 50
+local lagMethod = "Particles"
+local lagThreads = {}
 
 -- Create GUI
 local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "WorkingMountainTools"
+screenGui.Name = "AutoLagServer"
 screenGui.ResetOnSpawn = false
 screenGui.Parent = player.PlayerGui
 
@@ -21,7 +22,7 @@ screenGui.Parent = player.PlayerGui
 local mainFrame = Instance.new("Frame")
 mainFrame.Name = "MainFrame"
 mainFrame.Size = UDim2.new(0, 280, 0, 350)
-mainFrame.Position = UDim2.new(0, 50, 0, 50) -- Start position
+mainFrame.Position = UDim2.new(0, 50, 0, 50)
 mainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
 mainFrame.BorderSizePixel = 0
 mainFrame.Parent = screenGui
@@ -34,7 +35,7 @@ mainCorner.Parent = mainFrame
 local titleBar = Instance.new("TextButton")
 titleBar.Name = "TitleBar"
 titleBar.Size = UDim2.new(1, 0, 0, 40)
-titleBar.BackgroundColor3 = Color3.fromRGB(138, 43, 226)
+titleBar.BackgroundColor3 = Color3.fromRGB(231, 76, 60)
 titleBar.BorderSizePixel = 0
 titleBar.Text = ""
 titleBar.AutoButtonColor = false
@@ -44,7 +45,7 @@ local title = Instance.new("TextLabel")
 title.Size = UDim2.new(1, -50, 1, 0)
 title.Position = UDim2.new(0, 10, 0, 0)
 title.BackgroundTransparency = 1
-title.Text = "⛰️ Mountain Tools"
+title.Text = "⚡ Auto Lag Server"
 title.TextColor3 = Color3.fromRGB(255, 255, 255)
 title.TextSize = 16
 title.Font = Enum.Font.GothamBold
@@ -75,285 +76,165 @@ contentFrame.Position = UDim2.new(0, 0, 0, 40)
 contentFrame.BackgroundTransparency = 1
 contentFrame.Parent = mainFrame
 
--- Tab Buttons
-local tabsFrame = Instance.new("Frame")
-tabsFrame.Size = UDim2.new(1, -20, 0, 30)
-tabsFrame.Position = UDim2.new(0, 10, 0, 10)
-tabsFrame.BackgroundTransparency = 1
-tabsFrame.Parent = contentFrame
-
-local checkpointTab = Instance.new("TextButton")
-checkpointTab.Size = UDim2.new(0.33, -2, 1, 0)
-checkpointTab.Position = UDim2.new(0, 0, 0, 0)
-checkpointTab.BackgroundColor3 = Color3.fromRGB(52, 152, 219)
-checkpointTab.Text = "🎯"
-checkpointTab.TextColor3 = Color3.fromRGB(255, 255, 255)
-checkpointTab.TextSize = 14
-checkpointTab.Font = Enum.Font.GothamBold
-checkpointTab.Parent = tabsFrame
-
-local securityTab = Instance.new("TextButton")
-securityTab.Size = UDim2.new(0.33, -2, 1, 0)
-securityTab.Position = UDim2.new(0.33, 0, 0, 0)
-securityTab.BackgroundColor3 = Color3.fromRGB(149, 165, 166)
-securityTab.Text = "🔓"
-securityTab.TextColor3 = Color3.fromRGB(255, 255, 255)
-securityTab.TextSize = 14
-securityTab.Font = Enum.Font.GothamBold
-securityTab.Parent = tabsFrame
-
-local notesTab = Instance.new("TextButton")
-notesTab.Size = UDim2.new(0.34, 0, 1, 0)
-notesTab.Position = UDim2.new(0.66, 0, 0, 0)
-notesTab.BackgroundColor3 = Color3.fromRGB(149, 165, 166)
-notesTab.Text = "💬"
-notesTab.TextColor3 = Color3.fromRGB(255, 255, 255)
-notesTab.TextSize = 14
-notesTab.Font = Enum.Font.GothamBold
-notesTab.Parent = tabsFrame
-
--- Add corners to tabs
-for _, tab in pairs(tabsFrame:GetChildren()) do
-    if tab:IsA("TextButton") then
-        local corner = Instance.new("UICorner")
-        corner.CornerRadius = UDim.new(0, 6)
-        corner.Parent = tab
-    end
-end
-
--- Tab Content Area
-local tabContent = Instance.new("Frame")
-tabContent.Size = UDim2.new(1, -20, 1, -50)
-tabContent.Position = UDim2.new(0, 10, 0, 50)
-tabContent.BackgroundTransparency = 1
-tabContent.Parent = contentFrame
-
--- Checkpoint Tab Content
-local checkpointContent = Instance.new("Frame")
-checkpointContent.Size = UDim2.new(1, 0, 1, 0)
-checkpointContent.BackgroundTransparency = 1
-checkpointContent.Visible = true
-checkpointContent.Parent = tabContent
-
+-- Status Display
 local statusLabel = Instance.new("TextLabel")
-statusLabel.Size = UDim2.new(1, 0, 0, 25)
+statusLabel.Size = UDim2.new(1, -20, 0, 40)
+statusLabel.Position = UDim2.new(0, 10, 0, 10)
 statusLabel.BackgroundColor3 = Color3.fromRGB(45, 45, 55)
-statusLabel.Text = "🔴 Ready"
+statusLabel.Text = "🔴 Lag: OFF"
 statusLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-statusLabel.TextSize = 12
-statusLabel.Font = Enum.Font.Gotham
-statusLabel.Parent = checkpointContent
+statusLabel.TextSize = 14
+statusLabel.Font = Enum.Font.GothamBold
+statusLabel.Parent = contentFrame
 
 local statusCorner = Instance.new("UICorner")
-statusCorner.CornerRadius = UDim.new(0, 6)
+statusCorner.CornerRadius = UDim.new(0, 8)
 statusCorner.Parent = statusLabel
 
-local checkpointInfo = Instance.new("TextLabel")
-checkpointInfo.Size = UDim2.new(1, 0, 0, 25)
-checkpointInfo.Position = UDim2.new(0, 0, 0, 30)
-checkpointInfo.BackgroundColor3 = Color3.fromRGB(45, 45, 55)
-checkpointInfo.Text = "📍 0/0 Checkpoints"
-checkpointInfo.TextColor3 = Color3.fromRGB(255, 255, 255)
-checkpointInfo.TextSize = 12
-checkpointInfo.Font = Enum.Font.Gotham
-checkpointInfo.Parent = checkpointContent
+-- Lag Intensity Control
+local intensityFrame = Instance.new("Frame")
+intensityFrame.Size = UDim2.new(1, -20, 0, 70)
+intensityFrame.Position = UDim2.new(0, 10, 0, 60)
+intensityFrame.BackgroundColor3 = Color3.fromRGB(45, 45, 55)
+intensityFrame.Parent = contentFrame
 
-local infoCorner = Instance.new("UICorner")
-infoCorner.CornerRadius = UDim.new(0, 6)
-infoCorner.Parent = checkpointInfo
+local intensityCorner = Instance.new("UICorner")
+intensityCorner.CornerRadius = UDim.new(0, 8)
+intensityCorner.Parent = intensityFrame
 
--- Checkpoint Buttons
-local scanBtn = Instance.new("TextButton")
-scanBtn.Size = UDim2.new(1, 0, 0, 35)
-scanBtn.Position = UDim2.new(0, 0, 0, 65)
-scanBtn.BackgroundColor3 = Color3.fromRGB(52, 152, 219)
-scanBtn.Text = "🔍 Scan Checkpoints"
-scanBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-scanBtn.TextSize = 12
-scanBtn.Font = Enum.Font.GothamBold
-scanBtn.Parent = checkpointContent
+local intensityLabel = Instance.new("TextLabel")
+intensityLabel.Size = UDim2.new(1, -10, 0, 25)
+intensityLabel.Position = UDim2.new(0, 10, 0, 5)
+intensityLabel.BackgroundTransparency = 1
+intensityLabel.Text = "⚡ Lag Intensity: 50%"
+intensityLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+intensityLabel.TextSize = 14
+intensityLabel.Font = Enum.Font.GothamBold
+intensityLabel.TextXAlignment = Enum.TextXAlignment.Left
+intensityLabel.Parent = intensityFrame
 
-local scanCorner = Instance.new("UICorner")
-scanCorner.CornerRadius = UDim.new(0, 6)
-scanCorner.Parent = scanBtn
+local intensitySlider = Instance.new("Frame")
+intensitySlider.Name = "IntensitySlider"
+intensitySlider.Size = UDim2.new(1, -20, 0, 6)
+intensitySlider.Position = UDim2.new(0, 10, 0, 35)
+intensitySlider.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
+intensitySlider.Parent = intensityFrame
 
-local toggleBtn = Instance.new("TextButton")
-toggleBtn.Size = UDim2.new(1, 0, 0, 35)
-toggleBtn.Position = UDim2.new(0, 0, 0, 105)
-toggleBtn.BackgroundColor3 = Color3.fromRGB(46, 204, 113)
-toggleBtn.Text = "▶️ Start Auto TP"
-toggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-toggleBtn.TextSize = 12
-toggleBtn.Font = Enum.Font.GothamBold
-toggleBtn.Parent = checkpointContent
+local sliderCorner = Instance.new("UICorner")
+sliderCorner.CornerRadius = UDim.new(1, 0)
+sliderCorner.Parent = intensitySlider
 
-local toggleCorner = Instance.new("UICorner")
-toggleCorner.CornerRadius = UDim.new(0, 6)
-toggleCorner.Parent = toggleBtn
+local intensityFill = Instance.new("Frame")
+intensityFill.Name = "Fill"
+intensityFill.Size = UDim2.new(0.5, 0, 1, 0)
+intensityFill.BackgroundColor3 = Color3.fromRGB(231, 76, 60)
+intensityFill.BorderSizePixel = 0
+intensityFill.Parent = intensitySlider
 
-local loopToggle = Instance.new("TextButton")
-loopToggle.Size = UDim2.new(0.48, 0, 0, 30)
-loopToggle.Position = UDim2.new(0, 0, 0, 150)
-loopToggle.BackgroundColor3 = Color3.fromRGB(46, 204, 113)
-loopToggle.Text = "🔄 Loop: ON"
-loopToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
-loopToggle.TextSize = 11
-loopToggle.Font = Enum.Font.GothamBold
-loopToggle.Parent = checkpointContent
+local fillCorner = Instance.new("UICorner")
+fillCorner.CornerRadius = UDim.new(1, 0)
+fillCorner.Parent = intensityFill
 
-local loopCorner = Instance.new("UICorner")
-loopCorner.CornerRadius = UDim.new(0, 6)
-loopCorner.Parent = loopToggle
+local intensityHandle = Instance.new("Frame")
+intensityHandle.Name = "Handle"
+intensityHandle.Size = UDim2.new(0, 16, 0, 16)
+intensityHandle.Position = UDim2.new(0.5, -8, 0.5, -8)
+intensityHandle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+intensityHandle.Parent = intensitySlider
 
-local resetBtn = Instance.new("TextButton")
-resetBtn.Size = UDim2.new(0.48, 0, 0, 30)
-resetBtn.Position = UDim2.new(0.52, 0, 0, 150)
-resetBtn.BackgroundColor3 = Color3.fromRGB(231, 76, 60)
-resetBtn.Text = "🔄 Reset"
-resetBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-resetBtn.TextSize = 11
-resetBtn.Font = Enum.Font.GothamBold
-resetBtn.Parent = checkpointContent
+local handleCorner = Instance.new("UICorner")
+handleCorner.CornerRadius = UDim.new(1, 0)
+handleCorner.Parent = intensityHandle
 
-local resetCorner = Instance.new("UICorner")
-resetCorner.CornerRadius = UDim.new(0, 6)
-resetCorner.Parent = resetBtn
+-- Lag Method Selection
+local methodFrame = Instance.new("Frame")
+methodFrame.Size = UDim2.new(1, -20, 0, 90)
+methodFrame.Position = UDim2.new(0, 10, 0, 140)
+methodFrame.BackgroundColor3 = Color3.fromRGB(45, 45, 55)
+methodFrame.Parent = contentFrame
 
--- Security Tab Content
-local securityContent = Instance.new("Frame")
-securityContent.Size = UDim2.new(1, 0, 1, 0)
-securityContent.BackgroundTransparency = 1
-securityContent.Visible = false
-securityContent.Parent = tabContent
+local methodCorner = Instance.new("UICorner")
+methodCorner.CornerRadius = UDim.new(0, 8)
+methodCorner.Parent = methodFrame
 
-local securityStatus = Instance.new("TextLabel")
-securityStatus.Size = UDim2.new(1, 0, 0, 25)
-securityStatus.BackgroundColor3 = Color3.fromRGB(45, 45, 55)
-securityStatus.Text = "🔒 Not Scanned"
-securityStatus.TextColor3 = Color3.fromRGB(255, 255, 255)
-securityStatus.TextSize = 12
-securityStatus.Font = Enum.Font.Gotham
-securityStatus.Parent = securityContent
+local methodLabel = Instance.new("TextLabel")
+methodLabel.Size = UDim2.new(1, -10, 0, 25)
+methodLabel.Position = UDim2.new(0, 10, 0, 5)
+methodLabel.BackgroundTransparency = 1
+methodLabel.Text = "🎯 Lag Method"
+methodLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+methodLabel.TextSize = 14
+methodLabel.Font = Enum.Font.GothamBold
+methodLabel.TextXAlignment = Enum.TextXAlignment.Left
+methodLabel.Parent = methodFrame
 
-local securityStatusCorner = Instance.new("UICorner")
-securityStatusCorner.CornerRadius = UDim.new(0, 6)
-securityStatusCorner.Parent = securityStatus
+-- Method Buttons
+local method1 = Instance.new("TextButton")
+method1.Size = UDim2.new(1, -20, 0, 25)
+method1.Position = UDim2.new(0, 10, 0, 35)
+method1.BackgroundColor3 = Color3.fromRGB(52, 152, 219)
+method1.Text = "🌀 Particle Spam"
+method1.TextColor3 = Color3.fromRGB(255, 255, 255)
+method1.TextSize = 12
+method1.Font = Enum.Font.GothamBold
+method1.Parent = methodFrame
 
-local securityScanBtn = Instance.new("TextButton")
-securityScanBtn.Size = UDim2.new(1, 0, 0, 35)
-securityScanBtn.Position = UDim2.new(0, 0, 0, 35)
-securityScanBtn.BackgroundColor3 = Color3.fromRGB(230, 126, 34)
-securityScanBtn.Text = "🔍 Scan Backdoors"
-securityScanBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-securityScanBtn.TextSize = 12
-securityScanBtn.Font = Enum.Font.GothamBold
-securityScanBtn.Parent = securityContent
+local method2 = Instance.new("TextButton")
+method2.Size = UDim2.new(1, -20, 0, 25)
+method2.Position = UDim2.new(0, 10, 0, 65)
+method2.BackgroundColor3 = Color3.fromRGB(149, 165, 166)
+method2.Text = "📡 Network Flood"
+method2.TextColor3 = Color3.fromRGB(255, 255, 255)
+method2.TextSize = 12
+method2.Font = Enum.Font.GothamBold
+method2.Parent = methodFrame
 
-local securityScanCorner = Instance.new("UICorner")
-securityScanCorner.CornerRadius = UDim.new(0, 6)
-securityScanCorner.Parent = securityScanBtn
+local method1Corner = Instance.new("UICorner")
+method1Corner.CornerRadius = UDim.new(0, 6)
+method1Corner.Parent = method1
 
-local securityResults = Instance.new("TextLabel")
-securityResults.Size = UDim2.new(1, 0, 0, 80)
-securityResults.Position = UDim2.new(0, 0, 0, 80)
-securityResults.BackgroundColor3 = Color3.fromRGB(45, 45, 55)
-securityResults.TextColor3 = Color3.fromRGB(255, 255, 255)
-securityResults.TextSize = 10
-securityResults.Font = Enum.Font.Gotham
-securityResults.TextXAlignment = Enum.TextXAlignment.Left
-securityResults.TextYAlignment = Enum.TextYAlignment.Top
-securityResults.TextWrapped = true
-securityResults.Text = "Click scan to check for vulnerabilities..."
-securityResults.Parent = securityContent
+local method2Corner = Instance.new("UICorner")
+method2Corner.CornerRadius = UDim.new(0, 6)
+method2Corner.Parent = method2
 
-local resultsCorner = Instance.new("UICorner")
-resultsCorner.CornerRadius = UDim.new(0, 6)
-resultsCorner.Parent = securityResults
+-- Control Buttons
+local startBtn = Instance.new("TextButton")
+startBtn.Name = "StartButton"
+startBtn.Size = UDim2.new(1, -20, 0, 45)
+startBtn.Position = UDim2.new(0, 10, 0, 240)
+startBtn.BackgroundColor3 = Color3.fromRGB(46, 204, 113)
+startBtn.Text = "▶️ START LAG"
+startBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+startBtn.TextSize = 16
+startBtn.Font = Enum.Font.GothamBold
+startBtn.Parent = contentFrame
 
-local commandBox = Instance.new("TextBox")
-commandBox.Size = UDim2.new(1, 0, 0, 25)
-commandBox.Position = UDim2.new(0, 0, 0, 170)
-commandBox.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
-commandBox.TextColor3 = Color3.fromRGB(255, 255, 255)
-commandBox.PlaceholderText = "Enter command..."
-commandBox.Text = ""
-commandBox.TextSize = 11
-commandBox.Font = Enum.Font.Gotham
-commandBox.Parent = securityContent
+local startCorner = Instance.new("UICorner")
+startCorner.CornerRadius = UDim.new(0, 8)
+startCorner.Parent = startBtn
 
-local commandCorner = Instance.new("UICorner")
-commandCorner.CornerRadius = UDim.new(0, 6)
-commandCorner.Parent = commandBox
+local stopBtn = Instance.new("TextButton")
+stopBtn.Name = "StopButton"
+stopBtn.Size = UDim2.new(1, -20, 0, 35)
+stopBtn.Position = UDim2.new(0, 10, 0, 295)
+stopBtn.BackgroundColor3 = Color3.fromRGB(149, 165, 166)
+stopBtn.Text = "⏹️ STOP LAG"
+stopBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+stopBtn.TextSize = 14
+stopBtn.Font = Enum.Font.GothamBold
+stopBtn.Parent = contentFrame
 
-local executeBtn = Instance.new("TextButton")
-executeBtn.Size = UDim2.new(1, 0, 0, 25)
-executeBtn.Position = UDim2.new(0, 0, 0, 200)
-executeBtn.BackgroundColor3 = Color3.fromRGB(46, 204, 113)
-executeBtn.Text = "⚡ Execute Command"
-executeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-executeBtn.TextSize = 11
-executeBtn.Font = Enum.Font.GothamBold
-executeBtn.Parent = securityContent
-
-local executeCorner = Instance.new("UICorner")
-executeCorner.CornerRadius = UDim.new(0, 6)
-executeCorner.Parent = executeBtn
-
--- Notes Tab Content
-local notesContent = Instance.new("Frame")
-notesContent.Size = UDim2.new(1, 0, 1, 0)
-notesContent.BackgroundTransparency = 1
-notesContent.Visible = false
-notesContent.Parent = tabContent
-
-local notesDisplay = Instance.new("ScrollingFrame")
-notesDisplay.Size = UDim2.new(1, 0, 0, 150)
-notesDisplay.BackgroundColor3 = Color3.fromRGB(45, 45, 55)
-notesDisplay.BorderSizePixel = 0
-notesDisplay.ScrollBarThickness = 4
-notesDisplay.CanvasSize = UDim2.new(0, 0, 0, 0)
-notesDisplay.Parent = notesContent
-
-local notesCorner = Instance.new("UICorner")
-notesCorner.CornerRadius = UDim.new(0, 6)
-notesCorner.Parent = notesDisplay
-
-local messageBox = Instance.new("TextBox")
-messageBox.Size = UDim2.new(1, 0, 0, 35)
-messageBox.Position = UDim2.new(0, 0, 0, 160)
-messageBox.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
-messageBox.TextColor3 = Color3.fromRGB(255, 255, 255)
-messageBox.PlaceholderText = "Type message for all players..."
-messageBox.Text = ""
-messageBox.TextSize = 11
-messageBox.Font = Enum.Font.Gotham
-messageBox.Parent = notesContent
-
-local messageCorner = Instance.new("UICorner")
-messageCorner.CornerRadius = UDim.new(0, 6)
-messageCorner.Parent = messageBox
-
-local sendNotesBtn = Instance.new("TextButton")
-sendNotesBtn.Size = UDim2.new(1, 0, 0, 25)
-sendNotesBtn.Position = UDim2.new(0, 0, 0, 200)
-sendNotesBtn.BackgroundColor3 = Color3.fromRGB(52, 152, 219)
-sendNotesBtn.Text = "📤 Send Global Message"
-sendNotesBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-sendNotesBtn.TextSize = 11
-sendNotesBtn.Font = Enum.Font.GothamBold
-sendNotesBtn.Parent = notesContent
-
-local sendNotesCorner = Instance.new("UICorner")
-sendNotesCorner.CornerRadius = UDim.new(0, 6)
-sendNotesCorner.Parent = sendNotesBtn
+local stopCorner = Instance.new("UICorner")
+stopCorner.CornerRadius = UDim.new(0, 8)
+stopCorner.Parent = stopBtn
 
 -- Floating Button
 local floatingBtn = Instance.new("TextButton")
 floatingBtn.Name = "FloatingButton"
 floatingBtn.Size = UDim2.new(0, 60, 0, 60)
 floatingBtn.Position = UDim2.new(0, 20, 0, 20)
-floatingBtn.BackgroundColor3 = Color3.fromRGB(138, 43, 226)
-floatingBtn.Text = "⛰️"
+floatingBtn.BackgroundColor3 = Color3.fromRGB(231, 76, 60)
+floatingBtn.Text = "⚡"
 floatingBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 floatingBtn.TextSize = 24
 floatingBtn.Font = Enum.Font.GothamBold
@@ -365,14 +246,13 @@ local floatingCorner = Instance.new("UICorner")
 floatingCorner.CornerRadius = UDim.new(1, 0)
 floatingCorner.Parent = floatingBtn
 
--- ========== SIMPLE DRAG THAT WORKS ==========
+-- ========== DRAG FUNCTIONALITY ==========
 
 local dragging = false
 local dragInput
 local dragStart
 local startPos
 
--- Main Frame Drag
 local function update(input)
     local delta = input.Position - dragStart
     mainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
@@ -441,244 +321,200 @@ UserInputService.InputChanged:Connect(function(input)
     end
 end)
 
--- ========== TAB SYSTEM ==========
+-- ========== LAG FUNCTIONALITY ==========
 
-local function showTab(tabName)
-    checkpointContent.Visible = (tabName == "checkpoint")
-    securityContent.Visible = (tabName == "security")
-    notesContent.Visible = (tabName == "notes")
-    
-    checkpointTab.BackgroundColor3 = (tabName == "checkpoint") and Color3.fromRGB(52, 152, 219) or Color3.fromRGB(149, 165, 166)
-    securityTab.BackgroundColor3 = (tabName == "security") and Color3.fromRGB(230, 126, 34) or Color3.fromRGB(149, 165, 166)
-    notesTab.BackgroundColor3 = (tabName == "notes") and Color3.fromRGB(52, 152, 219) or Color3.fromRGB(149, 165, 166)
+-- Intensity Slider
+local draggingSlider = false
+
+intensitySlider.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        draggingSlider = true
+    end
+end)
+
+UserInputService.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        draggingSlider = false
+    end
+end)
+
+RunService.RenderStepped:Connect(function()
+    if draggingSlider then
+        local mouse = player:GetMouse()
+        local relativePos = math.clamp((mouse.X - intensitySlider.AbsolutePosition.X) / intensitySlider.AbsoluteSize.X, 0, 1)
+        
+        intensityFill.Size = UDim2.new(relativePos, 0, 1, 0)
+        intensityHandle.Position = UDim2.new(relativePos, -8, 0.5, -8)
+        
+        lagIntensity = math.floor(relativePos * 100)
+        intensityLabel.Text = "⚡ Lag Intensity: " .. lagIntensity .. "%"
+    end
+end)
+
+-- Method Selection
+method1.MouseButton1Click:Connect(function()
+    lagMethod = "Particles"
+    method1.BackgroundColor3 = Color3.fromRGB(52, 152, 219)
+    method2.BackgroundColor3 = Color3.fromRGB(149, 165, 166)
+    statusLabel.Text = "🎯 Method: Particle Spam"
+end)
+
+method2.MouseButton1Click:Connect(function()
+    lagMethod = "Network"
+    method2.BackgroundColor3 = Color3.fromRGB(52, 152, 219)
+    method1.BackgroundColor3 = Color3.fromRGB(149, 165, 166)
+    statusLabel.Text = "🎯 Method: Network Flood"
+end)
+
+-- Lag Functions
+local function createParticleLag()
+    while isLagging do
+        for i = 1, math.floor(lagIntensity / 10) + 1 do
+            local part = Instance.new("Part")
+            part.Name = "LagPart_" .. tick()
+            part.Size = Vector3.new(1, 1, 1)
+            part.Position = Vector3.new(
+                math.random(-100, 100),
+                math.random(10, 50),
+                math.random(-100, 100)
+            )
+            part.Anchored = true
+            part.CanCollide = false
+            part.Parent = workspace
+            
+            -- Add some effects
+            local fire = Instance.new("Fire")
+            fire.Parent = part
+            
+            local sparkles = Instance.new("Sparkles")
+            sparkles.Parent = part
+            
+            -- Auto clean after 2 seconds
+            game:GetService("Debris"):AddItem(part, 2)
+        end
+        wait(0.1)
+    end
 end
 
-checkpointTab.MouseButton1Click:Connect(function()
-    showTab("checkpoint")
-end)
+local function createNetworkLag()
+    while isLagging do
+        -- Find RemoteEvents to spam
+        for _, obj in pairs(game:GetDescendants()) do
+            if obj:IsA("RemoteEvent") and isLagging then
+                for i = 1, math.floor(lagIntensity / 20) + 1 do
+                    pcall(function()
+                        obj:FireServer("LAG_" .. tick())
+                    end)
+                end
+            end
+        end
+        
+        -- Spam some properties
+        local character = player.Character
+        if character then
+            for _, part in pairs(character:GetDescendants()) do
+                if part:IsA("BasePart") and isLagging then
+                    pcall(function()
+                        part.Transparency = math.random()
+                        part.Color = Color3.new(math.random(), math.random(), math.random())
+                    end)
+                end
+            end
+        end
+        
+        wait(0.05)
+    end
+end
 
-securityTab.MouseButton1Click:Connect(function()
-    showTab("security")
-end)
+local function startLag()
+    if isLagging then return end
+    
+    isLagging = true
+    statusLabel.Text = "🟢 LAGGING - Intensity: " .. lagIntensity .. "%"
+    statusLabel.BackgroundColor3 = Color3.fromRGB(46, 204, 113)
+    startBtn.BackgroundColor3 = Color3.fromRGB(149, 165, 166)
+    stopBtn.BackgroundColor3 = Color3.fromRGB(231, 76, 60)
+    
+    -- Clear previous threads
+    for _, thread in pairs(lagThreads) do
+        coroutine.close(thread)
+    end
+    lagThreads = {}
+    
+    -- Start lag based on method
+    if lagMethod == "Particles" then
+        local thread = coroutine.create(createParticleLag)
+        coroutine.resume(thread)
+        table.insert(lagThreads, thread)
+    else
+        local thread = coroutine.create(createNetworkLag)
+        coroutine.resume(thread)
+        table.insert(lagThreads, thread)
+    end
+    
+    -- Additional stress threads
+    for i = 1, math.floor(lagIntensity / 25) + 1 do
+        local stressThread = coroutine.create(function()
+            while isLagging do
+                -- Heavy calculations
+                local x = 0
+                for j = 1, 10000 do
+                    x = x + math.sqrt(j)
+                end
+                wait(0.1)
+            end
+        end)
+        coroutine.resume(stressThread)
+        table.insert(lagThreads, stressThread)
+    end
+    
+    print("⚡ Auto Lag Started - Method: " .. lagMethod .. " - Intensity: " .. lagIntensity .. "%")
+end
 
-notesTab.MouseButton1Click:Connect(function()
-    showTab("notes")
-end)
-
--- ========== CHECKPOINT SYSTEM ==========
-
-local function scanCheckpoints()
-    checkpoints = {}
+local function stopLag()
+    if not isLagging then return end
+    
+    isLagging = false
+    statusLabel.Text = "🔴 Lag: OFF"
+    statusLabel.BackgroundColor3 = Color3.fromRGB(45, 45, 55)
+    startBtn.BackgroundColor3 = Color3.fromRGB(46, 204, 113)
+    stopBtn.BackgroundColor3 = Color3.fromRGB(149, 165, 166)
+    
+    -- Stop all lag threads
+    for _, thread in pairs(lagThreads) do
+        coroutine.close(thread)
+    end
+    lagThreads = {}
+    
+    -- Clean up lag parts
     for _, obj in pairs(workspace:GetDescendants()) do
-        if obj:IsA("BasePart") and (
-            string.lower(obj.Name):find("checkpoint") or 
-            string.lower(obj.Name):find("stage") or
-            string.lower(obj.Name):find("platform") or
-            string.lower(obj.Name):find("point")
-        ) then
-            table.insert(checkpoints, obj)
+        if string.find(obj.Name, "LagPart_") then
+            obj:Destroy()
         end
     end
     
-    table.sort(checkpoints, function(a, b)
-        return a.Position.Y < b.Position.Y
-    end)
-    
-    return #checkpoints
+    print("⚡ Auto Lag Stopped")
 end
 
-local function teleportToCheckpoint(checkpoint)
-    local character = player.Character
-    if character and character:FindFirstChild("HumanoidRootPart") and checkpoint then
-        character.HumanoidRootPart.CFrame = checkpoint.CFrame + Vector3.new(0, 5, 0)
-    end
-end
-
-local function startAutoTP()
-    isRunning = true
-    statusLabel.Text = "🟢 Auto TP Running"
-    toggleBtn.Text = "⏸️ Stop Auto TP"
-    toggleBtn.BackgroundColor3 = Color3.fromRGB(231, 76, 60)
-    
-    spawn(function()
-        while isRunning and #checkpoints > 0 do
-            if currentCheckpoint > #checkpoints then
-                currentCheckpoint = 1
-                if not loopEnabled then
-                    isRunning = false
-                    statusLabel.Text = "✅ Completed"
-                    toggleBtn.Text = "▶️ Start Auto TP"
-                    toggleBtn.BackgroundColor3 = Color3.fromRGB(46, 204, 113)
-                    break
-                end
-            end
-            
-            checkpointInfo.Text = string.format("📍 %d/%d", currentCheckpoint, #checkpoints)
-            teleportToCheckpoint(checkpoints[currentCheckpoint])
-            
-            currentCheckpoint = currentCheckpoint + 1
-            wait(1)
-        end
-    end)
-end
-
--- ========== SECURITY SYSTEM ==========
-
-local function scanForBackdoors()
-    local results = {
-        remoteEvents = 0,
-        remoteFunctions = 0,
-        suspiciousScripts = 0
-    }
-    
-    for _, obj in pairs(game:GetDescendants()) do
-        if obj:IsA("RemoteEvent") then
-            results.remoteEvents = results.remoteEvents + 1
-        elseif obj:IsA("RemoteFunction") then
-            results.remoteFunctions = results.remoteFunctions + 1
-        elseif obj:IsA("Script") or obj:IsA("LocalScript") then
-            local suspiciousNames = {"admin", "backdoor", "execute", "command", "control", "hack"}
-            local lowerName = string.lower(obj.Name)
-            for _, name in pairs(suspiciousNames) do
-                if string.find(lowerName, name) then
-                    results.suspiciousScripts = results.suspiciousScripts + 1
-                    break
-                end
-            end
-        end
-    end
-    
-    return results
-end
-
--- ========== BUTTON FUNCTIONS ==========
-
--- Checkpoint Tab
-scanBtn.MouseButton1Click:Connect(function()
-    local count = scanCheckpoints()
-    checkpointInfo.Text = string.format("📍 %d/%d Checkpoints", 1, count)
-    currentCheckpoint = 1
-    statusLabel.Text = "✅ Found " .. count .. " checkpoints"
+-- Control Buttons
+startBtn.MouseButton1Click:Connect(function()
+    startLag()
 end)
 
-toggleBtn.MouseButton1Click:Connect(function()
-    if #checkpoints == 0 then
-        statusLabel.Text = "⚠️ Scan checkpoints first!"
-        return
-    end
-    
-    if isRunning then
-        isRunning = false
-        statusLabel.Text = "🔴 Stopped"
-        toggleBtn.Text = "▶️ Start Auto TP"
-        toggleBtn.BackgroundColor3 = Color3.fromRGB(46, 204, 113)
-    else
-        startAutoTP()
+stopBtn.MouseButton1Click:Connect(function()
+    stopLag()
+end)
+
+-- Auto-stop when character dies
+player.CharacterAdded:Connect(function()
+    if isLagging then
+        stopLag()
     end
 end)
 
-local loopEnabled = true
-loopToggle.MouseButton1Click:Connect(function()
-    loopEnabled = not loopEnabled
-    loopToggle.Text = loopEnabled and "🔄 Loop: ON" or "🔄 Loop: OFF"
-    loopToggle.BackgroundColor3 = loopEnabled and Color3.fromRGB(46, 204, 113) or Color3.fromRGB(149, 165, 166)
-end)
-
-resetBtn.MouseButton1Click:Connect(function()
-    currentCheckpoint = 1
-    if #checkpoints > 0 then
-        teleportToCheckpoint(checkpoints[1])
-        checkpointInfo.Text = string.format("📍 %d/%d", 1, #checkpoints)
-        statusLabel.Text = "🔄 Reset to checkpoint 1"
-    end
-end)
-
--- Security Tab
-securityScanBtn.MouseButton1Click:Connect(function()
-    local results = scanForBackdoors()
-    local total = results.remoteEvents + results.remoteFunctions + results.suspiciousScripts
-    
-    securityResults.Text = string.format(
-        "🔓 Security Scan Results:\n\nRemoteEvents: %d\nRemoteFunctions: %d\nSuspicious: %d\n\nTotal: %d objects",
-        results.remoteEvents,
-        results.remoteFunctions,
-        results.suspiciousScripts,
-        total
-    )
-    
-    if total > 10 then
-        securityStatus.Text = "🔴 HIGH RISK"
-        securityStatus.BackgroundColor3 = Color3.fromRGB(231, 76, 60)
-    elseif total > 5 then
-        securityStatus.Text = "🟡 MEDIUM RISK"
-        securityStatus.BackgroundColor3 = Color3.fromRGB(230, 126, 34)
-    else
-        securityStatus.Text = "🟢 LOW RISK"
-        securityStatus.BackgroundColor3 = Color3.fromRGB(46, 204, 113)
-    end
-end)
-
-executeBtn.MouseButton1Click:Connect(function()
-    local command = commandBox.Text
-    if command == "" then return end
-    
-    -- Try to find and execute command via available RemoteEvents
-    local executed = false
-    for _, obj in pairs(game:GetDescendants()) do
-        if obj:IsA("RemoteEvent") then
-            pcall(function()
-                obj:FireServer(command)
-                executed = true
-            end)
-            if executed then break end
-        end
-    end
-    
-    if executed then
-        securityResults.Text = "✅ Command executed via RemoteEvent\nCommand: " .. command
-    else
-        securityResults.Text = "❌ No available RemoteEvent found\nCommand: " .. command
-    end
-    
-    commandBox.Text = ""
-end)
-
--- Notes Tab
-sendNotesBtn.MouseButton1Click:Connect(function()
-    local message = messageBox.Text
-    if message and #message > 0 then
-        -- Simulate sending global message
-        notesDisplay.CanvasSize = UDim2.new(0, 0, 0, notesDisplay.CanvasSize.Y.Offset + 30)
-        
-        local noteFrame = Instance.new("Frame")
-        noteFrame.Size = UDim2.new(1, -10, 0, 25)
-        noteFrame.Position = UDim2.new(0, 5, 0, notesDisplay.CanvasSize.Y.Offset - 30)
-        noteFrame.BackgroundColor3 = Color3.fromRGB(65, 65, 75)
-        noteFrame.Parent = notesDisplay
-        
-        local noteCorner = Instance.new("UICorner")
-        noteCorner.CornerRadius = UDim.new(0, 4)
-        noteCorner.Parent = noteFrame
-        
-        local noteText = Instance.new("TextLabel")
-        noteText.Size = UDim2.new(1, -10, 1, 0)
-        noteText.Position = UDim2.new(0, 5, 0, 0)
-        noteText.BackgroundTransparency = 1
-        noteText.Text = player.Name .. ": " .. message
-        noteText.TextColor3 = Color3.fromRGB(255, 255, 255)
-        noteText.TextSize = 10
-        noteText.Font = Enum.Font.Gotham
-        noteText.TextXAlignment = Enum.TextXAlignment.Left
-        noteText.Parent = noteFrame
-        
-        messageBox.Text = ""
-        notesDisplay.CanvasPosition = Vector2.new(0, notesDisplay.CanvasSize.Y.Offset)
-    end
-end)
-
--- ========== WINDOW MANAGEMENT ==========
-
+-- Window Management
 closeBtn.MouseButton1Click:Connect(function()
+    stopLag()
     mainFrame.Visible = false
     floatingBtn.Visible = true
 end)
@@ -688,14 +524,32 @@ floatingBtn.MouseButton1Click:Connect(function()
     floatingBtn.Visible = false
 end)
 
--- ========== INITIALIZATION ==========
+-- Touch Feedback
+local function addTouchFeedback(button)
+    button.MouseButton1Down:Connect(function()
+        button.BackgroundTransparency = 0.3
+    end)
+    
+    button.MouseButton1Up:Connect(function()
+        button.BackgroundTransparency = 0
+    end)
+    
+    button.MouseLeave:Connect(function()
+        button.BackgroundTransparency = 0
+    end)
+end
 
--- Auto scan on start
-wait(1)
-local count = scanCheckpoints()
-checkpointInfo.Text = string.format("📍 %d/%d Checkpoints", 1, count)
-statusLabel.Text = "✅ Ready - Drag title bar to move"
+-- Add feedback to all buttons
+for _, button in pairs(contentFrame:GetDescendants()) do
+    if button:IsA("TextButton") then
+        addTouchFeedback(button)
+    end
+end
+addTouchFeedback(closeBtn)
+addTouchFeedback(floatingBtn)
 
-print("🎯 Mountain Tools Loaded Successfully!")
-print("✨ Drag the title bar to move the window!")
-print("📱 All features are working!")
+-- Initialize
+method1.BackgroundColor3 = Color3.fromRGB(52, 152, 219) -- Default method
+print("⚡ Auto Lag Server GUI Loaded!")
+print("🎯 Drag the title bar to move the window")
+print("⚠️ Use responsibly - may cause performance issues")
