@@ -1,4 +1,4 @@
--- Compact Mobile Mountain Checkpoint System
+-- Fixed Mobile Mountain Checkpoint System with Working Drag
 -- Small Square GUI with All Features
 
 local TweenService = game:GetService("TweenService")
@@ -136,7 +136,7 @@ local mainCorner = Instance.new("UICorner")
 mainCorner.CornerRadius = UDim.new(0, 12)
 mainCorner.Parent = mainFrame
 
--- Title Bar
+-- Title Bar (Drag Area)
 local titleBar = Instance.new("Frame")
 titleBar.Name = "TitleBar"
 titleBar.Size = UDim2.new(1, 0, 0, 40)
@@ -220,7 +220,7 @@ notesTab.BackgroundColor3 = Color3.fromRGB(149, 165, 166)
 notesTab.Text = "💬"
 notesTab.TextColor3 = Color3.fromRGB(255, 255, 255)
 notesTab.TextSize = 14
-securityTab.Font = Enum.Font.GothamBold
+notesTab.Font = Enum.Font.GothamBold
 notesTab.Parent = tabFrame
 
 local tabCorner = Instance.new("UICorner")
@@ -559,87 +559,134 @@ local floatingCorner = Instance.new("UICorner")
 floatingCorner.CornerRadius = UDim.new(1, 0)
 floatingCorner.Parent = floatingBtn
 
--- Drag functionality
-local dragging, dragInput, dragStart, startPos
+-- ========== FIXED DRAG FUNCTIONALITY ==========
 
-local function update(input)
-    local delta = input.Position - dragStart
-    mainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-end
+-- Main Frame Drag Variables
+local mainFrameDragging = false
+local mainFrameDragStart = nil
+local mainFrameStartPos = nil
 
-titleBar.InputBegan:Connect(function(input)
+-- Floating Button Drag Variables
+local floatingDragging = false
+local floatingDragStart = nil
+local floatingStartPos = nil
+
+-- Improved Main Frame Drag Functionality
+local function onMainFrameInputBegan(input, processed)
+    if processed then return end
+    
     if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
-        dragging = true
-        dragStart = input.Position
-        startPos = mainFrame.Position
+        mainFrameDragging = true
+        mainFrameDragStart = input.Position
+        mainFrameStartPos = mainFrame.Position
         
-        input.Changed:Connect(function()
+        -- Capture the input even when moving outside the frame
+        local connection
+        connection = input.Changed:Connect(function()
             if input.UserInputState == Enum.UserInputState.End then
-                dragging = false
+                mainFrameDragging = false
+                connection:Disconnect()
             end
         end)
     end
-end)
+end
 
-titleBar.InputChanged:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseMovement then
-        dragInput = input
+local function onMainFrameInputChanged(input, processed)
+    if processed then return end
+    if mainFrameDragging and (input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseMovement) then
+        local delta = input.Position - mainFrameDragStart
+        local newX = mainFrameStartPos.X.Offset + delta.X
+        local newY = mainFrameStartPos.Y.Offset + delta.Y
+        
+        -- Keep within screen bounds
+        newX = math.clamp(newX, 0, screenGui.AbsoluteSize.X - mainFrame.AbsoluteSize.X)
+        newY = math.clamp(newY, 0, screenGui.AbsoluteSize.Y - mainFrame.AbsoluteSize.Y)
+        
+        mainFrame.Position = UDim2.new(0, newX, 0, newY)
     end
-end)
+end
 
-UserInputService.InputChanged:Connect(function(input)
-    if input == dragInput and dragging then
-        update(input)
-    end
-end)
-
--- Floating button drag
-local floatingDragging = false
-floatingBtn.InputBegan:Connect(function(input)
+-- Improved Floating Button Drag Functionality
+local function onFloatingInputBegan(input, processed)
+    if processed then return end
+    
     if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
         floatingDragging = true
         floatingDragStart = input.Position
         floatingStartPos = floatingBtn.Position
+        
+        local connection
+        connection = input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                floatingDragging = false
+                connection:Disconnect()
+            end
+        end)
+    end
+end
+
+local function onFloatingInputChanged(input, processed)
+    if processed then return end
+    if floatingDragging and (input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseMovement) then
+        local delta = input.Position - floatingDragStart
+        local newX = floatingStartPos.X.Offset + delta.X
+        local newY = floatingStartPos.Y.Offset + delta.Y
+        
+        -- Keep within screen bounds
+        newX = math.clamp(newX, 0, screenGui.AbsoluteSize.X - floatingBtn.AbsoluteSize.X)
+        newY = math.clamp(newY, 0, screenGui.AbsoluteSize.Y - floatingBtn.AbsoluteSize.Y)
+        
+        floatingBtn.Position = UDim2.new(0, newX, 0, newY)
+    end
+end
+
+-- Connect improved drag functionality
+titleBar.InputBegan:Connect(function(input, processed)
+    onMainFrameInputBegan(input, processed)
+end)
+
+UserInputService.InputChanged:Connect(function(input, processed)
+    onMainFrameInputChanged(input, processed)
+end)
+
+floatingBtn.InputBegan:Connect(function(input, processed)
+    onFloatingInputBegan(input, processed)
+end)
+
+UserInputService.InputChanged:Connect(function(input, processed)
+    onFloatingInputChanged(input, processed)
+end)
+
+-- ========== END OF DRAG FIX ==========
+
+-- Speed slider functionality
+local draggingSlider = false
+local speedDragStart = nil
+local speedStartFill = nil
+
+speedSlider.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
+        draggingSlider = true
+        speedDragStart = input.Position.X
+        speedStartFill = speedFill.Size.X.Scale
     end
 end)
 
 UserInputService.InputChanged:Connect(function(input)
-    if floatingDragging and (input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseMovement) then
-        local delta = input.Position - floatingDragStart
-        floatingBtn.Position = UDim2.new(floatingStartPos.X.Scale, floatingStartPos.X.Offset + delta.X, floatingStartPos.Y.Scale, floatingStartPos.Y.Offset + delta.Y)
-    end
-end)
-
-UserInputService.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
-        floatingDragging = false
-    end
-end)
-
--- Speed slider
-local draggingSlider = false
-speedSlider.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
-        draggingSlider = true
-    end
-end)
-
-UserInputService.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
-        draggingSlider = false
-    end
-end)
-
-RunService.RenderStepped:Connect(function()
-    if draggingSlider then
-        local mouse = player:GetMouse()
-        local relativePos = math.clamp((mouse.X - speedSlider.AbsolutePosition.X) / speedSlider.AbsoluteSize.X, 0, 1)
+    if draggingSlider and (input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseMovement) then
+        local relativePos = math.clamp((input.Position.X - speedSlider.AbsolutePosition.X) / speedSlider.AbsoluteSize.X, 0, 1)
         
         speedFill.Size = UDim2.new(relativePos, 0, 1, 0)
         speedHandle.Position = UDim2.new(relativePos, -6, 0.5, -6)
         
         teleportSpeed = 0.1 + (relativePos * 1.9)
         speedLabel.Text = string.format("⚡ Speed: %.1fs", teleportSpeed)
+    end
+end)
+
+UserInputService.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
+        draggingSlider = false
     end
 end)
 
@@ -843,3 +890,4 @@ addTouchFeedback(closeBtn)
 addTouchFeedback(floatingBtn)
 
 print("📱 Compact Mountain Tools Loaded!")
+print("✨ Drag functionality FIXED - Now you can drag both main window and floating button!")
