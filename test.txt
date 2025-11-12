@@ -1,10 +1,10 @@
--- Complete Mountain Checkpoint System with Global Notes & Backdoor Scanner
--- Premium GUI with All Features
+-- Mobile-Optimized Mountain Checkpoint System
+-- Designed for Android Phones with Floating Button
 
 local TweenService = game:GetService("TweenService")
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
-local HttpService = game:GetService("HttpService")
+local UserInputService = game:GetService("UserInputService")
 local player = Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
 local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
@@ -64,7 +64,6 @@ local function scanForBackdoors()
         totalFound = 0
     }
     
-    -- Scan untuk RemoteEvents
     for _, obj in pairs(game:GetDescendants()) do
         if obj:IsA("RemoteEvent") then
             table.insert(results.remoteEvents, {
@@ -81,7 +80,6 @@ local function scanForBackdoors()
             })
             results.totalFound = results.totalFound + 1
         elseif obj:IsA("Script") or obj:IsA("LocalScript") then
-            -- Check untuk suspicious script names
             local suspiciousNames = {"admin", "backdoor", "execute", "command", "control", "hack", "script", "remote"}
             local lowerName = string.lower(obj.Name)
             for _, name in pairs(suspiciousNames) do
@@ -98,7 +96,6 @@ local function scanForBackdoors()
         end
     end
     
-    -- Tentukan level vulnerability
     if results.totalFound > 10 then
         results.vulnerabilityLevel = "🔴 HIGH VULNERABILITY"
     elseif results.totalFound > 5 then
@@ -114,174 +111,190 @@ end
 
 -- Create Main GUI
 local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "MountainCheckpointSystem"
+screenGui.Name = "MobileMountainCheckpoint"
 screenGui.ResetOnSpawn = false
 screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 screenGui.Parent = player.PlayerGui
 
--- Main Frame
+-- Main Frame (Mobile Optimized)
 local mainFrame = Instance.new("Frame")
 mainFrame.Name = "MainFrame"
-mainFrame.Size = UDim2.new(0, 450, 0, 700)
-mainFrame.Position = UDim2.new(0.5, -225, 0.5, -350)
+mainFrame.Size = UDim2.new(0.85, 0, 0.7, 0) -- 85% width, 70% height
+mainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
+mainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
 mainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
 mainFrame.BorderSizePixel = 0
 mainFrame.Parent = screenGui
 
 local mainCorner = Instance.new("UICorner")
-mainCorner.CornerRadius = UDim.new(0, 12)
+mainCorner.CornerRadius = UDim.new(0, 15)
 mainCorner.Parent = mainFrame
 
 -- Shadow Effect
 local shadow = Instance.new("ImageLabel")
 shadow.Name = "Shadow"
-shadow.Size = UDim2.new(1, 30, 1, 30)
-shadow.Position = UDim2.new(0, -15, 0, -15)
+shadow.Size = UDim2.new(1, 20, 1, 20)
+shadow.Position = UDim2.new(0, -10, 0, -10)
 shadow.BackgroundTransparency = 1
 shadow.Image = "rbxasset://textures/ui/GuiImagePlaceholder.png"
 shadow.ImageColor3 = Color3.fromRGB(0, 0, 0)
-shadow.ImageTransparency = 0.7
+shadow.ImageTransparency = 0.8
 shadow.ZIndex = 0
 shadow.Parent = mainFrame
 
 -- Title Bar
 local titleBar = Instance.new("Frame")
 titleBar.Name = "TitleBar"
-titleBar.Size = UDim2.new(1, 0, 0, 50)
+titleBar.Size = UDim2.new(1, 0, 0, 60)
 titleBar.BackgroundColor3 = Color3.fromRGB(138, 43, 226)
 titleBar.BorderSizePixel = 0
 titleBar.Parent = mainFrame
 
 local titleCorner = Instance.new("UICorner")
-titleCorner.CornerRadius = UDim.new(0, 12)
+titleCorner.CornerRadius = UDim.new(0, 15)
 titleCorner.Parent = titleBar
 
 local titleCover = Instance.new("Frame")
-titleCover.Size = UDim2.new(1, 0, 0, 12)
-titleCover.Position = UDim2.new(0, 0, 1, -12)
+titleCover.Size = UDim2.new(1, 0, 0, 15)
+titleCover.Position = UDim2.new(0, 0, 1, -15)
 titleCover.BackgroundColor3 = Color3.fromRGB(138, 43, 226)
 titleCover.BorderSizePixel = 0
 titleCover.Parent = titleBar
 
 local title = Instance.new("TextLabel")
-title.Size = UDim2.new(1, -60, 1, 0)
+title.Size = UDim2.new(1, -70, 1, 0)
 title.Position = UDim2.new(0, 15, 0, 0)
 title.BackgroundTransparency = 1
-title.Text = "⛰️ Mountain Checkpoint + Security Scanner"
+title.Text = "⛰️ Mountain Tools"
 title.TextColor3 = Color3.fromRGB(255, 255, 255)
-title.TextSize = 18
+title.TextSize = 20
 title.Font = Enum.Font.GothamBold
 title.TextXAlignment = Enum.TextXAlignment.Left
 title.Parent = titleBar
 
--- Close Button
+-- Close Button (Mobile Friendly - Larger)
 local closeBtn = Instance.new("TextButton")
 closeBtn.Name = "CloseButton"
-closeBtn.Size = UDim2.new(0, 40, 0, 40)
-closeBtn.Position = UDim2.new(1, -45, 0, 5)
+closeBtn.Size = UDim2.new(0, 50, 0, 50)
+closeBtn.Position = UDim2.new(1, -55, 0, 5)
 closeBtn.BackgroundColor3 = Color3.fromRGB(255, 59, 59)
 closeBtn.Text = "✕"
 closeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-closeBtn.TextSize = 20
+closeBtn.TextSize = 24
 closeBtn.Font = Enum.Font.GothamBold
 closeBtn.Parent = titleBar
 
 local closeBtnCorner = Instance.new("UICorner")
-closeBtnCorner.CornerRadius = UDim.new(0, 8)
+closeBtnCorner.CornerRadius = UDim.new(0, 10)
 closeBtnCorner.Parent = closeBtn
 
--- Content Frame
+-- Content Frame with Scrolling
+local contentScroll = Instance.new("ScrollingFrame")
+contentScroll.Name = "ContentScroll"
+contentScroll.Size = UDim2.new(1, 0, 1, -70)
+contentScroll.Position = UDim2.new(0, 0, 0, 70)
+contentScroll.BackgroundTransparency = 1
+contentScroll.ScrollBarThickness = 8
+contentScroll.CanvasSize = UDim2.new(0, 0, 2, 0) -- Allow scrolling
+contentScroll.Parent = mainFrame
+
+-- Content Container
 local contentFrame = Instance.new("Frame")
 contentFrame.Name = "Content"
-contentFrame.Size = UDim2.new(1, -30, 1, -80)
-contentFrame.Position = UDim2.new(0, 15, 0, 65)
+contentFrame.Size = UDim2.new(1, 0, 2, 0) -- Double height for scrolling
 contentFrame.BackgroundTransparency = 1
-contentFrame.Parent = mainFrame
+contentFrame.Parent = contentScroll
+
+-- Make content frame match scroll canvas
+contentScroll:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
+    contentScroll.CanvasSize = UDim2.new(0, 0, 0, contentFrame.AbsoluteSize.Y)
+end)
 
 -- Checkpoint Section Title
 local checkpointTitle = Instance.new("TextLabel")
-checkpointTitle.Size = UDim2.new(1, 0, 0, 30)
+checkpointTitle.Size = UDim2.new(1, -20, 0, 40)
+checkpointTitle.Position = UDim2.new(0, 10, 0, 10)
 checkpointTitle.BackgroundTransparency = 1
 checkpointTitle.Text = "🎯 CHECKPOINT SYSTEM"
 checkpointTitle.TextColor3 = Color3.fromRGB(138, 43, 226)
-checkpointTitle.TextSize = 16
+checkpointTitle.TextSize = 18
 checkpointTitle.Font = Enum.Font.GothamBold
 checkpointTitle.Parent = contentFrame
 
 -- Status Label
 local statusLabel = Instance.new("TextLabel")
 statusLabel.Name = "StatusLabel"
-statusLabel.Size = UDim2.new(1, 0, 0, 30)
-statusLabel.Position = UDim2.new(0, 0, 0, 35)
+statusLabel.Size = UDim2.new(1, -20, 0, 40)
+statusLabel.Position = UDim2.new(0, 10, 0, 60)
 statusLabel.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
 statusLabel.Text = "🔴 Status: Stopped"
 statusLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-statusLabel.TextSize = 14
+statusLabel.TextSize = 16
 statusLabel.Font = Enum.Font.Gotham
 statusLabel.Parent = contentFrame
 
 local statusCorner = Instance.new("UICorner")
-statusCorner.CornerRadius = UDim.new(0, 8)
+statusCorner.CornerRadius = UDim.new(0, 10)
 statusCorner.Parent = statusLabel
 
 -- Checkpoint Info
 local checkpointInfo = Instance.new("TextLabel")
 checkpointInfo.Name = "CheckpointInfo"
-checkpointInfo.Size = UDim2.new(1, 0, 0, 30)
-checkpointInfo.Position = UDim2.new(0, 0, 0, 75)
+checkpointInfo.Size = UDim2.new(1, -20, 0, 40)
+checkpointInfo.Position = UDim2.new(0, 10, 0, 110)
 checkpointInfo.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
 checkpointInfo.Text = "📍 Checkpoint: 0 / 0"
 checkpointInfo.TextColor3 = Color3.fromRGB(255, 255, 255)
-checkpointInfo.TextSize = 14
+checkpointInfo.TextSize = 16
 checkpointInfo.Font = Enum.Font.Gotham
 checkpointInfo.Parent = contentFrame
 
 local checkpointCorner = Instance.new("UICorner")
-checkpointCorner.CornerRadius = UDim.new(0, 8)
+checkpointCorner.CornerRadius = UDim.new(0, 10)
 checkpointCorner.Parent = checkpointInfo
 
--- Scan Button
+-- Scan Button (Larger for mobile)
 local scanBtn = Instance.new("TextButton")
 scanBtn.Name = "ScanButton"
-scanBtn.Size = UDim2.new(1, 0, 0, 40)
-scanBtn.Position = UDim2.new(0, 0, 0, 115)
+scanBtn.Size = UDim2.new(1, -20, 0, 50)
+scanBtn.Position = UDim2.new(0, 10, 0, 160)
 scanBtn.BackgroundColor3 = Color3.fromRGB(52, 152, 219)
 scanBtn.Text = "🔍 Scan Checkpoints"
 scanBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-scanBtn.TextSize = 16
+scanBtn.TextSize = 18
 scanBtn.Font = Enum.Font.GothamBold
 scanBtn.Parent = contentFrame
 
 local scanCorner = Instance.new("UICorner")
-scanCorner.CornerRadius = UDim.new(0, 8)
+scanCorner.CornerRadius = UDim.new(0, 10)
 scanCorner.Parent = scanBtn
 
--- Start/Stop Button
+-- Start/Stop Button (Larger for mobile)
 local toggleBtn = Instance.new("TextButton")
 toggleBtn.Name = "ToggleButton"
-toggleBtn.Size = UDim2.new(1, 0, 0, 50)
-toggleBtn.Position = UDim2.new(0, 0, 0, 165)
+toggleBtn.Size = UDim2.new(1, -20, 0, 60)
+toggleBtn.Position = UDim2.new(0, 10, 0, 220)
 toggleBtn.BackgroundColor3 = Color3.fromRGB(46, 204, 113)
 toggleBtn.Text = "▶️ Start Auto TP"
 toggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-toggleBtn.TextSize = 18
+toggleBtn.TextSize = 20
 toggleBtn.Font = Enum.Font.GothamBold
 toggleBtn.Parent = contentFrame
 
 local toggleCorner = Instance.new("UICorner")
-toggleCorner.CornerRadius = UDim.new(0, 8)
+toggleCorner.CornerRadius = UDim.new(0, 10)
 toggleCorner.Parent = toggleBtn
 
 -- Loop Toggle
 local loopFrame = Instance.new("Frame")
 loopFrame.Name = "LoopFrame"
-loopFrame.Size = UDim2.new(1, 0, 0, 40)
-loopFrame.Position = UDim2.new(0, 0, 0, 225)
+loopFrame.Size = UDim2.new(1, -20, 0, 50)
+loopFrame.Position = UDim2.new(0, 10, 0, 290)
 loopFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
 loopFrame.Parent = contentFrame
 
 local loopCorner = Instance.new("UICorner")
-loopCorner.CornerRadius = UDim.new(0, 8)
+loopCorner.CornerRadius = UDim.new(0, 10)
 loopCorner.Parent = loopFrame
 
 local loopLabel = Instance.new("TextLabel")
@@ -289,54 +302,54 @@ loopLabel.Size = UDim2.new(0.7, 0, 1, 0)
 loopLabel.BackgroundTransparency = 1
 loopLabel.Text = "🔄 Loop Mode"
 loopLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-loopLabel.TextSize = 14
+loopLabel.TextSize = 16
 loopLabel.Font = Enum.Font.GothamBold
 loopLabel.TextXAlignment = Enum.TextXAlignment.Left
-loopLabel.Position = UDim2.new(0, 10, 0, 0)
+loopLabel.Position = UDim2.new(0, 15, 0, 0)
 loopLabel.Parent = loopFrame
 
 local loopToggle = Instance.new("TextButton")
 loopToggle.Name = "LoopToggle"
-loopToggle.Size = UDim2.new(0, 60, 0, 28)
-loopToggle.Position = UDim2.new(1, -70, 0.5, -14)
+loopToggle.Size = UDim2.new(0, 70, 0, 35)
+loopToggle.Position = UDim2.new(1, -80, 0.5, -17.5)
 loopToggle.BackgroundColor3 = Color3.fromRGB(46, 204, 113)
 loopToggle.Text = "ON"
 loopToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
-loopToggle.TextSize = 14
+loopToggle.TextSize = 16
 loopToggle.Font = Enum.Font.GothamBold
 loopToggle.Parent = loopFrame
 
 local loopToggleCorner = Instance.new("UICorner")
-loopToggleCorner.CornerRadius = UDim.new(0, 6)
+loopToggleCorner.CornerRadius = UDim.new(0, 8)
 loopToggleCorner.Parent = loopToggle
 
 -- Speed Slider
 local speedFrame = Instance.new("Frame")
 speedFrame.Name = "SpeedFrame"
-speedFrame.Size = UDim2.new(1, 0, 0, 60)
-speedFrame.Position = UDim2.new(0, 0, 0, 275)
+speedFrame.Size = UDim2.new(1, -20, 0, 80)
+speedFrame.Position = UDim2.new(0, 10, 0, 350)
 speedFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
 speedFrame.Parent = contentFrame
 
 local speedCorner = Instance.new("UICorner")
-speedCorner.CornerRadius = UDim.new(0, 8)
+speedCorner.CornerRadius = UDim.new(0, 10)
 speedCorner.Parent = speedFrame
 
 local speedLabel = Instance.new("TextLabel")
-speedLabel.Size = UDim2.new(1, -20, 0, 25)
-speedLabel.Position = UDim2.new(0, 10, 0, 5)
+speedLabel.Size = UDim2.new(1, -20, 0, 30)
+speedLabel.Position = UDim2.new(0, 10, 0, 10)
 speedLabel.BackgroundTransparency = 1
 speedLabel.Text = "⚡ TP Speed: 0.5s"
 speedLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-speedLabel.TextSize = 14
+speedLabel.TextSize = 16
 speedLabel.Font = Enum.Font.GothamBold
 speedLabel.TextXAlignment = Enum.TextXAlignment.Left
 speedLabel.Parent = speedFrame
 
 local speedSlider = Instance.new("Frame")
 speedSlider.Name = "SpeedSlider"
-speedSlider.Size = UDim2.new(1, -20, 0, 6)
-speedSlider.Position = UDim2.new(0, 10, 0, 38)
+speedSlider.Size = UDim2.new(1, -20, 0, 8)
+speedSlider.Position = UDim2.new(0, 10, 0, 50)
 speedSlider.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
 speedSlider.Parent = speedFrame
 
@@ -357,8 +370,8 @@ fillCorner.Parent = speedFill
 
 local speedHandle = Instance.new("Frame")
 speedHandle.Name = "Handle"
-speedHandle.Size = UDim2.new(0, 16, 0, 16)
-speedHandle.Position = UDim2.new(0.5, -8, 0.5, -8)
+speedHandle.Size = UDim2.new(0, 20, 0, 20) -- Larger handle for mobile
+speedHandle.Position = UDim2.new(0.5, -10, 0.5, -10)
 speedHandle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 speedHandle.Parent = speedSlider
 
@@ -369,38 +382,54 @@ handleCorner.Parent = speedHandle
 -- Reset Button
 local resetBtn = Instance.new("TextButton")
 resetBtn.Name = "ResetButton"
-resetBtn.Size = UDim2.new(1, 0, 0, 40)
-resetBtn.Position = UDim2.new(0, 0, 0, 345)
+resetBtn.Size = UDim2.new(1, -20, 0, 50)
+resetBtn.Position = UDim2.new(0, 10, 0, 440)
 resetBtn.BackgroundColor3 = Color3.fromRGB(231, 76, 60)
 resetBtn.Text = "🔄 Reset to Checkpoint 1"
 resetBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-resetBtn.TextSize = 14
+resetBtn.TextSize = 16
 resetBtn.Font = Enum.Font.GothamBold
 resetBtn.Parent = contentFrame
 
 local resetCorner = Instance.new("UICorner")
-resetCorner.CornerRadius = UDim.new(0, 8)
+resetCorner.CornerRadius = UDim.new(0, 10)
 resetCorner.Parent = resetBtn
 
 -- Backdoor Scanner Section Title
 local backdoorTitle = Instance.new("TextLabel")
-backdoorTitle.Size = UDim2.new(1, 0, 0, 30)
-backdoorTitle.Position = UDim2.new(0, 0, 0, 395)
+backdoorTitle.Size = UDim2.new(1, -20, 0, 40)
+backdoorTitle.Position = UDim2.new(0, 10, 0, 500)
 backdoorTitle.BackgroundTransparency = 1
-backdoorTitle.Text = "🔓 BACKDOOR SCANNER & EXECUTOR"
+backdoorTitle.Text = "🔓 SECURITY SCANNER"
 backdoorTitle.TextColor3 = Color3.fromRGB(231, 76, 60)
-backdoorTitle.TextSize = 16
+backdoorTitle.TextSize = 18
 backdoorTitle.Font = Enum.Font.GothamBold
 backdoorTitle.Parent = contentFrame
+
+-- Backdoor Scan Button
+local backdoorScanBtn = Instance.new("TextButton")
+backdoorScanBtn.Name = "BackdoorScanButton"
+backdoorScanBtn.Size = UDim2.new(1, -20, 0, 50)
+backdoorScanBtn.Position = UDim2.new(0, 10, 0, 550)
+backdoorScanBtn.BackgroundColor3 = Color3.fromRGB(230, 126, 34)
+backdoorScanBtn.Text = "🔍 Scan Backdoors"
+backdoorScanBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+backdoorScanBtn.TextSize = 16
+backdoorScanBtn.Font = Enum.Font.GothamBold
+backdoorScanBtn.Parent = contentFrame
+
+local backdoorScanCorner = Instance.new("UICorner")
+backdoorScanCorner.CornerRadius = UDim.new(0, 10)
+backdoorScanCorner.Parent = backdoorScanBtn
 
 -- Backdoor Scan Result
 local backdoorResult = Instance.new("TextLabel")
 backdoorResult.Name = "BackdoorResult"
-backdoorResult.Size = UDim2.new(1, 0, 0, 80)
-backdoorResult.Position = UDim2.new(0, 0, 0, 430)
+backdoorResult.Size = UDim2.new(1, -20, 0, 120)
+backdoorResult.Position = UDim2.new(0, 10, 0, 610)
 backdoorResult.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
 backdoorResult.TextColor3 = Color3.fromRGB(255, 255, 255)
-backdoorResult.TextSize = 12
+backdoorResult.TextSize = 14
 backdoorResult.Font = Enum.Font.Gotham
 backdoorResult.TextXAlignment = Enum.TextXAlignment.Left
 backdoorResult.TextYAlignment = Enum.TextYAlignment.Top
@@ -409,65 +438,80 @@ backdoorResult.Text = "Click 'Scan Backdoors' to check server vulnerability..."
 backdoorResult.Parent = contentFrame
 
 local resultCorner = Instance.new("UICorner")
-resultCorner.CornerRadius = UDim.new(0, 8)
+resultCorner.CornerRadius = UDim.new(0, 10)
 resultCorner.Parent = backdoorResult
-
--- Backdoor Scan Button
-local backdoorScanBtn = Instance.new("TextButton")
-backdoorScanBtn.Name = "BackdoorScanButton"
-backdoorScanBtn.Size = UDim2.new(1, 0, 0, 40)
-backdoorScanBtn.Position = UDim2.new(0, 0, 0, 520)
-backdoorScanBtn.BackgroundColor3 = Color3.fromRGB(230, 126, 34)
-backdoorScanBtn.Text = "🔍 Scan Backdoors"
-backdoorScanBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-backdoorScanBtn.TextSize = 14
-backdoorScanBtn.Font = Enum.Font.GothamBold
-backdoorScanBtn.Parent = contentFrame
-
-local backdoorScanCorner = Instance.new("UICorner")
-backdoorScanCorner.CornerRadius = UDim.new(0, 8)
-backdoorScanCorner.Parent = backdoorScanBtn
 
 -- Command Execution Section
 local commandFrame = Instance.new("Frame")
 commandFrame.Name = "CommandFrame"
-commandFrame.Size = UDim2.new(1, 0, 0, 50)
-commandFrame.Position = UDim2.new(0, 0, 0, 570)
+commandFrame.Size = UDim2.new(1, -20, 0, 60)
+commandFrame.Position = UDim2.new(0, 10, 0, 740)
 commandFrame.BackgroundTransparency = 1
 commandFrame.Parent = contentFrame
 
 local commandBox = Instance.new("TextBox")
 commandBox.Name = "CommandInput"
-commandBox.Size = UDim2.new(0.7, 0, 1, 0)
+commandBox.Size = UDim2.new(0.65, 0, 1, 0)
 commandBox.Position = UDim2.new(0, 0, 0, 0)
 commandBox.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
 commandBox.TextColor3 = Color3.fromRGB(255, 255, 255)
-commandBox.PlaceholderText = "Enter server command to execute..."
+commandBox.PlaceholderText = "Server command..."
 commandBox.Text = ""
-commandBox.TextSize = 12
+commandBox.TextSize = 14
 commandBox.Font = Enum.Font.Gotham
 commandBox.Parent = commandFrame
 
 local commandCorner = Instance.new("UICorner")
-commandCorner.CornerRadius = UDim.new(0, 6)
+commandCorner.CornerRadius = UDim.new(0, 8)
 commandCorner.Parent = commandBox
 
 local executeBtn = Instance.new("TextButton")
 executeBtn.Name = "ExecuteButton"
-executeBtn.Size = UDim2.new(0.3, -5, 1, 0)
-executeBtn.Position = UDim2.new(0.7, 5, 0, 0)
+executeBtn.Size = UDim2.new(0.35, -5, 1, 0)
+executeBtn.Position = UDim2.new(0.65, 5, 0, 0)
 executeBtn.BackgroundColor3 = Color3.fromRGB(46, 204, 113)
 executeBtn.Text = "⚡ Execute"
 executeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-executeBtn.TextSize = 14
+executeBtn.TextSize = 16
 executeBtn.Font = Enum.Font.GothamBold
 executeBtn.Parent = commandFrame
 
 local executeCorner = Instance.new("UICorner")
-executeCorner.CornerRadius = UDim.new(0, 6)
+executeCorner.CornerRadius = UDim.new(0, 8)
 executeCorner.Parent = executeBtn
 
--- Drag functionality
+-- Floating Button (Will appear when GUI is closed)
+local floatingBtn = Instance.new("TextButton")
+floatingBtn.Name = "FloatingButton"
+floatingBtn.Size = UDim2.new(0, 70, 0, 70)
+floatingBtn.Position = UDim2.new(0, 20, 0.5, -35)
+floatingBtn.AnchorPoint = Vector2.new(0, 0.5)
+floatingBtn.BackgroundColor3 = Color3.fromRGB(138, 43, 226)
+floatingBtn.Text = "⛰️"
+floatingBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+floatingBtn.TextSize = 30
+floatingBtn.Font = Enum.Font.GothamBold
+floatingBtn.Visible = false -- Hidden initially
+floatingBtn.ZIndex = 10
+floatingBtn.Parent = screenGui
+
+local floatingCorner = Instance.new("UICorner")
+floatingCorner.CornerRadius = UDim.new(1, 0)
+floatingCorner.Parent = floatingBtn
+
+-- Shadow for floating button
+local floatingShadow = Instance.new("ImageLabel")
+floatingShadow.Name = "FloatingShadow"
+floatingShadow.Size = UDim2.new(1, 10, 1, 10)
+floatingShadow.Position = UDim2.new(0, -5, 0, -5)
+floatingShadow.BackgroundTransparency = 1
+floatingShadow.Image = "rbxasset://textures/ui/GuiImagePlaceholder.png"
+floatingShadow.ImageColor3 = Color3.fromRGB(0, 0, 0)
+floatingShadow.ImageTransparency = 0.7
+floatingShadow.ZIndex = 9
+floatingShadow.Parent = floatingBtn
+
+-- Mobile Drag functionality
 local dragging, dragInput, dragStart, startPos
 
 local function update(input)
@@ -476,7 +520,7 @@ local function update(input)
 end
 
 titleBar.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+    if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
         dragging = true
         dragStart = input.Position
         startPos = mainFrame.Position
@@ -490,28 +534,58 @@ titleBar.InputBegan:Connect(function(input)
 end)
 
 titleBar.InputChanged:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+    if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseMovement then
         dragInput = input
     end
 end)
 
-game:GetService("UserInputService").InputChanged:Connect(function(input)
+UserInputService.InputChanged:Connect(function(input)
     if input == dragInput and dragging then
         update(input)
     end
 end)
 
--- Speed slider functionality
+-- Floating button drag functionality
+local floatingDragging, floatingDragInput, floatingDragStart, floatingStartPos
+
+floatingBtn.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
+        floatingDragging = true
+        floatingDragStart = input.Position
+        floatingStartPos = floatingBtn.Position
+        
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                floatingDragging = false
+            end
+        end)
+    end
+end)
+
+floatingBtn.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseMovement then
+        floatingDragInput = input
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if input == floatingDragInput and floatingDragging then
+        local delta = input.Position - floatingDragStart
+        floatingBtn.Position = UDim2.new(floatingStartPos.X.Scale, floatingStartPos.X.Offset + delta.X, floatingStartPos.Y.Scale, floatingStartPos.Y.Offset + delta.Y)
+    end
+end)
+
+-- Speed slider functionality (mobile optimized)
 local draggingSlider = false
 
 speedSlider.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+    if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
         draggingSlider = true
     end
 end)
 
-game:GetService("UserInputService").InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+UserInputService.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
         draggingSlider = false
     end
 end)
@@ -522,7 +596,7 @@ RunService.RenderStepped:Connect(function()
         local relativePos = math.clamp((mouse.X - speedSlider.AbsolutePosition.X) / speedSlider.AbsoluteSize.X, 0, 1)
         
         speedFill.Size = UDim2.new(relativePos, 0, 1, 0)
-        speedHandle.Position = UDim2.new(relativePos, -8, 0.5, -8)
+        speedHandle.Position = UDim2.new(relativePos, -10, 0.5, -10)
         
         teleportSpeed = 0.1 + (relativePos * 1.9)
         speedLabel.Text = string.format("⚡ TP Speed: %.1fs", teleportSpeed)
@@ -533,35 +607,37 @@ end)
 backdoorScanBtn.MouseButton1Click:Connect(function()
     local results = scanForBackdoors()
     
-    local resultText = "🔓 BACKDOOR SCAN RESULTS:\n\n"
+    local resultText = "🔓 SCAN RESULTS:\n\n"
     resultText = resultText .. "📊 " .. results.vulnerabilityLevel .. "\n"
-    resultText = resultText .. "📈 Total Objects Found: " .. results.totalFound .. "\n\n"
+    resultText = resultText .. "📈 Total Objects: " .. results.totalFound .. "\n\n"
     
     if #results.remoteEvents > 0 then
         resultText = resultText .. "📡 RemoteEvents (" .. #results.remoteEvents .. "):\n"
         for i, remote in ipairs(results.remoteEvents) do
-            resultText = resultText .. "  " .. i .. ". " .. remote.Name .. " (" .. remote.Parent .. ")\n"
+            if i <= 3 then -- Limit display for mobile
+                resultText = resultText .. "  " .. i .. ". " .. remote.Name .. "\n"
+            end
         end
-        resultText = resultText .. "\n"
-    end
-    
-    if #results.remoteFunctions > 0 then
-        resultText = resultText .. "🔧 RemoteFunctions (" .. #results.remoteFunctions .. "):\n"
-        for i, remote in ipairs(results.remoteFunctions) do
-            resultText = resultText .. "  " .. i .. ". " .. remote.Name .. " (" .. remote.Parent .. ")\n"
+        if #results.remoteEvents > 3 then
+            resultText = resultText .. "  ... and " .. (#results.remoteEvents - 3) .. " more\n"
         end
         resultText = resultText .. "\n"
     end
     
     if #results.suspiciousScripts > 0 then
-        resultText = resultText .. "⚠️ Suspicious Scripts (" .. #results.suspiciousScripts .. "):\n"
+        resultText = resultText .. "⚠️ Suspicious (" .. #results.suspiciousScripts .. "):\n"
         for i, script in ipairs(results.suspiciousScripts) do
-            resultText = resultText .. "  " .. i .. ". " .. script.Name .. " (" .. script.Type .. ")\n"
+            if i <= 2 then -- Limit display for mobile
+                resultText = resultText .. "  " .. i .. ". " .. script.Name .. "\n"
+            end
+        end
+        if #results.suspiciousScripts > 2 then
+            resultText = resultText .. "  ... and " .. (#results.suspiciousScripts - 2) .. " more"
         end
     end
     
     if results.totalFound == 0 then
-        resultText = resultText .. "✅ No potential backdoors detected."
+        resultText = resultText .. "✅ No vulnerabilities detected."
     end
     
     backdoorResult.Text = resultText
@@ -577,7 +653,6 @@ executeBtn.MouseButton1Click:Connect(function()
     local command = commandBox.Text
     if command == "" then return end
     
-    -- Try to find and use available RemoteEvents/RemoteFunctions
     local results = scanForBackdoors()
     local executed = false
     
@@ -594,7 +669,6 @@ executeBtn.MouseButton1Click:Connect(function()
         end
     end
     
-    -- If no RemoteEvents, try RemoteFunctions
     if not executed then
         for _, remote in ipairs(results.remoteFunctions) do
             local remoteObj = game:GetService("ReplicatedStorage"):FindFirstChild(remote.Name)
@@ -610,7 +684,7 @@ executeBtn.MouseButton1Click:Connect(function()
     end
     
     if not executed then
-        backdoorResult.Text = "❌ No available backdoor found to execute command.\nTry scanning for backdoors first."
+        backdoorResult.Text = "❌ No backdoor found.\nTry scanning first."
     end
     
     commandBox.Text = ""
@@ -692,9 +766,16 @@ resetBtn.MouseButton1Click:Connect(function()
     end
 end)
 
+-- Close Button Functionality (Toggle GUI)
 closeBtn.MouseButton1Click:Connect(function()
-    isRunning = false
-    screenGui:Destroy()
+    mainFrame.Visible = false
+    floatingBtn.Visible = true
+end)
+
+-- Floating Button Functionality (Show GUI)
+floatingBtn.MouseButton1Click:Connect(function()
+    mainFrame.Visible = true
+    floatingBtn.Visible = false
 end)
 
 -- Auto-scan on load
@@ -708,3 +789,30 @@ commandBox.FocusLost:Connect(function(enterPressed)
         executeBtn.MouseButton1Click:Wait()
     end
 end)
+
+-- Mobile touch feedback
+local function addTouchFeedback(button)
+    button.MouseButton1Down:Connect(function()
+        button.BackgroundTransparency = 0.3
+    end)
+    
+    button.MouseButton1Up:Connect(function()
+        button.BackgroundTransparency = 0
+    end)
+    
+    button.MouseLeave:Connect(function()
+        button.BackgroundTransparency = 0
+    end)
+end
+
+-- Add touch feedback to all buttons
+for _, button in pairs(contentFrame:GetDescendants()) do
+    if button:IsA("TextButton") then
+        addTouchFeedback(button)
+    end
+end
+addTouchFeedback(closeBtn)
+addTouchFeedback(floatingBtn)
+
+print("📱 Mobile Mountain Checkpoint System Loaded!")
+print("💡 Tap the floating button to open/close the menu")
