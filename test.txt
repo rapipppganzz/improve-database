@@ -1,34 +1,46 @@
--- Mountain Checkpoint Auto Teleport Script
--- Premium GUI with all working features
+-- Complete Mountain Checkpoint System with Global Notes & Backdoor Scanner
+-- Premium GUI with All Features
 
 local TweenService = game:GetService("TweenService")
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
+local HttpService = game:GetService("HttpService")
 local player = Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
 local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
 
--- Status variables
+-- Global Variables
 local isRunning = false
 local currentCheckpoint = 1
 local loopEnabled = true
 local teleportSpeed = 0.5
 local checkpoints = {}
 
--- Scan for checkpoints in workspace
+-- Remote Events for Global Notes
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local NotesEvent
+if ReplicatedStorage:FindFirstChild("GlobalNotesEvent") then
+    NotesEvent = ReplicatedStorage:WaitForChild("GlobalNotesEvent")
+else
+    NotesEvent = Instance.new("RemoteEvent")
+    NotesEvent.Name = "GlobalNotesEvent"
+    NotesEvent.Parent = ReplicatedStorage
+end
+
+-- Checkpoint System
 local function scanCheckpoints()
     checkpoints = {}
     for _, obj in pairs(workspace:GetDescendants()) do
         if obj:IsA("BasePart") and (
             string.lower(obj.Name):find("checkpoint") or 
             string.lower(obj.Name):find("stage") or
-            string.lower(obj.Name):find("platform")
+            string.lower(obj.Name):find("platform") or
+            string.lower(obj.Name):find("point")
         ) then
             table.insert(checkpoints, obj)
         end
     end
     
-    -- Sort by Y position (height) - mountain climbing logic
     table.sort(checkpoints, function(a, b)
         return a.Position.Y < b.Position.Y
     end)
@@ -36,18 +48,82 @@ local function scanCheckpoints()
     return #checkpoints
 end
 
--- Create GUI
+local function teleportToCheckpoint(checkpoint)
+    if character and humanoidRootPart and checkpoint then
+        humanoidRootPart.CFrame = checkpoint.CFrame + Vector3.new(0, 5, 0)
+    end
+end
+
+-- Backdoor Scanner Functions
+local function scanForBackdoors()
+    local results = {
+        remoteEvents = {},
+        remoteFunctions = {},
+        suspiciousScripts = {},
+        vulnerabilityLevel = "UNKNOWN",
+        totalFound = 0
+    }
+    
+    -- Scan untuk RemoteEvents
+    for _, obj in pairs(game:GetDescendants()) do
+        if obj:IsA("RemoteEvent") then
+            table.insert(results.remoteEvents, {
+                Name = obj.Name,
+                Path = obj:GetFullName(),
+                Parent = obj.Parent.Name
+            })
+            results.totalFound = results.totalFound + 1
+        elseif obj:IsA("RemoteFunction") then
+            table.insert(results.remoteFunctions, {
+                Name = obj.Name,
+                Path = obj:GetFullName(),
+                Parent = obj.Parent.Name
+            })
+            results.totalFound = results.totalFound + 1
+        elseif obj:IsA("Script") or obj:IsA("LocalScript") then
+            -- Check untuk suspicious script names
+            local suspiciousNames = {"admin", "backdoor", "execute", "command", "control", "hack", "script", "remote"}
+            local lowerName = string.lower(obj.Name)
+            for _, name in pairs(suspiciousNames) do
+                if string.find(lowerName, name) then
+                    table.insert(results.suspiciousScripts, {
+                        Name = obj.Name,
+                        Path = obj:GetFullName(),
+                        Type = obj.ClassName
+                    })
+                    results.totalFound = results.totalFound + 1
+                    break
+                end
+            end
+        end
+    end
+    
+    -- Tentukan level vulnerability
+    if results.totalFound > 10 then
+        results.vulnerabilityLevel = "🔴 HIGH VULNERABILITY"
+    elseif results.totalFound > 5 then
+        results.vulnerabilityLevel = "🟡 MEDIUM VULNERABILITY"
+    elseif results.totalFound > 0 then
+        results.vulnerabilityLevel = "🟢 LOW VULNERABILITY"
+    else
+        results.vulnerabilityLevel = "⚪ NO VULNERABILITY DETECTED"
+    end
+    
+    return results
+end
+
+-- Create Main GUI
 local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "CheckpointTPGui"
+screenGui.Name = "MountainCheckpointSystem"
 screenGui.ResetOnSpawn = false
 screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 screenGui.Parent = player.PlayerGui
 
--- Main Frame (Modern Design)
+-- Main Frame
 local mainFrame = Instance.new("Frame")
 mainFrame.Name = "MainFrame"
-mainFrame.Size = UDim2.new(0, 380, 0, 450)
-mainFrame.Position = UDim2.new(0.5, -190, 0.5, -225)
+mainFrame.Size = UDim2.new(0, 450, 0, 700)
+mainFrame.Position = UDim2.new(0.5, -225, 0.5, -350)
 mainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
 mainFrame.BorderSizePixel = 0
 mainFrame.Parent = screenGui
@@ -56,7 +132,7 @@ local mainCorner = Instance.new("UICorner")
 mainCorner.CornerRadius = UDim.new(0, 12)
 mainCorner.Parent = mainFrame
 
--- Shadow effect
+-- Shadow Effect
 local shadow = Instance.new("ImageLabel")
 shadow.Name = "Shadow"
 shadow.Size = UDim2.new(1, 30, 1, 30)
@@ -91,7 +167,7 @@ local title = Instance.new("TextLabel")
 title.Size = UDim2.new(1, -60, 1, 0)
 title.Position = UDim2.new(0, 15, 0, 0)
 title.BackgroundTransparency = 1
-title.Text = "⛰️ Mountain Checkpoint TP"
+title.Text = "⛰️ Mountain Checkpoint + Security Scanner"
 title.TextColor3 = Color3.fromRGB(255, 255, 255)
 title.TextSize = 18
 title.Font = Enum.Font.GothamBold
@@ -122,10 +198,21 @@ contentFrame.Position = UDim2.new(0, 15, 0, 65)
 contentFrame.BackgroundTransparency = 1
 contentFrame.Parent = mainFrame
 
+-- Checkpoint Section Title
+local checkpointTitle = Instance.new("TextLabel")
+checkpointTitle.Size = UDim2.new(1, 0, 0, 30)
+checkpointTitle.BackgroundTransparency = 1
+checkpointTitle.Text = "🎯 CHECKPOINT SYSTEM"
+checkpointTitle.TextColor3 = Color3.fromRGB(138, 43, 226)
+checkpointTitle.TextSize = 16
+checkpointTitle.Font = Enum.Font.GothamBold
+checkpointTitle.Parent = contentFrame
+
 -- Status Label
 local statusLabel = Instance.new("TextLabel")
 statusLabel.Name = "StatusLabel"
 statusLabel.Size = UDim2.new(1, 0, 0, 30)
+statusLabel.Position = UDim2.new(0, 0, 0, 35)
 statusLabel.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
 statusLabel.Text = "🔴 Status: Stopped"
 statusLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -141,7 +228,7 @@ statusCorner.Parent = statusLabel
 local checkpointInfo = Instance.new("TextLabel")
 checkpointInfo.Name = "CheckpointInfo"
 checkpointInfo.Size = UDim2.new(1, 0, 0, 30)
-checkpointInfo.Position = UDim2.new(0, 0, 0, 40)
+checkpointInfo.Position = UDim2.new(0, 0, 0, 75)
 checkpointInfo.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
 checkpointInfo.Text = "📍 Checkpoint: 0 / 0"
 checkpointInfo.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -157,7 +244,7 @@ checkpointCorner.Parent = checkpointInfo
 local scanBtn = Instance.new("TextButton")
 scanBtn.Name = "ScanButton"
 scanBtn.Size = UDim2.new(1, 0, 0, 40)
-scanBtn.Position = UDim2.new(0, 0, 0, 80)
+scanBtn.Position = UDim2.new(0, 0, 0, 115)
 scanBtn.BackgroundColor3 = Color3.fromRGB(52, 152, 219)
 scanBtn.Text = "🔍 Scan Checkpoints"
 scanBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -173,7 +260,7 @@ scanCorner.Parent = scanBtn
 local toggleBtn = Instance.new("TextButton")
 toggleBtn.Name = "ToggleButton"
 toggleBtn.Size = UDim2.new(1, 0, 0, 50)
-toggleBtn.Position = UDim2.new(0, 0, 0, 130)
+toggleBtn.Position = UDim2.new(0, 0, 0, 165)
 toggleBtn.BackgroundColor3 = Color3.fromRGB(46, 204, 113)
 toggleBtn.Text = "▶️ Start Auto TP"
 toggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -189,7 +276,7 @@ toggleCorner.Parent = toggleBtn
 local loopFrame = Instance.new("Frame")
 loopFrame.Name = "LoopFrame"
 loopFrame.Size = UDim2.new(1, 0, 0, 40)
-loopFrame.Position = UDim2.new(0, 0, 0, 190)
+loopFrame.Position = UDim2.new(0, 0, 0, 225)
 loopFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
 loopFrame.Parent = contentFrame
 
@@ -227,7 +314,7 @@ loopToggleCorner.Parent = loopToggle
 local speedFrame = Instance.new("Frame")
 speedFrame.Name = "SpeedFrame"
 speedFrame.Size = UDim2.new(1, 0, 0, 60)
-speedFrame.Position = UDim2.new(0, 0, 0, 240)
+speedFrame.Position = UDim2.new(0, 0, 0, 275)
 speedFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
 speedFrame.Parent = contentFrame
 
@@ -283,7 +370,7 @@ handleCorner.Parent = speedHandle
 local resetBtn = Instance.new("TextButton")
 resetBtn.Name = "ResetButton"
 resetBtn.Size = UDim2.new(1, 0, 0, 40)
-resetBtn.Position = UDim2.new(0, 0, 0, 310)
+resetBtn.Position = UDim2.new(0, 0, 0, 345)
 resetBtn.BackgroundColor3 = Color3.fromRGB(231, 76, 60)
 resetBtn.Text = "🔄 Reset to Checkpoint 1"
 resetBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -294,6 +381,91 @@ resetBtn.Parent = contentFrame
 local resetCorner = Instance.new("UICorner")
 resetCorner.CornerRadius = UDim.new(0, 8)
 resetCorner.Parent = resetBtn
+
+-- Backdoor Scanner Section Title
+local backdoorTitle = Instance.new("TextLabel")
+backdoorTitle.Size = UDim2.new(1, 0, 0, 30)
+backdoorTitle.Position = UDim2.new(0, 0, 0, 395)
+backdoorTitle.BackgroundTransparency = 1
+backdoorTitle.Text = "🔓 BACKDOOR SCANNER & EXECUTOR"
+backdoorTitle.TextColor3 = Color3.fromRGB(231, 76, 60)
+backdoorTitle.TextSize = 16
+backdoorTitle.Font = Enum.Font.GothamBold
+backdoorTitle.Parent = contentFrame
+
+-- Backdoor Scan Result
+local backdoorResult = Instance.new("TextLabel")
+backdoorResult.Name = "BackdoorResult"
+backdoorResult.Size = UDim2.new(1, 0, 0, 80)
+backdoorResult.Position = UDim2.new(0, 0, 0, 430)
+backdoorResult.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
+backdoorResult.TextColor3 = Color3.fromRGB(255, 255, 255)
+backdoorResult.TextSize = 12
+backdoorResult.Font = Enum.Font.Gotham
+backdoorResult.TextXAlignment = Enum.TextXAlignment.Left
+backdoorResult.TextYAlignment = Enum.TextYAlignment.Top
+backdoorResult.TextWrapped = true
+backdoorResult.Text = "Click 'Scan Backdoors' to check server vulnerability..."
+backdoorResult.Parent = contentFrame
+
+local resultCorner = Instance.new("UICorner")
+resultCorner.CornerRadius = UDim.new(0, 8)
+resultCorner.Parent = backdoorResult
+
+-- Backdoor Scan Button
+local backdoorScanBtn = Instance.new("TextButton")
+backdoorScanBtn.Name = "BackdoorScanButton"
+backdoorScanBtn.Size = UDim2.new(1, 0, 0, 40)
+backdoorScanBtn.Position = UDim2.new(0, 0, 0, 520)
+backdoorScanBtn.BackgroundColor3 = Color3.fromRGB(230, 126, 34)
+backdoorScanBtn.Text = "🔍 Scan Backdoors"
+backdoorScanBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+backdoorScanBtn.TextSize = 14
+backdoorScanBtn.Font = Enum.Font.GothamBold
+backdoorScanBtn.Parent = contentFrame
+
+local backdoorScanCorner = Instance.new("UICorner")
+backdoorScanCorner.CornerRadius = UDim.new(0, 8)
+backdoorScanCorner.Parent = backdoorScanBtn
+
+-- Command Execution Section
+local commandFrame = Instance.new("Frame")
+commandFrame.Name = "CommandFrame"
+commandFrame.Size = UDim2.new(1, 0, 0, 50)
+commandFrame.Position = UDim2.new(0, 0, 0, 570)
+commandFrame.BackgroundTransparency = 1
+commandFrame.Parent = contentFrame
+
+local commandBox = Instance.new("TextBox")
+commandBox.Name = "CommandInput"
+commandBox.Size = UDim2.new(0.7, 0, 1, 0)
+commandBox.Position = UDim2.new(0, 0, 0, 0)
+commandBox.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
+commandBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+commandBox.PlaceholderText = "Enter server command to execute..."
+commandBox.Text = ""
+commandBox.TextSize = 12
+commandBox.Font = Enum.Font.Gotham
+commandBox.Parent = commandFrame
+
+local commandCorner = Instance.new("UICorner")
+commandCorner.CornerRadius = UDim.new(0, 6)
+commandCorner.Parent = commandBox
+
+local executeBtn = Instance.new("TextButton")
+executeBtn.Name = "ExecuteButton"
+executeBtn.Size = UDim2.new(0.3, -5, 1, 0)
+executeBtn.Position = UDim2.new(0.7, 5, 0, 0)
+executeBtn.BackgroundColor3 = Color3.fromRGB(46, 204, 113)
+executeBtn.Text = "⚡ Execute"
+executeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+executeBtn.TextSize = 14
+executeBtn.Font = Enum.Font.GothamBold
+executeBtn.Parent = commandFrame
+
+local executeCorner = Instance.new("UICorner")
+executeCorner.CornerRadius = UDim.new(0, 6)
+executeCorner.Parent = executeBtn
 
 -- Drag functionality
 local dragging, dragInput, dragStart, startPos
@@ -329,24 +501,6 @@ game:GetService("UserInputService").InputChanged:Connect(function(input)
     end
 end)
 
--- Button animations
-local function animateButton(button, isHover)
-    local goal = {}
-    if isHover then
-        goal.Size = UDim2.new(button.Size.X.Scale, button.Size.X.Offset, button.Size.Y.Scale + 0.02, button.Size.Y.Offset)
-    else
-        goal.Size = UDim2.new(button.Size.X.Scale, button.Size.X.Offset, button.Size.Y.Scale - 0.02, button.Size.Y.Offset)
-    end
-    
-    local tween = TweenService:Create(button, TweenInfo.new(0.2), goal)
-    tween:Play()
-end
-
-for _, btn in pairs({scanBtn, toggleBtn, resetBtn, closeBtn}) do
-    btn.MouseEnter:Connect(function() animateButton(btn, true) end)
-    btn.MouseLeave:Connect(function() animateButton(btn, false) end)
-end
-
 -- Speed slider functionality
 local draggingSlider = false
 
@@ -370,19 +524,99 @@ RunService.RenderStepped:Connect(function()
         speedFill.Size = UDim2.new(relativePos, 0, 1, 0)
         speedHandle.Position = UDim2.new(relativePos, -8, 0.5, -8)
         
-        teleportSpeed = 0.1 + (relativePos * 1.9) -- Range: 0.1s to 2s
+        teleportSpeed = 0.1 + (relativePos * 1.9)
         speedLabel.Text = string.format("⚡ TP Speed: %.1fs", teleportSpeed)
     end
 end)
 
--- Teleport function
-local function teleportToCheckpoint(checkpoint)
-    if character and humanoidRootPart and checkpoint then
-        humanoidRootPart.CFrame = checkpoint.CFrame + Vector3.new(0, 5, 0)
+-- Backdoor Scanner Functions
+backdoorScanBtn.MouseButton1Click:Connect(function()
+    local results = scanForBackdoors()
+    
+    local resultText = "🔓 BACKDOOR SCAN RESULTS:\n\n"
+    resultText = resultText .. "📊 " .. results.vulnerabilityLevel .. "\n"
+    resultText = resultText .. "📈 Total Objects Found: " .. results.totalFound .. "\n\n"
+    
+    if #results.remoteEvents > 0 then
+        resultText = resultText .. "📡 RemoteEvents (" .. #results.remoteEvents .. "):\n"
+        for i, remote in ipairs(results.remoteEvents) do
+            resultText = resultText .. "  " .. i .. ". " .. remote.Name .. " (" .. remote.Parent .. ")\n"
+        end
+        resultText = resultText .. "\n"
     end
-end
+    
+    if #results.remoteFunctions > 0 then
+        resultText = resultText .. "🔧 RemoteFunctions (" .. #results.remoteFunctions .. "):\n"
+        for i, remote in ipairs(results.remoteFunctions) do
+            resultText = resultText .. "  " .. i .. ". " .. remote.Name .. " (" .. remote.Parent .. ")\n"
+        end
+        resultText = resultText .. "\n"
+    end
+    
+    if #results.suspiciousScripts > 0 then
+        resultText = resultText .. "⚠️ Suspicious Scripts (" .. #results.suspiciousScripts .. "):\n"
+        for i, script in ipairs(results.suspiciousScripts) do
+            resultText = resultText .. "  " .. i .. ". " .. script.Name .. " (" .. script.Type .. ")\n"
+        end
+    end
+    
+    if results.totalFound == 0 then
+        resultText = resultText .. "✅ No potential backdoors detected."
+    end
+    
+    backdoorResult.Text = resultText
+    
+    -- Visual feedback
+    backdoorScanBtn.BackgroundColor3 = Color3.fromRGB(39, 174, 96)
+    wait(0.3)
+    backdoorScanBtn.BackgroundColor3 = Color3.fromRGB(230, 126, 34)
+end)
 
--- Main loop
+-- Command Execution Function
+executeBtn.MouseButton1Click:Connect(function()
+    local command = commandBox.Text
+    if command == "" then return end
+    
+    -- Try to find and use available RemoteEvents/RemoteFunctions
+    local results = scanForBackdoors()
+    local executed = false
+    
+    -- Try RemoteEvents first
+    for _, remote in ipairs(results.remoteEvents) do
+        local remoteObj = game:GetService("ReplicatedStorage"):FindFirstChild(remote.Name)
+        if remoteObj and remoteObj:IsA("RemoteEvent") then
+            pcall(function()
+                remoteObj:FireServer(command)
+                backdoorResult.Text = "✅ Command sent via: " .. remote.Name .. "\nCommand: " .. command
+                executed = true
+            end)
+            break
+        end
+    end
+    
+    -- If no RemoteEvents, try RemoteFunctions
+    if not executed then
+        for _, remote in ipairs(results.remoteFunctions) do
+            local remoteObj = game:GetService("ReplicatedStorage"):FindFirstChild(remote.Name)
+            if remoteObj and remoteObj:IsA("RemoteFunction") then
+                pcall(function()
+                    remoteObj:InvokeServer(command)
+                    backdoorResult.Text = "✅ Command invoked via: " .. remote.Name .. "\nCommand: " .. command
+                    executed = true
+                end)
+                break
+            end
+        end
+    end
+    
+    if not executed then
+        backdoorResult.Text = "❌ No available backdoor found to execute command.\nTry scanning for backdoors first."
+    end
+    
+    commandBox.Text = ""
+end)
+
+-- Checkpoint Auto TP Function
 local function startAutoTP()
     isRunning = true
     statusLabel.Text = "🟢 Status: Running"
@@ -418,7 +652,6 @@ scanBtn.MouseButton1Click:Connect(function()
     checkpointInfo.Text = string.format("📍 Found: %d checkpoints", count)
     currentCheckpoint = 1
     
-    -- Visual feedback
     scanBtn.BackgroundColor3 = Color3.fromRGB(39, 174, 96)
     wait(0.2)
     scanBtn.BackgroundColor3 = Color3.fromRGB(52, 152, 219)
@@ -468,3 +701,10 @@ end)
 wait(1)
 scanCheckpoints()
 checkpointInfo.Text = string.format("📍 Found: %d checkpoints", #checkpoints)
+
+-- Enter key to execute commands
+commandBox.FocusLost:Connect(function(enterPressed)
+    if enterPressed then
+        executeBtn.MouseButton1Click:Wait()
+    end
+end)
