@@ -225,7 +225,7 @@ local function createFloatingButton()
     local logoImage = Instance.new("ImageLabel")
     logoImage.Size = UDim2.new(1, 0, 1, 0)
     logoImage.BackgroundTransparency = 1
-    logoImage.Image = "https://files.catbox.moe/your-logo.png" -- Replace with your logo
+    logoImage.Image = "https://files.catbox.moe/b0k250.jpg" -- Replace with your logo
     logoImage.Visible = false
     logoImage.Parent = floatingButton
     
