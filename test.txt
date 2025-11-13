@@ -1,31 +1,42 @@
--- Universal Part Claim
+-- RapipppXD V1.0 - RapipppModss Style GUI
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
-local UserInputService = game:GetService("UserInputService")
 local LocalPlayer = Players.LocalPlayer
 local Workspace = game:GetService("Workspace")
+local SoundService = game:GetService("SoundService")
+local StarterGui = game:GetService("StarterGui")
+local TextChatService = game:GetService("TextChatService")
 
+-- Wait for character
 local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
 local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
 
+-- Universal Part Claim System
 local Folder = Instance.new("Folder", Workspace)
-local Part = Instance.new("Part", Folder)
-local Attachment1 = Instance.new("Attachment", Part)
-Part.Anchored = true
-Part.CanCollide = false
-Part.Transparency = 1
+Folder.Name = "XMODS_System"
+local AnchorPart = Instance.new("Part", Folder)
+local MainAttachment = Instance.new("Attachment", AnchorPart)
+AnchorPart.Name = "XMODS_Anchor"
+AnchorPart.Anchored = true
+AnchorPart.CanCollide = false
+AnchorPart.Transparency = 1
+AnchorPart.Size = Vector3.new(0.1, 0.1, 0.1)
 
-if not getgenv().Network then
-    getgenv().Network = {
+-- Network System
+if not getgenv().XMODSNetwork then
+    getgenv().XMODSNetwork = {
         BaseParts = {},
-        Velocity = Vector3.new(14.46262424, 14.46262424, 14.46262424)
+        Velocity = Vector3.new(50, 50, 50)
     }
 
-    Network.RetainPart = function(Part)
+    XMODSNetwork.RetainPart = function(Part)
         if typeof(Part) == "Instance" and Part:IsA("BasePart") and Part:IsDescendantOf(Workspace) then
-            table.insert(Network.BaseParts, Part)
+            table.insert(XMODSNetwork.BaseParts, Part)
             Part.CustomPhysicalProperties = PhysicalProperties.new(0, 0, 0, 0, 0)
             Part.CanCollide = false
+            Part.Massless = true
         end
     end
 
@@ -33,294 +44,87 @@ if not getgenv().Network then
         LocalPlayer.ReplicationFocus = Workspace
         RunService.Heartbeat:Connect(function()
             sethiddenproperty(LocalPlayer, "SimulationRadius", math.huge)
-            for _, Part in pairs(Network.BaseParts) do
+            for _, Part in pairs(XMODSNetwork.BaseParts) do
                 if Part:IsDescendantOf(Workspace) then
-                    Part.Velocity = Network.Velocity
+                    Part.Velocity = XMODSNetwork.Velocity
                 end
             end
         end)
     end
-
     EnablePartControl()
 end
 
+-- Ring Parts System
+local ringPartsEnabled = false
+local radius = 50
+local height = 100
+local rotationSpeed = 2
+local attractionStrength = 1000
+
+local function ShouldProcessPart(part)
+    if not part:IsA("BasePart") then return false end
+    if part.Anchored then return false end
+    
+    -- Skip character parts
+    if part:IsDescendantOf(LocalPlayer.Character) then
+        return false
+    end
+    
+    -- Skip humanoid models
+    local model = part:FindFirstAncestorOfClass("Model")
+    if model and model:FindFirstChildOfClass("Humanoid") then
+        return false
+    end
+    
+    -- Skip important parts
+    if part.Name == "Handle" then return false end
+    if part:FindFirstAncestorWhichIsA("Tool") then return false end
+    if part:FindFirstAncestorWhichIsA("Accessory") then return false end
+    
+    -- Skip terrain and baseplate
+    if part:IsA("Terrain") then return false end
+    if string.lower(part.Name):find("baseplate") then return false end
+    if string.lower(part.Name):find("spawn") then return false end
+    
+    return true
+end
+
 local function ForcePart(v)
-    if v:IsA("Part") and not v.Anchored and not v.Parent:FindFirstChild("Humanoid") and not v.Parent:FindFirstChild("Head") and v.Name ~= "Handle" then
+    if ShouldProcessPart(v) then
+        -- Destroy existing forces
         for _, x in next, v:GetChildren() do
             if x:IsA("BodyAngularVelocity") or x:IsA("BodyForce") or x:IsA("BodyGyro") or x:IsA("BodyPosition") or x:IsA("BodyThrust") or x:IsA("BodyVelocity") or x:IsA("RocketPropulsion") then
                 x:Destroy()
             end
         end
-        if v:FindFirstChild("Attachment") then
-            v:FindFirstChild("Attachment"):Destroy()
+        
+        -- Destroy constraints
+        for _, constraint in pairs(v:GetChildren()) do
+            if constraint:IsA("Constraint") then
+                constraint:Destroy()
+            end
         end
-        if v:FindFirstChild("AlignPosition") then
-            v:FindFirstChild("AlignPosition"):Destroy()
-        end
-        if v:FindFirstChild("Torque") then
-            v:FindFirstChild("Torque"):Destroy()
-        end
+        
         v.CanCollide = false
+        v.Massless = true
+        
+        -- Add torque for rotation
         local Torque = Instance.new("Torque", v)
         Torque.Torque = Vector3.new(100000, 100000, 100000)
-        local AlignPosition = Instance.new("AlignPosition", v)
         local Attachment2 = Instance.new("Attachment", v)
         Torque.Attachment0 = Attachment2
-        AlignPosition.MaxForce = 9999999999999999
+        
+        -- Add align position
+        local AlignPosition = Instance.new("AlignPosition", v)
+        AlignPosition.MaxForce = 999999999
         AlignPosition.MaxVelocity = math.huge
         AlignPosition.Responsiveness = 200
         AlignPosition.Attachment0 = Attachment2
-        AlignPosition.Attachment1 = Attachment1
-    end
-end
-
-
-
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local UserInputService = game:GetService("UserInputService")
-local SoundService = game:GetService("SoundService")
-local StarterGui = game:GetService("StarterGui")
-local TextChatService = game:GetService("TextChatService")
-
-local LocalPlayer = Players.LocalPlayer
-
--- Sound Effects
-local function playSound(soundId)
-    local sound = Instance.new("Sound")
-    sound.SoundId = "rbxassetid://" .. soundId
-    sound.Parent = SoundService
-    sound:Play()
-    sound.Ended:Connect(function()
-        sound:Destroy()
-    end)
-end
-
--- Play initial sound
-playSound("2865227271")
-
--- GUI Creation
-local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "SuperRingPartsGUI"
-ScreenGui.ResetOnSpawn = false
-ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
-
-local MainFrame = Instance.new("Frame")
-MainFrame.Size = UDim2.new(0, 220, 0, 190)
-MainFrame.Position = UDim2.new(0.5, -110, 0.5, -95)
-MainFrame.BackgroundColor3 = Color3.fromRGB(0, 102, 51) -- Green
-MainFrame.BorderSizePixel = 0
-MainFrame.Parent = ScreenGui
-
--- Make the GUI round
-local UICorner = Instance.new("UICorner")
-UICorner.CornerRadius = UDim.new(0, 20)
-UICorner.Parent = MainFrame
-
-local Title = Instance.new("TextLabel")
-Title.Size = UDim2.new(1, 0, 0, 40)
-Title.Position = UDim2.new(0, 0, 0, 0)
-Title.Text = "XMODS V1.0"
-Title.TextColor3 = Color3.fromRGB(255, 255, 255) -- White
-Title.BackgroundColor3 = Color3.fromRGB(0, 153, 76) -- Little dark green
-Title.Font = Enum.Font.Fondamento -- More elegant font
-Title.TextSize = 22
-Title.Parent = MainFrame
-
--- Round the title
-local TitleCorner = Instance.new("UICorner")
-TitleCorner.CornerRadius = UDim.new(0, 20)
-TitleCorner.Parent = Title
-
-local ToggleButton = Instance.new("TextButton")
-ToggleButton.Size = UDim2.new(0.8, 0, 0, 35)
-ToggleButton.Position = UDim2.new(0.1, 0, 0.3, 0)
-ToggleButton.Text = "Off"
-ToggleButton.BackgroundColor3 = Color3.fromRGB(255, 0, 0) -- Red
-ToggleButton.TextColor3 = Color3.fromRGB(255, 255, 255) -- White
-ToggleButton.Font = Enum.Font.Fondamento
-ToggleButton.TextSize = 15
-ToggleButton.Parent = MainFrame
-
--- Round the toggle button
-local ToggleCorner = Instance.new("UICorner")
-ToggleCorner.CornerRadius = UDim.new(0, 10)
-ToggleCorner.Parent = ToggleButton
-
-local DecreaseRadius = Instance.new("TextButton")
-DecreaseRadius.Size = UDim2.new(0.2, 0, 0, 35)
-DecreaseRadius.Position = UDim2.new(0.1, 0, 0.6, 0)
-DecreaseRadius.Text = "<"
-DecreaseRadius.BackgroundColor3 = Color3.fromRGB(255, 255, 0) -- Yellow
-DecreaseRadius.TextColor3 = Color3.fromRGB(0, 0, 0) -- White
-DecreaseRadius.Font = Enum.Font.Fondamento
-DecreaseRadius.TextSize = 18
-DecreaseRadius.Parent = MainFrame
-
--- Round the decrease button
-local DecreaseCorner = Instance.new("UICorner")
-DecreaseCorner.CornerRadius = UDim.new(0, 10)
-DecreaseCorner.Parent = DecreaseRadius
-
-local IncreaseRadius = Instance.new("TextButton")
-IncreaseRadius.Size = UDim2.new(0.2, 0, 0, 35)
-IncreaseRadius.Position = UDim2.new(0.7, 0, 0.6, 0)
-IncreaseRadius.Text = ">"
-IncreaseRadius.BackgroundColor3 = Color3.fromRGB(255, 255, 0) -- Yellow
-IncreaseRadius.TextColor3 = Color3.fromRGB(0, 0, 0) -- White
-IncreaseRadius.Font = Enum.Font.Fondamento
-IncreaseRadius.TextSize = 18
-IncreaseRadius.Parent = MainFrame
-
--- Round the increase button
-local IncreaseCorner = Instance.new("UICorner")
-IncreaseCorner.CornerRadius = UDim.new(0, 10)
-IncreaseCorner.Parent = IncreaseRadius
-
-local RadiusDisplay = Instance.new("TextLabel")
-RadiusDisplay.Size = UDim2.new(0.4, 0, 0, 35)
-RadiusDisplay.Position = UDim2.new(0.3, 0, 0.6, 0)
-RadiusDisplay.Text = "Radius: 50"
-RadiusDisplay.BackgroundColor3 = Color3.fromRGB(255, 255, 0) -- Yellow
-RadiusDisplay.TextColor3 = Color3.fromRGB(0, 0, 0) -- White
-RadiusDisplay.Font = Enum.Font.Fondamento
-RadiusDisplay.TextSize = 15
-RadiusDisplay.Parent = MainFrame
-
--- Round the radius display
-local RadiusCorner = Instance.new("UICorner")
-RadiusCorner.CornerRadius = UDim.new(0, 10)
-RadiusCorner.Parent = RadiusDisplay
-
-local Watermark = Instance.new("TextLabel")
-Watermark.Size = UDim2.new(1, 0, 0, 20)
-Watermark.Position = UDim2.new(0, 0, 1, -20)
-Watermark.Text = "Super Ring [V5] by Rapipp!"
-Watermark.TextColor3 = Color3.fromRGB(255, 255, 255) -- Dark brown
-Watermark.BackgroundTransparency = 1
-Watermark.Font = Enum.Font.Fondamento
-Watermark.TextSize = 14
-Watermark.Parent = MainFrame
-
--- Add minimize button
-local MinimizeButton = Instance.new("TextButton")
-MinimizeButton.Size = UDim2.new(0, 30, 0, 30)
-MinimizeButton.Position = UDim2.new(1, -35, 0, 5)
-MinimizeButton.Text = "-"
-MinimizeButton.BackgroundColor3 = Color3.fromRGB(0, 255, 0) -- Green
-MinimizeButton.TextColor3 = Color3.fromRGB(255, 255, 255) -- White
-MinimizeButton.Font = Enum.Font.Fondamento
-MinimizeButton.TextSize = 15
-MinimizeButton.Parent = MainFrame
-
--- Round the minimize button
-local MinimizeCorner = Instance.new("UICorner")
-MinimizeCorner.CornerRadius = UDim.new(0, 15)
-MinimizeCorner.Parent = MinimizeButton
-
--- Minimize functionality
-local minimized = false
-MinimizeButton.MouseButton1Click:Connect(function()
-    minimized = not minimized
-    if minimized then
-        MainFrame:TweenSize(UDim2.new(0, 220, 0, 40), "Out", "Quad", 0.3, true)
-        MinimizeButton.Text = "+"
-        ToggleButton.Visible = false
-        DecreaseRadius.Visible = false
-        IncreaseRadius.Visible = false
-        RadiusDisplay.Visible = false
-        Watermark.Visible = false
-    else
-        MainFrame:TweenSize(UDim2.new(0, 220, 0, 190), "Out", "Quad", 0.3, true)
-        MinimizeButton.Text = "-"
-        ToggleButton.Visible = true
-        DecreaseRadius.Visible = true
-        IncreaseRadius.Visible = true
-        RadiusDisplay.Visible = true
-        Watermark.Visible = true
-    end
-    playSound("12221967")
-end)
-
--- Make GUI draggable
-local dragging
-local dragInput
-local dragStart
-local startPos
-
-local function update(input)
-    local delta = input.Position - dragStart
-    MainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-end
-
-MainFrame.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        dragging = true
-        dragStart = input.Position
-        startPos = MainFrame.Position
+        AlignPosition.Attachment1 = MainAttachment
         
-        input.Changed:Connect(function()
-            if input.UserInputState == Enum.UserInputState.End then
-                dragging = false
-            end
-        end)
-    end
-end)
-
-MainFrame.InputChanged:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-        dragInput = input
-    end
-end)
-
-UserInputService.InputChanged:Connect(function(input)
-    if input == dragInput and dragging then
-        update(input)
-    end
-end)
-
--- Ring Parts Claim
-if not getgenv().Network then
-    getgenv().Network = {
-        BaseParts = {},
-        Velocity = Vector3.new(14.46262424, 14.46262424, 14.46262424)
-    }
-    Network.RetainPart = function(Part)
-        if typeof(Part) == "Instance" and Part:IsA("BasePart") and Part:IsDescendantOf(workspace) then
-            table.insert(Network.BaseParts, Part)
-            Part.CustomPhysicalProperties = PhysicalProperties.new(0, 0, 0, 0, 0)
-            Part.CanCollide = false
-        end
-    end
-    local function EnablePartControl()
-        LocalPlayer.ReplicationFocus = workspace
-        RunService.Heartbeat:Connect(function()
-            sethiddenproperty(LocalPlayer, "SimulationRadius", math.huge)
-            for _, Part in pairs(Network.BaseParts) do
-                if Part:IsDescendantOf(workspace) then
-                    Part.Velocity = Network.Velocity
-                end
-            end
-        end)
-    end
-    EnablePartControl()
-end
-
--- Edits
-local radius = 50
-local height = 100
-local rotationSpeed = 0.5
-local attractionStrength = 1000
-local ringPartsEnabled = false
-
-local function RetainPart(Part)
-    if Part:IsA("BasePart") and not Part.Anchored and Part:IsDescendantOf(workspace) then
-        if Part.Parent == LocalPlayer.Character or Part:IsDescendantOf(LocalPlayer.Character) then
-            return false
-        end
-
-        Part.CustomPhysicalProperties = PhysicalProperties.new(0, 0, 0, 0, 0)
-        Part.CanCollide = false
+        -- Add to network
+        XMODSNetwork.RetainPart(v)
+        
         return true
     end
     return false
@@ -328,7 +132,7 @@ end
 
 local parts = {}
 local function addPart(part)
-    if RetainPart(part) then
+    if ShouldProcessPart(part) then
         if not table.find(parts, part) then
             table.insert(parts, part)
         end
@@ -342,6 +146,7 @@ local function removePart(part)
     end
 end
 
+-- Initialize parts
 for _, part in pairs(workspace:GetDescendants()) do
     addPart(part)
 end
@@ -349,78 +154,597 @@ end
 workspace.DescendantAdded:Connect(addPart)
 workspace.DescendantRemoving:Connect(removePart)
 
-RunService.Heartbeat:Connect(function()
+-- Ring Parts Main Loop
+local ringConnection = nil
+
+local function updateRingParts()
     if not ringPartsEnabled then return end
     
     local humanoidRootPart = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
     if humanoidRootPart then
+        -- Update anchor position
+        AnchorPart.Position = humanoidRootPart.Position
+        
         local tornadoCenter = humanoidRootPart.Position
         for _, part in pairs(parts) do
-            if part.Parent and not part.Anchored then
+            if part.Parent and not part.Anchored and ShouldProcessPart(part) then
                 local pos = part.Position
                 local distance = (Vector3.new(pos.X, tornadoCenter.Y, pos.Z) - tornadoCenter).Magnitude
-                local angle = math.atan2(pos.Z - tornadoCenter.Z, pos.X - tornadoCenter.X)
-                local newAngle = angle + math.rad(rotationSpeed)
-                local targetPos = Vector3.new(
-                    tornadoCenter.X + math.cos(newAngle) * math.min(radius, distance),
-                    tornadoCenter.Y + (height * (math.abs(math.sin((pos.Y - tornadoCenter.Y) / height)))),
-                    tornadoCenter.Z + math.sin(newAngle) * math.min(radius, distance)
-                )
-                local directionToTarget = (targetPos - part.Position).unit
-                part.Velocity = directionToTarget * attractionStrength
+                if distance <= radius then
+                    -- Force the part if not already processed
+                    if not part:FindFirstChild("AlignPosition") then
+                        ForcePart(part)
+                    end
+                    
+                    local angle = math.atan2(pos.Z - tornadoCenter.Z, pos.X - tornadoCenter.X)
+                    local newAngle = angle + math.rad(rotationSpeed)
+                    local targetPos = Vector3.new(
+                        tornadoCenter.X + math.cos(newAngle) * math.min(radius, distance),
+                        tornadoCenter.Y + (height * (math.abs(math.sin((pos.Y - tornadoCenter.Y) / height)))),
+                        tornadoCenter.Z + math.sin(newAngle) * math.min(radius, distance)
+                    )
+                    local directionToTarget = (targetPos - part.Position).unit
+                    part.Velocity = directionToTarget * attractionStrength
+                end
             end
+        end
+    end
+end
+
+local function startRingParts()
+    if ringPartsEnabled then return end
+    ringPartsEnabled = true
+    
+    ringConnection = RunService.Heartbeat:Connect(function()
+        updateRingParts()
+    end)
+    
+    playSound("2865227271")
+end
+
+local function stopRingParts()
+    ringPartsEnabled = false
+    if ringConnection then
+        ringConnection:Disconnect()
+        ringConnection = nil
+    end
+end
+
+-- Sound Effects
+local function playSound(soundId)
+    local sound = Instance.new("Sound")
+    sound.SoundId = "rbxassetid://" .. soundId
+    sound.Parent = SoundService
+    sound:Play()
+    sound.Ended:Connect(function()
+        sound:Destroy()
+    end)
+end
+
+-- Buat ScreenGui Parvus Style
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "XMODSHub"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+
+-- Main Frame
+local MainFrame = Instance.new("Frame")
+MainFrame.Name = "MainFrame"
+MainFrame.Size = UDim2.new(0, 600, 0, 450)
+MainFrame.Position = UDim2.new(0.5, -300, 0.5, -225)
+MainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
+MainFrame.BorderSizePixel = 0
+MainFrame.Parent = ScreenGui
+
+local MainCorner = Instance.new("UICorner")
+MainCorner.CornerRadius = UDim.new(0, 8)
+MainCorner.Parent = MainFrame
+
+-- Header
+local Header = Instance.new("Frame")
+Header.Name = "Header"
+Header.Size = UDim2.new(1, 0, 0, 40)
+Header.BackgroundColor3 = Color3.fromRGB(0, 102, 51) -- Green theme
+Header.BorderSizePixel = 0
+Header.Parent = MainFrame
+
+local HeaderCorner = Instance.new("UICorner")
+HeaderCorner.CornerRadius = UDim.new(0, 8)
+HeaderCorner.Parent = Header
+
+local HeaderTitle = Instance.new("TextLabel")
+HeaderTitle.Name = "Title"
+HeaderTitle.Size = UDim2.new(1, -80, 1, 0)
+HeaderTitle.Position = UDim2.new(0, 15, 0, 0)
+HeaderTitle.BackgroundTransparency = 1
+HeaderTitle.Text = "RapipppXD V1.0 - By Rapipp"
+HeaderTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+HeaderTitle.TextSize = 18
+HeaderTitle.Font = Enum.Font.GothamBold
+HeaderTitle.TextXAlignment = Enum.TextXAlignment.Left
+HeaderTitle.Parent = Header
+
+-- Close Button
+local CloseButton = Instance.new("TextButton")
+CloseButton.Name = "CloseButton"
+CloseButton.Size = UDim2.new(0, 30, 0, 30)
+CloseButton.Position = UDim2.new(1, -35, 0, 5)
+CloseButton.BackgroundColor3 = Color3.fromRGB(230, 50, 50)
+CloseButton.Text = "X"
+CloseButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+CloseButton.TextSize = 16
+CloseButton.Font = Enum.Font.GothamBold
+CloseButton.Parent = Header
+
+local CloseCorner = Instance.new("UICorner")
+CloseCorner.CornerRadius = UDim.new(0, 6)
+CloseCorner.Parent = CloseButton
+
+CloseButton.MouseButton1Click:Connect(function()
+    ScreenGui:Destroy()
+    playSound("12221967")
+end)
+
+-- Tab Container
+local TabContainer = Instance.new("Frame")
+TabContainer.Name = "TabContainer"
+TabContainer.Size = UDim2.new(1, 0, 0, 35)
+TabContainer.Position = UDim2.new(0, 0, 0, 40)
+TabContainer.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
+TabContainer.BorderSizePixel = 0
+TabContainer.Parent = MainFrame
+
+-- Content Frame
+local ContentFrame = Instance.new("Frame")
+ContentFrame.Name = "ContentFrame"
+ContentFrame.Size = UDim2.new(1, -20, 1, -95)
+ContentFrame.Position = UDim2.new(0, 10, 0, 85)
+ContentFrame.BackgroundTransparency = 1
+ContentFrame.Parent = MainFrame
+
+-- Tabs
+local tabs = {"Ring Parts", "Magnet", "Visuals", "Settings"}
+local activeTab = "Ring Parts"
+
+-- Fungsi membuat Section
+local function CreateSection(name, parent, position, size)
+    local Section = Instance.new("Frame")
+    Section.Name = name
+    Section.Size = size or UDim2.new(1, 0, 0, 200)
+    Section.Position = position
+    Section.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
+    Section.BorderSizePixel = 0
+    Section.Parent = parent
+    
+    local SectionCorner = Instance.new("UICorner")
+    SectionCorner.CornerRadius = UDim.new(0, 6)
+    SectionCorner.Parent = Section
+    
+    local Title = Instance.new("TextLabel")
+    Title.Name = "Title"
+    Title.Size = UDim2.new(1, -20, 0, 30)
+    Title.Position = UDim2.new(0, 10, 0, 5)
+    Title.BackgroundTransparency = 1
+    Title.Text = name
+    Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+    Title.TextSize = 16
+    Title.Font = Enum.Font.GothamBold
+    Title.TextXAlignment = Enum.TextXAlignment.Left
+    Title.Parent = Section
+    
+    local Container = Instance.new("ScrollingFrame")
+    Container.Name = "Container"
+    Container.Size = UDim2.new(1, -20, 1, -45)
+    Container.Position = UDim2.new(0, 10, 0, 40)
+    Container.BackgroundTransparency = 1
+    Container.BorderSizePixel = 0
+    Container.ScrollBarThickness = 4
+    Container.ScrollBarImageColor3 = Color3.fromRGB(0, 153, 76)
+    Container.CanvasSize = UDim2.new(0, 0, 2, 0)
+    Container.Parent = Section
+    
+    local Layout = Instance.new("UIListLayout")
+    Layout.SortOrder = Enum.SortOrder.LayoutOrder
+    Layout.Padding = UDim.new(0, 8)
+    Layout.Parent = Container
+    
+    return Container
+end
+
+-- Fungsi membuat Toggle
+local function CreateToggle(name, parent, default, callback)
+    local Toggle = Instance.new("Frame")
+    Toggle.Name = name
+    Toggle.Size = UDim2.new(1, 0, 0, 30)
+    Toggle.BackgroundTransparency = 1
+    Toggle.Parent = parent
+    
+    local Label = Instance.new("TextLabel")
+    Label.Size = UDim2.new(1, -40, 1, 0)
+    Label.BackgroundTransparency = 1
+    Label.Text = name
+    Label.TextColor3 = Color3.fromRGB(200, 200, 200)
+    Label.TextSize = 14
+    Label.Font = Enum.Font.Gotham
+    Label.TextXAlignment = Enum.TextXAlignment.Left
+    Label.Parent = Toggle
+    
+    local ToggleButton = Instance.new("TextButton")
+    ToggleButton.Size = UDim2.new(0, 50, 0, 25)
+    ToggleButton.Position = UDim2.new(1, -55, 0, 2)
+    ToggleButton.BackgroundColor3 = default and Color3.fromRGB(0, 153, 76) or Color3.fromRGB(50, 50, 60)
+    ToggleButton.Text = default and "ON" or "OFF"
+    ToggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    ToggleButton.TextSize = 12
+    ToggleButton.Font = Enum.Font.GothamBold
+    ToggleButton.Parent = Toggle
+    
+    local ToggleCorner = Instance.new("UICorner")
+    ToggleCorner.CornerRadius = UDim.new(0, 4)
+    ToggleCorner.Parent = ToggleButton
+    
+    ToggleButton.MouseButton1Click:Connect(function()
+        local newState = not (ToggleButton.Text == "ON")
+        ToggleButton.BackgroundColor3 = newState and Color3.fromRGB(0, 153, 76) or Color3.fromRGB(50, 50, 60)
+        ToggleButton.Text = newState and "ON" or "OFF"
+        playSound("12221967")
+        if callback then
+            callback(newState)
+        end
+    end)
+    
+    return Toggle
+end
+
+-- Fungsi membuat Slider
+local function CreateSlider(name, parent, min, max, default, callback)
+    local Slider = Instance.new("Frame")
+    Slider.Name = name
+    Slider.Size = UDim2.new(1, 0, 0, 50)
+    Slider.BackgroundTransparency = 1
+    Slider.Parent = parent
+    
+    local Label = Instance.new("TextLabel")
+    Label.Size = UDim2.new(0.6, 0, 0, 20)
+    Label.BackgroundTransparency = 1
+    Label.Text = name
+    Label.TextColor3 = Color3.fromRGB(200, 200, 200)
+    Label.TextSize = 14
+    Label.Font = Enum.Font.Gotham
+    Label.TextXAlignment = Enum.TextXAlignment.Left
+    Label.Parent = Slider
+    
+    local ValueLabel = Instance.new("TextLabel")
+    ValueLabel.Size = UDim2.new(0.4, 0, 0, 20)
+    ValueLabel.Position = UDim2.new(0.6, 0, 0, 0)
+    ValueLabel.BackgroundTransparency = 1
+    ValueLabel.Text = tostring(default)
+    ValueLabel.TextColor3 = Color3.fromRGB(0, 153, 76)
+    ValueLabel.TextSize = 14
+    ValueLabel.Font = Enum.Font.GothamBold
+    ValueLabel.TextXAlignment = Enum.TextXAlignment.Right
+    ValueLabel.Parent = Slider
+    
+    local SliderFrame = Instance.new("Frame")
+    SliderFrame.Size = UDim2.new(1, 0, 0, 6)
+    SliderFrame.Position = UDim2.new(0, 0, 0, 30)
+    SliderFrame.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
+    SliderFrame.BorderSizePixel = 0
+    SliderFrame.Parent = Slider
+    
+    local SliderCorner = Instance.new("UICorner")
+    SliderCorner.CornerRadius = UDim.new(1, 0)
+    SliderCorner.Parent = SliderFrame
+    
+    local SliderFill = Instance.new("Frame")
+    SliderFill.Size = UDim2.new((default - min) / (max - min), 0, 1, 0)
+    SliderFill.BackgroundColor3 = Color3.fromRGB(0, 153, 76)
+    SliderFill.BorderSizePixel = 0
+    SliderFill.Parent = SliderFrame
+    
+    local FillCorner = Instance.new("UICorner")
+    FillCorner.CornerRadius = UDim.new(1, 0)
+    FillCorner.Parent = SliderFill
+    
+    local dragging = false
+    
+    local function updateSlider(value)
+        local pos = (value - min) / (max - min)
+        SliderFill.Size = UDim2.new(pos, 0, 1, 0)
+        ValueLabel.Text = tostring(value)
+        if callback then
+            callback(value)
+        end
+    end
+    
+    SliderFrame.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = true
+        end
+    end)
+    
+    UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = false
+        end
+    end)
+    
+    UserInputService.InputChanged:Connect(function(input)
+        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+            local pos = math.clamp((input.Position.X - SliderFrame.AbsolutePosition.X) / SliderFrame.AbsoluteSize.X, 0, 1)
+            local value = math.floor(min + (max - min) * pos)
+            updateSlider(value)
+        end
+    end)
+    
+    -- Initialize
+    updateSlider(default)
+    
+    return Slider
+end
+
+-- Fungsi membuat Button
+local function CreateButton(name, parent, callback)
+    local Button = Instance.new("TextButton")
+    Button.Name = name
+    Button.Size = UDim2.new(1, 0, 0, 35)
+    Button.BackgroundColor3 = Color3.fromRGB(0, 102, 51)
+    Button.BorderSizePixel = 0
+    Button.Text = name
+    Button.TextColor3 = Color3.fromRGB(255, 255, 255)
+    Button.TextSize = 14
+    Button.Font = Enum.Font.GothamBold
+    Button.Parent = parent
+    
+    local ButtonCorner = Instance.new("UICorner")
+    ButtonCorner.CornerRadius = UDim.new(0, 6)
+    ButtonCorner.Parent = Button
+    
+    Button.MouseButton1Click:Connect(function()
+        playSound("12221967")
+        if callback then
+            callback()
+        end
+    end)
+    
+    return Button
+end
+
+-- Buat Tab Buttons
+for i, tabName in ipairs(tabs) do
+    local TabButton = Instance.new("TextButton")
+    TabButton.Name = tabName .. "Tab"
+    TabButton.Size = UDim2.new(0, 140, 1, 0)
+    TabButton.Position = UDim2.new(0, (i-1) * 140, 0, 0)
+    TabButton.BackgroundColor3 = tabName == activeTab and Color3.fromRGB(0, 102, 51) or Color3.fromRGB(45, 45, 55)
+    TabButton.BorderSizePixel = 0
+    TabButton.Text = tabName
+    TabButton.TextColor3 = tabName == activeTab and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(150, 150, 150)
+    TabButton.TextSize = 14
+    TabButton.Font = Enum.Font.GothamBold
+    TabButton.Parent = TabContainer
+    
+    TabButton.MouseButton1Click:Connect(function()
+        for _, child in ipairs(TabContainer:GetChildren()) do
+            if child:IsA("TextButton") then
+                child.BackgroundColor3 = Color3.fromRGB(45, 45, 55)
+                child.TextColor3 = Color3.fromRGB(150, 150, 150)
+            end
+        end
+        TabButton.BackgroundColor3 = Color3.fromRGB(0, 102, 51)
+        TabButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+        
+        -- Hide all content
+        for _, child in ipairs(ContentFrame:GetChildren()) do
+            child.Visible = false
+        end
+        
+        -- Show selected tab content
+        local tabContent = ContentFrame:FindFirstChild(tabName .. "Content")
+        if tabContent then
+            tabContent.Visible = true
+        end
+    end)
+end
+
+-- Ring Parts Tab Content
+local RingPartsContent = Instance.new("Frame")
+RingPartsContent.Name = "Ring PartsContent"
+RingPartsContent.Size = UDim2.new(1, 0, 1, 0)
+RingPartsContent.BackgroundTransparency = 1
+RingPartsContent.Visible = true
+RingPartsContent.Parent = ContentFrame
+
+local RingPartsSection = CreateSection("Ring Parts Control", RingPartsContent, UDim2.new(0, 0, 0, 0), UDim2.new(1, 0, 1, -50))
+
+-- Ring Parts Controls
+CreateToggle("Enable Ring Parts", RingPartsSection, ringPartsEnabled, function(state)
+    ringPartsEnabled = state
+    if state then
+        startRingParts()
+    else
+        stopRingParts()
+    end
+end)
+
+CreateSlider("Radius", RingPartsSection, 10, 200, radius, function(value)
+    radius = value
+end)
+
+CreateSlider("Height", RingPartsSection, 50, 300, height, function(value)
+    height = value
+end)
+
+CreateSlider("Rotation Speed", RingPartsSection, 1, 10, rotationSpeed, function(value)
+    rotationSpeed = value
+end)
+
+CreateSlider("Attraction Strength", RingPartsSection, 100, 2000, attractionStrength, function(value)
+    attractionStrength = value
+end)
+
+CreateButton("Force All Parts", RingPartsSection, function()
+    for _, part in pairs(workspace:GetDescendants()) do
+        if ShouldProcessPart(part) then
+            ForcePart(part)
         end
     end
 end)
 
--- Button functionality
-ToggleButton.MouseButton1Click:Connect(function()
-    ringPartsEnabled = not ringPartsEnabled
-    ToggleButton.Text = ringPartsEnabled and "Ring Parts On" or "Ring Parts Off"
-    ToggleButton.BackgroundColor3 = ringPartsEnabled and Color3.fromRGB(50, 205, 50) or Color3.fromRGB(160, 82, 45)
-    playSound("12221967")
+-- Status Display
+local StatusSection = CreateSection("System Status", RingPartsContent, UDim2.new(0, 0, 0, 250), UDim2.new(1, 0, 0, 80))
+
+local StatusLabel = Instance.new("TextLabel")
+StatusLabel.Size = UDim2.new(1, -20, 1, -10)
+StatusLabel.Position = UDim2.new(0, 10, 0, 5)
+StatusLabel.BackgroundTransparency = 1
+StatusLabel.Text = "🔮 RapipppXD V1.0 Ready\n• Ring Parts: OFF\n• Parts Controlled: 0\n• System: Stable"
+StatusLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+StatusLabel.TextSize = 12
+StatusLabel.Font = Enum.Font.Gotham
+StatusLabel.TextXAlignment = Enum.TextXAlignment.Left
+StatusLabel.TextYAlignment = Enum.TextYAlignment.Top
+StatusLabel.TextWrapped = true
+StatusLabel.Parent = StatusSection
+
+-- Update status periodically
+RunService.Heartbeat:Connect(function()
+    if ringPartsEnabled then
+        StatusLabel.Text = string.format("🌪️ Ring Parts ACTIVE\n• Parts Controlled: %d\n• Radius: %d\n• Strength: %d", #XMODSNetwork.BaseParts, radius, attractionStrength)
+    else
+        StatusLabel.Text = string.format("🔮 RapipppXD V1.0 Ready\n• Ring Parts: OFF\n• Parts Controlled: %d\n• System: Stable", #XMODSNetwork.BaseParts)
+    end
 end)
 
-DecreaseRadius.MouseButton1Click:Connect(function()
-    radius = math.max(0, radius - 5)
-    RadiusDisplay.Text = "Radius: " .. radius
-    playSound("12221967")
+-- Create other tabs (initially hidden)
+local MagnetContent = Instance.new("Frame")
+MagnetContent.Name = "MagnetContent"
+MagnetContent.Size = UDim2.new(1, 0, 1, 0)
+MagnetContent.BackgroundTransparency = 1
+MagnetContent.Visible = false
+MagnetContent.Parent = ContentFrame
+
+local VisualsContent = Instance.new("Frame")
+VisualsContent.Name = "VisualsContent"
+VisualsContent.Size = UDim2.new(1, 0, 1, 0)
+VisualsContent.BackgroundTransparency = 1
+VisualsContent.Visible = false
+VisualsContent.Parent = ContentFrame
+
+local SettingsContent = Instance.new("Frame")
+SettingsContent.Name = "SettingsContent"
+SettingsContent.Size = UDim2.new(1, 0, 1, 0)
+SettingsContent.BackgroundTransparency = 1
+SettingsContent.Visible = false
+SettingsContent.Parent = ContentFrame
+
+-- Add some placeholder content to other tabs
+local MagnetSection = CreateSection("Magnet Features", MagnetContent, UDim2.new(0, 0, 0, 0), UDim2.new(1, 0, 1, 0))
+local MagnetLabel = Instance.new("TextLabel")
+MagnetLabel.Size = UDim2.new(1, -20, 1, -20)
+MagnetLabel.Position = UDim2.new(0, 10, 0, 10)
+MagnetLabel.BackgroundTransparency = 1
+MagnetLabel.Text = "🧲 Magnet Features\n\n• Coming Soon in V2.0\n• Advanced Part Control\n• Custom Attraction Modes\n• Performance Optimization"
+MagnetLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+MagnetLabel.TextSize = 14
+MagnetLabel.Font = Enum.Font.Gotham
+MagnetLabel.TextXAlignment = Enum.TextXAlignment.Center
+MagnetLabel.TextYAlignment = Enum.TextYAlignment.Center
+MagnetLabel.TextWrapped = true
+MagnetLabel.Parent = MagnetSection
+
+local VisualsSection = CreateSection("Visual Settings", VisualsContent, UDim2.new(0, 0, 0, 0), UDim2.new(1, 0, 1, 0))
+local VisualsLabel = Instance.new("TextLabel")
+VisualsLabel.Size = UDim2.new(1, -20, 1, -20)
+VisualsLabel.Position = UDim2.new(0, 10, 0, 10)
+VisualsLabel.BackgroundTransparency = 1
+VisualsLabel.Text = "👁️ Visual Features\n\n• Coming Soon in V2.0\n• Custom Visual Effects\n• Part Highlighting\n• Trail Effects"
+VisualsLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+VisualsLabel.TextSize = 14
+VisualsLabel.Font = Enum.Font.Gotham
+VisualsLabel.TextXAlignment = Enum.TextXAlignment.Center
+VisualsLabel.TextYAlignment = Enum.TextYAlignment.Center
+VisualsLabel.TextWrapped = true
+VisualsLabel.Parent = VisualsSection
+
+local SettingsSection = CreateSection("RapipppXD Settings", SettingsContent, UDim2.new(0, 0, 0, 0), UDim2.new(1, 0, 1, 0))
+CreateToggle("Auto-Start", SettingsSection, false, function(state)
+    print("Auto-Start:", state)
 end)
 
-IncreaseRadius.MouseButton1Click:Connect(function()
-    radius = math.min(10000, radius + 5)
-    RadiusDisplay.Text = "Radius: " .. radius
-    playSound("12221967")
+CreateToggle("Sound Effects", SettingsSection, true, function(state)
+    print("Sound Effects:", state)
 end)
 
--- Get player thumbnail
+CreateSlider("UI Scale", SettingsSection, 80, 120, 100, function(value)
+    MainFrame.Size = UDim2.new(0, 600 * (value/100), 0, 450 * (value/100))
+    MainFrame.Position = UDim2.new(0.5, -300 * (value/100), 0.5, -225 * (value/100))
+end)
+
+-- Dragging functionality
+local dragging = false
+local dragInput, dragStart, startPos
+
+local function update(input)
+    local delta = input.Position - dragStart
+    MainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+end
+
+Header.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = true
+        dragStart = input.Position
+        startPos = MainFrame.Position
+        
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
+        end)
+    end
+end)
+
+Header.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement then
+        dragInput = input
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if input == dragInput and dragging then
+        update(input)
+    end
+end)
+
+-- Notifications and Chat
 local userId = Players:GetUserIdFromNameAsync("RobloxRapippgames")
 local thumbType = Enum.ThumbnailType.HeadShot
 local thumbSize = Enum.ThumbnailSize.Size420x420
 local content, isReady = Players:GetUserThumbnailAsync(userId, thumbType, thumbSize)
 
 StarterGui:SetCore("SendNotification", {
-    Title = "Super ring parts V4",
-    Text = "enjoy",
+    Title = "RapipppXD V1.0 Loaded",
+    Text = "Ring Parts System Activated",
     Icon = content,
     Duration = 5
 })
 
 StarterGui:SetCore("SendNotification", {
     Title = "Credits",
-    Text = "Original By Yumm Scriptblox",
+    Text = "Original By RapipppModss",
     Icon = content,
     Duration = 5
 })
 
 StarterGui:SetCore("SendNotification", {
-    Title = "Credits",
-    Text = "Edited By Rapipp",
+    Title = "Edited By Rapipp",
+    Text = "RapipppXD V1.0 - Premium GUI",
     Icon = content,
     Duration = 5
 })
 
--- Chat message (Updated for new chat system)
+-- Chat message
 local function SendChatMessage(message)
     if TextChatService.ChatVersion == Enum.ChatVersion.TextChatService then
         local textChannel = TextChatService.TextChannels.RBXGeneral
@@ -430,5 +754,11 @@ local function SendChatMessage(message)
     end
 end
 
--- Send the chat message
-SendChatMessage("XMODS V1.0 By Rapipp")
+-- Send chat message after a delay
+wait(2)
+SendChatMessage("RapipppXD V1.0 By Rapipp - Loaded Successfully!")
+
+print("🎮 RapipppXD V1.0 - RapipppModss Style Loaded!")
+print("🌪️ Ring Parts System: Ready")
+print("🎨 Premium GUI: Activated")
+print("💎 Credits: RapippModss")
