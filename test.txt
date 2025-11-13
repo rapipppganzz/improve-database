@@ -1,5 +1,5 @@
--- RapipppModss V3.0 - Fixed Movement Issue COMPLETELY
--- FE Super Magnet System with Tornado
+-- RapipppModss V3.0 - FE Super Magnet System with Tornado
+-- GUI Design: Black & Blue Theme with Floating Logo
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -11,9 +11,8 @@ local LocalPlayer = Players.LocalPlayer
 local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
 local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
 
--- Setup anchor part system - FIXED: Jangan ganggu character parts
+-- Setup anchor part system
 local Folder = Instance.new("Folder", workspace)
-Folder.Name = "RapipppModssSystem"
 local AnchorPart = Instance.new("Part", Folder)
 local MainAttachment = Instance.new("Attachment", AnchorPart)
 AnchorPart.Name = "RapipppAnchor"
@@ -22,144 +21,182 @@ AnchorPart.CanCollide = false
 AnchorPart.Transparency = 1
 AnchorPart.Size = Vector3.new(0.1, 0.1, 0.1)
 
--- Safe part filtering - FIXED: Strict filtering
-local function ShouldProcessPart(part)
-    if not part:IsA("BasePart") then return false end
-    if part.Anchored then return false end
-    
-    -- JANGAN sentuh character parts sama sekali
+-- Network system
+if not getgenv().RapipppNetwork then
+    getgenv().RapipppNetwork = {
+        BaseParts = {},
+        Velocity = Vector3.new(80, 80, 80)
+    }
+
+    RapipppNetwork.RetainPart = function(Part)
+        if typeof(Part) == "Instance" and Part:IsA("BasePart") and Part:IsDescendantOf(workspace) then
+            table.insert(RapipppNetwork.BaseParts, Part)
+            Part.CustomPhysicalProperties = PhysicalProperties.new(0, 0, 0, 0, 0)
+            Part.CanCollide = false
+            Part.Massless = true
+        end
+    end
+
+    local function EnablePartControl()
+        LocalPlayer.ReplicationFocus = workspace
+        RunService.Heartbeat:Connect(function()
+    sethiddenproperty(LocalPlayer, "SimulationRadius", 500) 
+            for _, Part in pairs(RapipppNetwork.BaseParts) do
+                if Part:IsDescendantOf(workspace) then
+                    Part.Velocity = RapipppNetwork.Velocity
+                end
+            end
+        end)
+    end
+    EnablePartControl()
+end
+
+-- Super Fast Magnet Function
+local function ForcePartToPlayer(part)
+    -- Tambahkan pengecekan ini di awal
     if part:IsDescendantOf(LocalPlayer.Character) then
         return false
     end
     
-    -- Skip semua humanoid models (player characters)
-    local model = part:FindFirstAncestorOfClass("Model")
-    if model then
-        if model:FindFirstChildOfClass("Humanoid") then
-            return false
-        end
-    end
-    
-    -- Skip tools dan accessories
-    if part:FindFirstAncestorWhichIsA("Tool") then return false end
-    if part:FindFirstAncestorWhichIsA("Accessory") then return false end
-    
-    -- Skip parts penting
-    local blacklistedNames = {
-        "handle", "head", "torso", "humanoidrootpart", "leftarm", "rightarm",
-        "leftleg", "rightleg", "baseplate", "spawnlocation", "camera", "terrain"
-    }
-    
-    local lowerName = part.Name:lower()
-    for _, blacklisted in ipairs(blacklistedNames) do
-        if lowerName:find(blacklisted) then
-            return false
-        end
-    end
-    
-    -- Skip jika part terlalu besar (biasanya map parts)
-    if part.Size.Magnitude > 50 then
-        return false
-    end
-    
-    return true
-end
-
--- Simple Network System tanpa ganggu character
-getgenv().RapipppNetwork = {
-    BaseParts = {},
-    Velocity = Vector3.new(60, 60, 60)
-}
-
-RapipppNetwork.RetainPart = function(Part)
-    if not ShouldProcessPart(Part) then return end
-    if table.find(RapipppNetwork.BaseParts, Part) then return end
-    
-    table.insert(RapipppNetwork.BaseParts, Part)
-    Part.CanCollide = false
-    Part.Massless = true
-end
-
--- Enable part control yang aman
-local function EnablePartControl()
-    LocalPlayer.ReplicationFocus = workspace
-    RunService.Heartbeat:Connect(function()
-        sethiddenproperty(LocalPlayer, "SimulationRadius", 1000) -- Jangan set math.huge
-        for _, Part in pairs(RapipppNetwork.BaseParts) do
-            if Part and Part.Parent and ShouldProcessPart(Part) then
-                Part.Velocity = RapipppNetwork.Velocity
+    if part:IsA("Part") and not part.Anchored and 
+       not part.Parent:FindFirstChild("Humanoid") and 
+       not part.Parent:FindFirstChild("Head") and 
+       part.Name ~= "Handle" then
+        -- rest of code...
+        
+        -- Destroy existing forces
+        for _, x in next, part:GetChildren() do
+            if x:IsA("BodyAngularVelocity") or x:IsA("BodyForce") or 
+               x:IsA("BodyGyro") or x:IsA("BodyPosition") or 
+               x:IsA("BodyThrust") or x:IsA("BodyVelocity") or 
+               x:IsA("RocketPropulsion") then
+                x:Destroy()
             end
         end
-    end)
-end
-EnablePartControl()
-
--- Simple Magnet Function - FIXED: No complex physics
-local function ForcePartToPlayer(part)
-    if not ShouldProcessPart(part) then return false end
-    
-    -- Simple velocity-based movement
-    part.CanCollide = false
-    part.Massless = true
-    
-    -- Add to network
-    RapipppNetwork.RetainPart(part)
-    
-    return true
+        
+        -- Destroy constraints to break ropes
+        for _, constraint in pairs(part:GetChildren()) do
+            if constraint:IsA("Constraint") then
+                constraint:Destroy()
+            end
+        end
+        
+        part.CanCollide = false
+        part.Massless = true
+        
+        -- Add to network for velocity control
+        RapipppNetwork.RetainPart(part)
+        
+        -- Use AlignPosition for precise movement
+        local AlignPosition = Instance.new("AlignPosition")
+        local Attachment = Instance.new("Attachment", part)
+        
+        AlignPosition.MaxForce = 999999999
+        AlignPosition.MaxVelocity = math.huge
+        AlignPosition.Responsiveness = 500
+        AlignPosition.Attachment0 = Attachment
+        AlignPosition.Attachment1 = MainAttachment
+        AlignPosition.Parent = part
+        
+        -- Add torque for rotation control
+        local Torque = Instance.new("Torque", part)
+        Torque.Torque = Vector3.new(1000000, 1000000, 1000000)
+        Torque.Attachment0 = Attachment
+        
+        return true
+    end
+    return false
 end
 
 -- Configuration
 local magnetEnabled = false
 local tornadoEnabled = false
-local currentRadius = 50
-local currentSpeed = 80
-local tornadoRadius = 30
-local tornadoHeight = 50
-local tornadoRotationSpeed = 1
-local tornadoAttractionStrength = 60
-
--- Tornado System - SIMPLIFIED
+local currentRadius = 100
+local currentSpeed = 120
+local tornadoRadius = 50
+local tornadoHeight = 100
+local tornadoRotationSpeed = 2
+local tornadoAttractionStrength = 80
+local attractedParts = {}
 local tornadoParts = {}
+
+-- Tornado System (From Lukas Script)
+local function RetainPart(Part)
+    if Part:IsA("BasePart") and not Part.Anchored and Part:IsDescendantOf(workspace) then
+        if Part.Parent == LocalPlayer.Character or Part:IsDescendantOf(LocalPlayer.Character) then
+            return false
+        end
+
+        Part.CustomPhysicalProperties = PhysicalProperties.new(0, 0, 0, 0, 0)
+        Part.CanCollide = false
+        return true
+    end
+    return false
+end
+
+local parts = {}
+local function addPart(part)
+    if RetainPart(part) then
+        if not table.find(parts, part) then
+            table.insert(parts, part)
+        end
+    end
+end
+
+local function removePart(part)
+    local index = table.find(parts, part)
+    if index then
+        table.remove(parts, index)
+    end
+end
+
+-- Initialize parts
+for _, part in pairs(workspace:GetDescendants()) do
+    addPart(part)
+end
+
+workspace.DescendantAdded:Connect(addPart)
+workspace.DescendantRemoving:Connect(removePart)
+
+-- Tornado Movement Function
 local function updateTornado()
     if not tornadoEnabled then return end
     
     local humanoidRootPart = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-    if not humanoidRootPart then return end
-    
-    local tornadoCenter = humanoidRootPart.Position
-    
-    -- Scan workspace untuk parts
-    for _, part in pairs(workspace:GetDescendants()) do
-        if ShouldProcessPart(part) and not tornadoParts[part] then
-            local distance = (part.Position - tornadoCenter).Magnitude
-            if distance <= tornadoRadius then
-                local angle = math.atan2(part.Position.Z - tornadoCenter.Z, part.Position.X - tornadoCenter.X)
-                local newAngle = angle + math.rad(tornadoRotationSpeed)
-                local targetPos = Vector3.new(
-                    tornadoCenter.X + math.cos(newAngle) * tornadoRadius,
-                    tornadoCenter.Y + tornadoHeight,
-                    tornadoCenter.Z + math.sin(newAngle) * tornadoRadius
-                )
-                local direction = (targetPos - part.Position).Unit
-                part.Velocity = direction * tornadoAttractionStrength
-                tornadoParts[part] = true
-                RapipppNetwork.RetainPart(part)
+    if humanoidRootPart then
+        local tornadoCenter = humanoidRootPart.Position
+        for _, part in pairs(parts) do
+            if part.Parent and not part.Anchored then
+                local pos = part.Position
+                local distance = (Vector3.new(pos.X, tornadoCenter.Y, pos.Z) - tornadoCenter).Magnitude
+                if distance <= tornadoRadius then
+                    local angle = math.atan2(pos.Z - tornadoCenter.Z, pos.X - tornadoCenter.X)
+                    local newAngle = angle + math.rad(tornadoRotationSpeed)
+                    local targetPos = Vector3.new(
+                        tornadoCenter.X + math.cos(newAngle) * math.min(tornadoRadius, distance),
+                        tornadoCenter.Y + (tornadoHeight * (math.abs(math.sin((pos.Y - tornadoCenter.Y) / tornadoHeight)))),
+                        tornadoCenter.Z + math.sin(newAngle) * math.min(tornadoRadius, distance)
+                    )
+                    local directionToTarget = (targetPos - part.Position).unit
+                    part.Velocity = directionToTarget * tornadoAttractionStrength
+                    tornadoParts[part] = true
+                end
             end
         end
     end
 end
 
--- Main Loops - FIXED: Simple and safe
-local magnetConnection = nil
-local tornadoConnection = nil
-
+-- Main Magnet Loop
 local function startMagnet()
-    if magnetEnabled then return end
     magnetEnabled = true
-    print("🔮 Magnet Activated - Safe Mode")
+    print("🔮 RapipppModss V3.0 Magnet Activated!")
     
-    magnetConnection = RunService.Heartbeat:Connect(function()
-        if not magnetEnabled then return end
+    local connection
+    connection = RunService.Heartbeat:Connect(function()
+        if not magnetEnabled then 
+            connection:Disconnect()
+            return 
+        end
         
         local character = LocalPlayer.Character
         if not character then return end
@@ -167,74 +204,91 @@ local function startMagnet()
         local rootPart = character:FindFirstChild("HumanoidRootPart")
         if not rootPart then return end
         
-        -- Move anchor to player
-        AnchorPart.Position = rootPart.Position + Vector3.new(0, 3, 0)
+        -- Move anchor to player position
+        AnchorPart.Position = rootPart.Position
         
-        -- Simple part attraction
+        -- Scan for parts in radius
         for _, part in pairs(workspace:GetDescendants()) do
-            if ShouldProcessPart(part) then
+            if part:IsA("BasePart") and not attractedParts[part] then
                 local distance = (part.Position - rootPart.Position).Magnitude
                 if distance <= currentRadius then
-                    ForcePartToPlayer(part)
-                    -- Simple velocity towards player
-                    local direction = (rootPart.Position - part.Position).Unit
-                    part.Velocity = direction * currentSpeed
+                    if ForcePartToPlayer(part) then
+                        attractedParts[part] = true
+                    end
                 end
+            end
+        end
+        
+        -- Apply network velocity to all attracted parts
+        for part, _ in pairs(attractedParts) do
+            if part and part.Parent then
+                part.Velocity = (rootPart.Position - part.Position).Unit * currentSpeed
             end
         end
     end)
 end
 
 local function startTornado()
-    if tornadoEnabled then return end
     tornadoEnabled = true
-    print("🌪️ Tornado Activated - Safe Mode")
+    print("🌪️ RapipppModss V3.0 Tornado Activated!")
     
-    tornadoConnection = RunService.Heartbeat:Connect(function()
-        if not tornadoEnabled then return end
+    local connection
+    connection = RunService.Heartbeat:Connect(function()
+        if not tornadoEnabled then 
+            connection:Disconnect()
+            return 
+        end
         updateTornado()
     end)
 end
 
 local function stopMagnet()
     magnetEnabled = false
-    if magnetConnection then
-        magnetConnection:Disconnect()
-        magnetConnection = nil
+    
+    -- Clean up attracted parts
+    for part, _ in pairs(attractedParts) do
+        if part and part.Parent then
+            local alignPos = part:FindFirstChild("AlignPosition")
+            if alignPos then
+                alignPos:Destroy()
+            end
+            local torque = part:FindFirstChild("Torque")
+            if torque then
+                torque:Destroy()
+            end
+            local attachment = part:FindFirstChild("Attachment")
+            if attachment then
+                attachment:Destroy()
+            end
+        end
     end
-    print("🔮 Magnet Stopped")
+    
+    attractedParts = {}
+    print("🔮 RapipppModss V3.0 Magnet Deactivated!")
 end
 
 local function stopTornado()
     tornadoEnabled = false
-    if tornadoConnection then
-        tornadoConnection:Disconnect()
-        tornadoConnection = nil
-    end
     tornadoParts = {}
-    print("🌪️ Tornado Stopped")
+    print("🌪️ RapipppModss V3.0 Tornado Deactivated!")
 end
 
--- GUI Creation - Simple and Clean
+-- GUI Creation - RapipppModss V3.0 Design
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "RapipppModssGUI"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 
--- Main Container
+-- Main Container - Black & Blue Theme
 local MainFrame = Instance.new("Frame")
-MainFrame.Size = UDim2.new(0, 300, 0, 350)
-MainFrame.Position = UDim2.new(0.5, -150, 0.5, -175)
-MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 25)
+MainFrame.Size = UDim2.new(0, 350, 0, 480)
+MainFrame.Position = UDim2.new(0.5, -175, 0.5, -240)
+MainFrame.BackgroundColor3 = Color3.fromRGB(10, 10, 20)
 MainFrame.BorderSizePixel = 0
 MainFrame.Parent = ScreenGui
 
-local MainCorner = Instance.new("UICorner")
-MainCorner.CornerRadius = UDim.new(0, 12)
-MainCorner.Parent = MainFrame
-
--- Blue Border
+-- Blue Border Effect
 local BorderFrame = Instance.new("Frame")
 BorderFrame.Size = UDim2.new(1, 4, 1, 4)
 BorderFrame.Position = UDim2.new(0, -2, 0, -2)
@@ -243,13 +297,17 @@ BorderFrame.BorderSizePixel = 0
 BorderFrame.ZIndex = 0
 BorderFrame.Parent = MainFrame
 
+local MainCorner = Instance.new("UICorner")
+MainCorner.CornerRadius = UDim.new(0, 12)
+MainCorner.Parent = MainFrame
+
 local BorderCorner = Instance.new("UICorner")
 BorderCorner.CornerRadius = UDim.new(0, 14)
 BorderCorner.Parent = BorderFrame
 
--- Header
+-- Header with Gradient
 local Header = Instance.new("Frame")
-Header.Size = UDim2.new(1, 0, 0, 50)
+Header.Size = UDim2.new(1, 0, 0, 60)
 Header.Position = UDim2.new(0, 0, 0, 0)
 Header.BackgroundColor3 = Color3.fromRGB(0, 20, 40)
 Header.BorderSizePixel = 0
@@ -259,32 +317,33 @@ local HeaderCorner = Instance.new("UICorner")
 HeaderCorner.CornerRadius = UDim.new(0, 12)
 HeaderCorner.Parent = Header
 
+-- Title
 local Title = Instance.new("TextLabel")
-Title.Size = UDim2.new(1, -60, 1, 0)
+Title.Size = UDim2.new(1, -80, 1, 0)
 Title.Position = UDim2.new(0, 15, 0, 0)
 Title.Text = "RapipppModss V3.0"
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 Title.BackgroundTransparency = 1
-Title.Font = Enum.Font.GothamBold
-Title.TextSize = 18
+Title.Font = Enum.Font.GothamBlack
+Title.TextSize = 20
 Title.TextXAlignment = Enum.TextXAlignment.Left
 Title.Parent = Header
 
 local SubTitle = Instance.new("TextLabel")
-SubTitle.Size = UDim2.new(1, -60, 0, 20)
-SubTitle.Position = UDim2.new(0, 15, 0, 25)
-SubTitle.Text = "SAFE MODE - Movement Fixed"
+SubTitle.Size = UDim2.new(1, -80, 0, 20)
+SubTitle.Position = UDim2.new(0, 15, 0, 30)
+SubTitle.Text = "FE Super Magnet + Tornado System"
 SubTitle.TextColor3 = Color3.fromRGB(200, 200, 255)
 SubTitle.BackgroundTransparency = 1
 SubTitle.Font = Enum.Font.Gotham
-SubTitle.TextSize = 11
+SubTitle.TextSize = 12
 SubTitle.TextXAlignment = Enum.TextXAlignment.Left
 SubTitle.Parent = Header
 
 -- Close Button
 local CloseButton = Instance.new("TextButton")
 CloseButton.Size = UDim2.new(0, 30, 0, 30)
-CloseButton.Position = UDim2.new(1, -35, 0, 10)
+CloseButton.Position = UDim2.new(1, -40, 0, 15)
 CloseButton.Text = "✕"
 CloseButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 CloseButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
@@ -299,121 +358,229 @@ CloseCorner.Parent = CloseButton
 
 -- Content Area
 local ContentFrame = Instance.new("Frame")
-ContentFrame.Size = UDim2.new(1, -20, 1, -60)
-ContentFrame.Position = UDim2.new(0, 10, 0, 60)
+ContentFrame.Size = UDim2.new(1, -20, 1, -80)
+ContentFrame.Position = UDim2.new(0, 10, 0, 70)
 ContentFrame.BackgroundTransparency = 1
 ContentFrame.Parent = MainFrame
 
--- Status
+-- Status Panel
+local StatusPanel = Instance.new("Frame")
+StatusPanel.Size = UDim2.new(1, 0, 0, 80)
+StatusPanel.Position = UDim2.new(0, 0, 0, 0)
+StatusPanel.BackgroundColor3 = Color3.fromRGB(20, 25, 40)
+StatusPanel.BorderColor3 = Color3.fromRGB(0, 100, 255)
+StatusPanel.BorderSizePixel = 2
+StatusPanel.Parent = ContentFrame
+
+local StatusCorner = Instance.new("UICorner")
+StatusCorner.CornerRadius = UDim.new(0, 8)
+StatusCorner.Parent = StatusPanel
+
 local StatusLabel = Instance.new("TextLabel")
-StatusLabel.Size = UDim2.new(1, 0, 0, 60)
-StatusLabel.Position = UDim2.new(0, 0, 0, 0)
-StatusLabel.Text = "✅ SYSTEM READY\n• Movement: FIXED\n• Safe Mode: ACTIVE\n• No Character Interference"
+StatusLabel.Size = UDim2.new(1, -20, 1, -10)
+StatusLabel.Position = UDim2.new(0, 10, 0, 5)
+StatusLabel.Text = "🔮 SYSTEM READY\n• Status: Inactive\n• Parts: 0\n• RapipppModss V3.0"
 StatusLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-StatusLabel.BackgroundColor3 = Color3.fromRGB(20, 25, 40)
-StatusLabel.BorderColor3 = Color3.fromRGB(0, 100, 255)
-StatusLabel.BorderSizePixel = 2
+StatusLabel.BackgroundTransparency = 1
 StatusLabel.Font = Enum.Font.Gotham
 StatusLabel.TextSize = 12
 StatusLabel.TextXAlignment = Enum.TextXAlignment.Left
 StatusLabel.TextYAlignment = Enum.TextYAlignment.Top
 StatusLabel.TextWrapped = true
-StatusLabel.Parent = ContentFrame
+StatusLabel.Parent = StatusPanel
 
-local StatusCorner = Instance.new("UICorner")
-StatusCorner.CornerRadius = UDim.new(0, 8)
-StatusCorner.Parent = StatusLabel
+-- Magnet Controls
+local MagnetLabel = Instance.new("TextLabel")
+MagnetLabel.Size = UDim2.new(1, 0, 0, 25)
+MagnetLabel.Position = UDim2.new(0, 0, 0, 90)
+MagnetLabel.Text = "MAGNET CONTROLS"
+MagnetLabel.TextColor3 = Color3.fromRGB(0, 150, 255)
+MagnetLabel.BackgroundTransparency = 1
+MagnetLabel.Font = Enum.Font.GothamBold
+MagnetLabel.TextSize = 14
+MagnetLabel.TextXAlignment = Enum.TextXAlignment.Left
+MagnetLabel.Parent = ContentFrame
 
 -- Control Buttons
 local ActivateMagnetButton = Instance.new("TextButton")
-ActivateMagnetButton.Size = UDim2.new(1, 0, 0, 35)
-ActivateMagnetButton.Position = UDim2.new(0, 0, 0, 70)
+ActivateMagnetButton.Size = UDim2.new(0.48, 0, 0, 35)
+ActivateMagnetButton.Position = UDim2.new(0, 0, 0, 120)
 ActivateMagnetButton.Text = "🧲 ACTIVATE MAGNET"
 ActivateMagnetButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 ActivateMagnetButton.BackgroundColor3 = Color3.fromRGB(0, 150, 50)
 ActivateMagnetButton.BorderSizePixel = 0
 ActivateMagnetButton.Font = Enum.Font.GothamBold
-ActivateMagnetButton.TextSize = 14
+ActivateMagnetButton.TextSize = 12
 ActivateMagnetButton.Parent = ContentFrame
 
 local MagnetCorner = Instance.new("UICorner")
 MagnetCorner.CornerRadius = UDim.new(0, 8)
 MagnetCorner.Parent = ActivateMagnetButton
 
+local DeactivateMagnetButton = Instance.new("TextButton")
+DeactivateMagnetButton.Size = UDim2.new(0.48, 0, 0, 35)
+DeactivateMagnetButton.Position = UDim2.new(0.52, 0, 0, 120)
+DeactivateMagnetButton.Text = "🛑 STOP MAGNET"
+DeactivateMagnetButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+DeactivateMagnetButton.BackgroundColor3 = Color3.fromRGB(150, 30, 30)
+DeactivateMagnetButton.BorderSizePixel = 0
+DeactivateMagnetButton.Font = Enum.Font.GothamBold
+DeactivateMagnetButton.TextSize = 12
+DeactivateMagnetButton.Parent = ContentFrame
+
+local DeactivateCorner = Instance.new("UICorner")
+DeactivateCorner.CornerRadius = UDim.new(0, 8)
+DeactivateCorner.Parent = DeactivateMagnetButton
+
+-- Tornado Controls
+local TornadoLabel = Instance.new("TextLabel")
+TornadoLabel.Size = UDim2.new(1, 0, 0, 25)
+TornadoLabel.Position = UDim2.new(0, 0, 0, 165)
+TornadoLabel.Text = "TORNADO CONTROLS"
+TornadoLabel.TextColor3 = Color3.fromRGB(255, 100, 0)
+TornadoLabel.BackgroundTransparency = 1
+TornadoLabel.Font = Enum.Font.GothamBold
+TornadoLabel.TextSize = 14
+TornadoLabel.TextXAlignment = Enum.TextXAlignment.Left
+TornadoLabel.Parent = ContentFrame
+
 local ActivateTornadoButton = Instance.new("TextButton")
-ActivateTornadoButton.Size = UDim2.new(1, 0, 0, 35)
-ActivateTornadoButton.Position = UDim2.new(0, 0, 0, 115)
+ActivateTornadoButton.Size = UDim2.new(0.48, 0, 0, 35)
+ActivateTornadoButton.Position = UDim2.new(0, 0, 0, 195)
 ActivateTornadoButton.Text = "🌪️ ACTIVATE TORNADO"
 ActivateTornadoButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 ActivateTornadoButton.BackgroundColor3 = Color3.fromRGB(255, 100, 0)
 ActivateTornadoButton.BorderSizePixel = 0
 ActivateTornadoButton.Font = Enum.Font.GothamBold
-ActivateTornadoButton.TextSize = 14
+ActivateTornadoButton.TextSize = 12
 ActivateTornadoButton.Parent = ContentFrame
 
 local TornadoCorner = Instance.new("UICorner")
 TornadoCorner.CornerRadius = UDim.new(0, 8)
 TornadoCorner.Parent = ActivateTornadoButton
 
-local StopAllButton = Instance.new("TextButton")
-StopAllButton.Size = UDim2.new(1, 0, 0, 35)
-StopAllButton.Position = UDim2.new(0, 0, 0, 160)
-StopAllButton.Text = "🛑 STOP ALL"
-StopAllButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-StopAllButton.BackgroundColor3 = Color3.fromRGB(150, 30, 30)
-StopAllButton.BorderSizePixel = 0
-StopAllButton.Font = Enum.Font.GothamBold
-StopAllButton.TextSize = 14
-StopAllButton.Parent = ContentFrame
+local DeactivateTornadoButton = Instance.new("TextButton")
+DeactivateTornadoButton.Size = UDim2.new(0.48, 0, 0, 35)
+DeactivateTornadoButton.Position = UDim2.new(0.52, 0, 0, 195)
+DeactivateTornadoButton.Text = "🛑 STOP TORNADO"
+DeactivateTornadoButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+DeactivateTornadoButton.BackgroundColor3 = Color3.fromRGB(150, 30, 30)
+DeactivateTornadoButton.BorderSizePixel = 0
+DeactivateTornadoButton.Font = Enum.Font.GothamBold
+DeactivateTornadoButton.TextSize = 12
+DeactivateTornadoButton.Parent = ContentFrame
 
-local StopCorner = Instance.new("UICorner")
-StopCorner.CornerRadius = UDim.new(0, 8)
-StopCorner.Parent = StopAllButton
+local DeactivateTornadoCorner = Instance.new("UICorner")
+DeactivateTornadoCorner.CornerRadius = UDim.new(0, 8)
+DeactivateTornadoCorner.Parent = DeactivateTornadoButton
 
--- Settings
-local SettingsLabel = Instance.new("TextLabel")
-SettingsLabel.Size = UDim2.new(1, 0, 0, 25)
-SettingsLabel.Position = UDim2.new(0, 0, 0, 210)
-SettingsLabel.Text = "SETTINGS (Safe Ranges)"
-SettingsLabel.TextColor3 = Color3.fromRGB(0, 200, 255)
-SettingsLabel.BackgroundTransparency = 1
-SettingsLabel.Font = Enum.Font.GothamBold
-SettingsLabel.TextSize = 14
-SettingsLabel.TextXAlignment = Enum.TextXAlignment.Left
-SettingsLabel.Parent = ContentFrame
+-- Controls Section
+local ControlsLabel = Instance.new("TextLabel")
+ControlsLabel.Size = UDim2.new(1, 0, 0, 25)
+ControlsLabel.Position = UDim2.new(0, 0, 0, 240)
+ControlsLabel.Text = "SETTINGS"
+ControlsLabel.TextColor3 = Color3.fromRGB(0, 200, 255)
+ControlsLabel.BackgroundTransparency = 1
+ControlsLabel.Font = Enum.Font.GothamBold
+ControlsLabel.TextSize = 14
+ControlsLabel.TextXAlignment = Enum.TextXAlignment.Left
+ControlsLabel.Parent = ContentFrame
 
-local RadiusLabel = Instance.new("TextLabel")
-RadiusLabel.Size = UDim2.new(0.6, 0, 0, 25)
-RadiusLabel.Position = UDim2.new(0, 0, 0, 240)
-RadiusLabel.Text = "Radius: " .. currentRadius
-RadiusLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-RadiusLabel.BackgroundTransparency = 1
-RadiusLabel.Font = Enum.Font.Gotham
-RadiusLabel.TextSize = 12
-RadiusLabel.TextXAlignment = Enum.TextXAlignment.Left
-RadiusLabel.Parent = ContentFrame
+-- Magnet Radius Control
+local MagnetRadiusContainer = Instance.new("Frame")
+MagnetRadiusContainer.Size = UDim2.new(1, 0, 0, 60)
+MagnetRadiusContainer.Position = UDim2.new(0, 0, 0, 270)
+MagnetRadiusContainer.BackgroundTransparency = 1
+MagnetRadiusContainer.Parent = ContentFrame
 
-local SpeedLabel = Instance.new("TextLabel")
-SpeedLabel.Size = UDim2.new(0.6, 0, 0, 25)
-SpeedLabel.Position = UDim2.new(0, 0, 0, 265)
-SpeedLabel.Text = "Speed: " .. currentSpeed
-SpeedLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-SpeedLabel.BackgroundTransparency = 1
-SpeedLabel.Font = Enum.Font.Gotham
-SpeedLabel.TextSize = 12
-SpeedLabel.TextXAlignment = Enum.TextXAlignment.Left
-SpeedLabel.Parent = ContentFrame
+local MagnetRadiusLabel = Instance.new("TextLabel")
+MagnetRadiusLabel.Size = UDim2.new(0.6, 0, 0, 25)
+MagnetRadiusLabel.Position = UDim2.new(0, 0, 0, 0)
+MagnetRadiusLabel.Text = "MAGNET RADIUS:"
+MagnetRadiusLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+MagnetRadiusLabel.BackgroundTransparency = 1
+MagnetRadiusLabel.Font = Enum.Font.Gotham
+MagnetRadiusLabel.TextSize = 12
+MagnetRadiusLabel.TextXAlignment = Enum.TextXAlignment.Left
+MagnetRadiusLabel.Parent = MagnetRadiusContainer
 
--- Floating Logo
-local FloatingLogo = Instance.new("TextButton")
+local MagnetRadiusValue = Instance.new("TextLabel")
+MagnetRadiusValue.Size = UDim2.new(0.4, 0, 0, 25)
+MagnetRadiusValue.Position = UDim2.new(0.6, 0, 0, 0)
+MagnetRadiusValue.Text = tostring(currentRadius)
+MagnetRadiusValue.TextColor3 = Color3.fromRGB(0, 200, 255)
+MagnetRadiusValue.BackgroundTransparency = 1
+MagnetRadiusValue.Font = Enum.Font.GothamBold
+MagnetRadiusValue.TextSize = 14
+MagnetRadiusValue.TextXAlignment = Enum.TextXAlignment.Right
+MagnetRadiusValue.Parent = MagnetRadiusContainer
+
+local MagnetRadiusSlider = Instance.new("TextButton")
+MagnetRadiusSlider.Size = UDim2.new(1, 0, 0, 25)
+MagnetRadiusSlider.Position = UDim2.new(0, 0, 0, 30)
+MagnetRadiusSlider.Text = "│────────────│"
+MagnetRadiusSlider.TextColor3 = Color3.fromRGB(0, 150, 255)
+MagnetRadiusSlider.BackgroundColor3 = Color3.fromRGB(30, 35, 50)
+MagnetRadiusSlider.BorderSizePixel = 0
+MagnetRadiusSlider.Font = Enum.Font.GothamBold
+MagnetRadiusSlider.TextSize = 14
+MagnetRadiusSlider.Parent = MagnetRadiusContainer
+
+local MagnetSliderCorner = Instance.new("UICorner")
+MagnetSliderCorner.CornerRadius = UDim.new(0, 6)
+MagnetSliderCorner.Parent = MagnetRadiusSlider
+
+-- Tornado Radius Control
+local TornadoRadiusContainer = Instance.new("Frame")
+TornadoRadiusContainer.Size = UDim2.new(1, 0, 0, 60)
+TornadoRadiusContainer.Position = UDim2.new(0, 0, 0, 340)
+TornadoRadiusContainer.BackgroundTransparency = 1
+TornadoRadiusContainer.Parent = ContentFrame
+
+local TornadoRadiusLabel = Instance.new("TextLabel")
+TornadoRadiusLabel.Size = UDim2.new(0.6, 0, 0, 25)
+TornadoRadiusLabel.Position = UDim2.new(0, 0, 0, 0)
+TornadoRadiusLabel.Text = "TORNADO RADIUS:"
+TornadoRadiusLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+TornadoRadiusLabel.BackgroundTransparency = 1
+TornadoRadiusLabel.Font = Enum.Font.Gotham
+TornadoRadiusLabel.TextSize = 12
+TornadoRadiusLabel.TextXAlignment = Enum.TextXAlignment.Left
+TornadoRadiusLabel.Parent = TornadoRadiusContainer
+
+local TornadoRadiusValue = Instance.new("TextLabel")
+TornadoRadiusValue.Size = UDim2.new(0.4, 0, 0, 25)
+TornadoRadiusValue.Position = UDim2.new(0.6, 0, 0, 0)
+TornadoRadiusValue.Text = tostring(tornadoRadius)
+TornadoRadiusValue.TextColor3 = Color3.fromRGB(255, 150, 0)
+TornadoRadiusValue.BackgroundTransparency = 1
+TornadoRadiusValue.Font = Enum.Font.GothamBold
+TornadoRadiusValue.TextSize = 14
+TornadoRadiusValue.TextXAlignment = Enum.TextXAlignment.Right
+TornadoRadiusValue.Parent = TornadoRadiusContainer
+
+local TornadoRadiusSlider = Instance.new("TextButton")
+TornadoRadiusSlider.Size = UDim2.new(1, 0, 0, 25)
+TornadoRadiusSlider.Position = UDim2.new(0, 0, 0, 30)
+TornadoRadiusSlider.Text = "│────────────│"
+TornadoRadiusSlider.TextColor3 = Color3.fromRGB(255, 150, 0)
+TornadoRadiusSlider.BackgroundColor3 = Color3.fromRGB(30, 35, 50)
+TornadoRadiusSlider.BorderSizePixel = 0
+TornadoRadiusSlider.Font = Enum.Font.GothamBold
+TornadoRadiusSlider.TextSize = 14
+TornadoRadiusSlider.Parent = TornadoRadiusContainer
+
+local TornadoSliderCorner = Instance.new("UICorner")
+TornadoSliderCorner.CornerRadius = UDim.new(0, 6)
+TornadoSliderCorner.Parent = TornadoRadiusSlider
+
+-- Floating Logo (Initially Hidden)
+local FloatingLogo = Instance.new("ImageButton")
 FloatingLogo.Size = UDim2.new(0, 60, 0, 60)
 FloatingLogo.Position = UDim2.new(0, 20, 0, 20)
 FloatingLogo.BackgroundColor3 = Color3.fromRGB(0, 50, 100)
 FloatingLogo.BorderSizePixel = 0
-FloatingLogo.Text = "R\nV3"
-FloatingLogo.TextColor3 = Color3.fromRGB(255, 255, 255)
-FloatingLogo.Font = Enum.Font.GothamBlack
-FloatingLogo.TextSize = 14
+FloatingLogo.Image = "rbxassetid://0" -- Placeholder - replace with your logo
 FloatingLogo.Visible = false
 FloatingLogo.ZIndex = 10
 FloatingLogo.Parent = ScreenGui
@@ -422,38 +589,95 @@ local FloatingCorner = Instance.new("UICorner")
 FloatingCorner.CornerRadius = UDim.new(0, 12)
 FloatingCorner.Parent = FloatingLogo
 
+local FloatingBorder = Instance.new("UIStroke")
+FloatingBorder.Color = Color3.fromRGB(0, 150, 255)
+FloatingBorder.Thickness = 2
+FloatingBorder.Parent = FloatingLogo
+
+-- Logo Text (if no image)
+local LogoText = Instance.new("TextLabel")
+LogoText.Size = UDim2.new(1, 0, 1, 0)
+LogoText.Position = UDim2.new(0, 0, 0, 0)
+LogoText.Text = "R\nV3"
+LogoText.TextColor3 = Color3.fromRGB(255, 255, 255)
+LogoText.BackgroundTransparency = 1
+LogoText.Font = Enum.Font.GothamBlack
+LogoText.TextSize = 14
+LogoText.TextWrapped = true
+LogoText.Parent = FloatingLogo
+
+-- Function to update sliders
+local function updateSliderVisual(slider, value, maxValue, color)
+    local percentage = value / maxValue
+    local bars = math.floor(percentage * 12)
+    local visual = "│" .. string.rep("─", bars) .. "○" .. string.rep(" ", 11 - bars) .. "│"
+    slider.Text = visual
+end
+
+-- Initialize sliders
+updateSliderVisual(MagnetRadiusSlider, currentRadius, 200, Color3.fromRGB(0, 150, 255))
+updateSliderVisual(TornadoRadiusSlider, tornadoRadius, 100, Color3.fromRGB(255, 150, 0))
+
+-- Slider functionality
+local function setupSlider(slider, valueLabel, minVal, maxVal, callback)
+    slider.MouseButton1Down:Connect(function()
+        local connection
+        connection = RunService.Heartbeat:Connect(function()
+            local mouse = game:GetService("Players").LocalPlayer:GetMouse()
+            local x = math.clamp((mouse.X - slider.AbsolutePosition.X) / slider.AbsoluteSize.X, 0, 1)
+            local value = math.floor(minVal + (x * (maxVal - minVal)))
+            
+            valueLabel.Text = tostring(value)
+            updateSliderVisual(slider, value, maxVal, slider.TextColor3)
+            callback(value)
+        end)
+        
+        game:GetService("UserInputService").InputEnded:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                connection:Disconnect()
+            end
+        end)
+    end)
+end
+
+setupSlider(MagnetRadiusSlider, MagnetRadiusValue, 10, 200, function(value)
+    currentRadius = value
+end)
+
+setupSlider(TornadoRadiusSlider, TornadoRadiusValue, 10, 100, function(value)
+    tornadoRadius = value
+end)
+
 -- Button functionality
 ActivateMagnetButton.MouseButton1Click:Connect(function()
-    stopTornado()
     startMagnet()
-    StatusLabel.Text = "🟢 MAGNET ACTIVE\n• Parts attracted: Working\n• Movement: FREE\n• Safe Mode: ACTIVE"
+    StatusLabel.Text = "🟢 MAGNET ACTIVE\n• Status: Magnet ON\n• Parts: " .. #RapipppNetwork.BaseParts .. "\n• RapipppModss V3.0"
     ActivateMagnetButton.BackgroundColor3 = Color3.fromRGB(0, 100, 30)
-    ActivateTornadoButton.BackgroundColor3 = Color3.fromRGB(255, 100, 0)
+end)
+
+DeactivateMagnetButton.MouseButton1Click:Connect(function()
+    stopMagnet()
+    StatusLabel.Text = "🔴 SYSTEM READY\n• Status: Inactive\n• Parts: 0\n• RapipppModss V3.0"
+    ActivateMagnetButton.BackgroundColor3 = Color3.fromRGB(0, 150, 50)
 end)
 
 ActivateTornadoButton.MouseButton1Click:Connect(function()
-    stopMagnet()
     startTornado()
-    StatusLabel.Text = "🌪️ TORNADO ACTIVE\n• Parts spinning: Working\n• Movement: FREE\n• Safe Mode: ACTIVE"
+    StatusLabel.Text = "🌪️ TORNADO ACTIVE\n• Status: Tornado ON\n• Parts: " .. #parts .. "\n• RapipppModss V3.0"
     ActivateTornadoButton.BackgroundColor3 = Color3.fromRGB(200, 80, 0)
-    ActivateMagnetButton.BackgroundColor3 = Color3.fromRGB(0, 150, 50)
 end)
 
-StopAllButton.MouseButton1Click:Connect(function()
-    stopMagnet()
+DeactivateTornadoButton.MouseButton1Click:Connect(function()
     stopTornado()
-    StatusLabel.Text = "🔴 SYSTEM READY\n• All systems: STOPPED\n• Movement: FREE\n• Safe Mode: ACTIVE"
-    ActivateMagnetButton.BackgroundColor3 = Color3.fromRGB(0, 150, 50)
+    StatusLabel.Text = "🔴 SYSTEM READY\n• Status: Inactive\n• Parts: 0\n• RapipppModss V3.0"
     ActivateTornadoButton.BackgroundColor3 = Color3.fromRGB(255, 100, 0)
 end)
 
 -- Close Button functionality
 CloseButton.MouseButton1Click:Connect(function()
-    stopMagnet()
-    stopTornado()
-    
+    -- Hide main GUI with tween
     local tweenInfo = TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-    local tween = TweenService:Create(MainFrame, tweenInfo, {Position = UDim2.new(0.5, -150, 1, 10)})
+    local tween = TweenService:Create(MainFrame, tweenInfo, {Position = UDim2.new(0.5, -175, 1, 10)})
     tween:Play()
     
     tween.Completed:Connect(function()
@@ -467,66 +691,83 @@ FloatingLogo.MouseButton1Click:Connect(function()
     FloatingLogo.Visible = false
     MainFrame.Visible = true
     
+    -- Show main GUI with tween
     local tweenInfo = TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-    local tween = TweenService:Create(MainFrame, tweenInfo, {Position = UDim2.new(0.5, -150, 0.5, -175)})
+    local tween = TweenService:Create(MainFrame, tweenInfo, {Position = UDim2.new(0.5, -175, 0.5, -240)})
     tween:Play()
 end)
 
 -- Make GUI draggable
 local dragging = false
-local dragStart, startPos
+local dragInput, dragStart, startPos
+
+local function update(input)
+    local delta = input.Position - dragStart
+    MainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+end
 
 Header.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
         dragging = true
         dragStart = input.Position
         startPos = MainFrame.Position
+        
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
+        end)
     end
 end)
 
 Header.InputChanged:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-        if dragging then
-            local delta = input.Position - dragStart
-            MainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-        end
+        dragInput = input
     end
 end)
 
-Header.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        dragging = false
+UserInputService.InputChanged:Connect(function(input)
+    if input == dragInput and dragging then
+        update(input)
     end
 end)
 
 -- Make floating logo draggable
 local floatingDragging = false
-local floatingDragStart, floatingStartPos
+local floatingDragInput, floatingDragStart, floatingStartPos
+
+local function updateFloating(input)
+    local delta = input.Position - floatingDragStart
+    FloatingLogo.Position = UDim2.new(floatingStartPos.X.Scale, floatingStartPos.X.Offset + delta.X, floatingStartPos.Y.Scale, floatingStartPos.Y.Offset + delta.Y)
+end
 
 FloatingLogo.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
         floatingDragging = true
         floatingDragStart = input.Position
         floatingStartPos = FloatingLogo.Position
+        
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                floatingDragging = false
+            end
+        end)
     end
 end)
 
 FloatingLogo.InputChanged:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-        if floatingDragging then
-            local delta = input.Position - floatingDragStart
-            FloatingLogo.Position = UDim2.new(floatingStartPos.X.Scale, floatingStartPos.X.Offset + delta.X, floatingStartPos.Y.Scale, floatingStartPos.Y.Offset + delta.Y)
-        end
+        floatingDragInput = input
     end
 end)
 
-FloatingLogo.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        floatingDragging = false
+UserInputService.InputChanged:Connect(function(input)
+    if input == floatingDragInput and floatingDragging then
+        updateFloating(input)
     end
 end)
 
--- Auto cleanup
+-- Auto cleanup when character dies
 LocalPlayer.CharacterAdded:Connect(function(newChar)
     character = newChar
     humanoidRootPart = newChar:WaitForChild("HumanoidRootPart")
@@ -534,10 +775,23 @@ LocalPlayer.CharacterAdded:Connect(function(newChar)
     newChar:WaitForChild("Humanoid").Died:Connect(function()
         stopMagnet()
         stopTornado()
+        StatusLabel.Text = "🔴 SYSTEM READY\n• Status: Inactive\n• Parts: 0\n• RapipppModss V3.0"
+        ActivateMagnetButton.BackgroundColor3 = Color3.fromRGB(0, 150, 50)
+        ActivateTornadoButton.BackgroundColor3 = Color3.fromRGB(255, 100, 0)
     end)
 end)
 
-print("🎮 RapipppModss V3.0 - MOVEMENT COMPLETELY FIXED!")
-print("✅ Character movement should work perfectly now")
-print("🔮 Using Safe Mode - No character part interference")
-print("🌪️ Simple velocity-based system")
+-- Update status periodically
+RunService.Heartbeat:Connect(function()
+    if magnetEnabled then
+        StatusLabel.Text = "🟢 MAGNET ACTIVE\n• Status: Magnet ON\n• Parts: " .. #RapipppNetwork.BaseParts .. "\n• RapipppModss V3.0"
+    elseif tornadoEnabled then
+        StatusLabel.Text = "🌪️ TORNADO ACTIVE\n• Status: Tornado ON\n• Parts: " .. #parts .. "\n• RapipppModss V3.0"
+    end
+end)
+
+print("🎮 RapipppModss V3.0 Successfully Loaded!")
+print("🔮 Features: Super Fast Magnet + Tornado, Rope Breaking, Premium GUI")
+print("🌪️ Two Modes: Direct Magnet & Spinning Tornado")
+print("💎 Close GUI to show floating logo")
+print("🖱️ Click floating logo to reopen GUI")
