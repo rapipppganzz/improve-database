@@ -1,5 +1,4 @@
--- RapipppXD V1.0 - RapipppXD GUI
--- Universal Part Claim
+
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
@@ -8,6 +7,7 @@ local StarterGui = game:GetService("StarterGui")
 local TextChatService = game:GetService("TextChatService")
 local LocalPlayer = Players.LocalPlayer
 local Workspace = game:GetService("Workspace")
+local HttpService = game:GetService("HttpService")
 
 local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
 local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
@@ -18,6 +18,40 @@ local Attachment1 = Instance.new("Attachment", Part)
 Part.Anchored = true
 Part.CanCollide = false
 Part.Transparency = 1
+
+-- Database untuk menyimpan recordings per map
+if not getgenv().RapipppXD_Database then
+    getgenv().RapipppXD_Database = {}
+end
+
+-- Fungsi untuk mendapatkan nama map saat ini
+local function GetCurrentMapName()
+    return game.PlaceId .. "_" .. (Workspace:FindFirstChild("Map") and Workspace.Map.Name or "DefaultMap")
+end
+
+-- Fungsi untuk save recording ke database
+local function SaveRecording(path)
+    local mapName = GetCurrentMapName()
+    getgenv().RapipppXD_Database[mapName] = path
+    
+    StarterGui:SetCore("SendNotification", {
+        Title = "Recording Saved",
+        Text = "Saved to map: " .. mapName,
+        Duration = 4
+    })
+end
+
+-- Fungsi untuk load recording dari database
+local function LoadRecording()
+    local mapName = GetCurrentMapName()
+    return getgenv().RapipppXD_Database[mapName] or {}
+end
+
+-- Fungsi untuk check apakah ada recording untuk map ini
+local function HasRecording()
+    local mapName = GetCurrentMapName()
+    return getgenv().RapipppXD_Database[mapName] ~= nil and #getgenv().RapipppXD_Database[mapName] > 0
+end
 
 if not getgenv().Network then
     getgenv().Network = {
@@ -92,6 +126,13 @@ end
 -- Play initial sound
 playSound("2865227271")
 
+-- Auto Walk Recording System
+local recordedPath = {}
+local isRecording = false
+local isPlaying = false
+local recordingConnection = nil
+local playbackConnection = nil
+
 -- GUI Creation
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "RapipppXDGUI"
@@ -105,7 +146,7 @@ FloatingLogo.Size = UDim2.new(0, 60, 0, 60)
 FloatingLogo.Position = UDim2.new(0, 20, 0, 20)
 FloatingLogo.BackgroundColor3 = Color3.fromRGB(20, 40, 80)
 FloatingLogo.BorderSizePixel = 0
-FloatingLogo.Image = "https://files.catbox.moe/x4pj6l.jpg" -- Ganti dengan logo custom lo
+FloatingLogo.Image = "https://files.catbox.moe/x4pj6l.jpg"
 FloatingLogo.Visible = false
 FloatingLogo.Parent = ScreenGui
 
@@ -121,8 +162,8 @@ LogoStroke.Parent = FloatingLogo
 -- Main Frame
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
-MainFrame.Size = UDim2.new(0, 300, 0, 500)
-MainFrame.Position = UDim2.new(0.5, -150, 0.5, -250)
+MainFrame.Size = UDim2.new(0, 300, 0, 610)
+MainFrame.Position = UDim2.new(0.5, -150, 0.5, -305)
 MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 25)
 MainFrame.BorderSizePixel = 0
 MainFrame.Parent = ScreenGui
@@ -326,11 +367,112 @@ local IncreaseCorner = Instance.new("UICorner")
 IncreaseCorner.CornerRadius = UDim.new(0, 6)
 IncreaseCorner.Parent = IncreaseRadius
 
+-- Auto Walk Section
+local AutoWalkSection = Instance.new("Frame")
+AutoWalkSection.Name = "AutoWalkSection"
+AutoWalkSection.Size = UDim2.new(1, 0, 0, 190)
+AutoWalkSection.Position = UDim2.new(0, 0, 0, 220)
+AutoWalkSection.BackgroundColor3 = Color3.fromRGB(25, 25, 40)
+AutoWalkSection.BorderSizePixel = 0
+AutoWalkSection.Parent = ContentFrame
+
+local AutoWalkCorner = Instance.new("UICorner")
+AutoWalkCorner.CornerRadius = UDim.new(0, 8)
+AutoWalkCorner.Parent = AutoWalkSection
+
+local AutoWalkStroke = Instance.new("UIStroke")
+AutoWalkStroke.Color = Color3.fromRGB(0, 100, 200)
+AutoWalkStroke.Thickness = 1
+AutoWalkStroke.Parent = AutoWalkSection
+
+local AutoWalkTitle = Instance.new("TextLabel")
+AutoWalkTitle.Size = UDim2.new(1, -20, 0, 30)
+AutoWalkTitle.Position = UDim2.new(0, 10, 0, 10)
+AutoWalkTitle.BackgroundTransparency = 1
+AutoWalkTitle.Text = "Auto Walk"
+AutoWalkTitle.TextColor3 = Color3.fromRGB(100, 200, 255)
+AutoWalkTitle.TextSize = 16
+AutoWalkTitle.Font = Enum.Font.GothamBold
+AutoWalkTitle.TextXAlignment = Enum.TextXAlignment.Left
+AutoWalkTitle.Parent = AutoWalkSection
+
+-- Map Status Label
+local MapStatusLabel = Instance.new("TextLabel")
+MapStatusLabel.Size = UDim2.new(1, -20, 0, 20)
+MapStatusLabel.Position = UDim2.new(0, 10, 0, 45)
+MapStatusLabel.BackgroundTransparency = 1
+MapStatusLabel.Text = "Map: " .. GetCurrentMapName()
+MapStatusLabel.TextColor3 = Color3.fromRGB(150, 150, 150)
+MapStatusLabel.TextSize = 10
+MapStatusLabel.Font = Enum.Font.Gotham
+MapStatusLabel.TextXAlignment = Enum.TextXAlignment.Left
+MapStatusLabel.Parent = AutoWalkSection
+
+local RecordButton = Instance.new("TextButton")
+RecordButton.Name = "RecordButton"
+RecordButton.Size = UDim2.new(1, -20, 0, 35)
+RecordButton.Position = UDim2.new(0, 10, 0, 70)
+RecordButton.BackgroundColor3 = Color3.fromRGB(255, 100, 100)
+RecordButton.Text = "🔴 Start Recording"
+RecordButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+RecordButton.TextSize = 14
+RecordButton.Font = Enum.Font.GothamBold
+RecordButton.Parent = AutoWalkSection
+
+local RecordCorner = Instance.new("UICorner")
+RecordCorner.CornerRadius = UDim.new(0, 6)
+RecordCorner.Parent = RecordButton
+
+local PlayButton = Instance.new("TextButton")
+PlayButton.Name = "PlayButton"
+PlayButton.Size = UDim2.new(0.48, -5, 0, 35)
+PlayButton.Position = UDim2.new(0, 10, 0, 115)
+PlayButton.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
+PlayButton.Text = "▶ Play"
+PlayButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+PlayButton.TextSize = 14
+PlayButton.Font = Enum.Font.GothamBold
+PlayButton.Parent = AutoWalkSection
+
+local PlayCorner = Instance.new("UICorner")
+PlayCorner.CornerRadius = UDim.new(0, 6)
+PlayCorner.Parent = PlayButton
+
+local LoadButton = Instance.new("TextButton")
+LoadButton.Name = "LoadButton"
+LoadButton.Size = UDim2.new(0.48, -5, 0, 35)
+LoadButton.Position = UDim2.new(0.52, 5, 0, 115)
+LoadButton.BackgroundColor3 = Color3.fromRGB(100, 150, 255)
+LoadButton.Text = "📂 Load"
+LoadButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+LoadButton.TextSize = 14
+LoadButton.Font = Enum.Font.GothamBold
+LoadButton.Parent = AutoWalkSection
+
+local LoadCorner = Instance.new("UICorner")
+LoadCorner.CornerRadius = UDim.new(0, 6)
+LoadCorner.Parent = LoadButton
+
+local ClearButton = Instance.new("TextButton")
+ClearButton.Name = "ClearButton"
+ClearButton.Size = UDim2.new(1, -20, 0, 35)
+ClearButton.Position = UDim2.new(0, 10, 0, 155)
+ClearButton.BackgroundColor3 = Color3.fromRGB(200, 100, 0)
+ClearButton.Text = "🗑 Clear Recording"
+ClearButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+ClearButton.TextSize = 14
+ClearButton.Font = Enum.Font.GothamBold
+ClearButton.Parent = AutoWalkSection
+
+local ClearCorner = Instance.new("UICorner")
+ClearCorner.CornerRadius = UDim.new(0, 6)
+ClearCorner.Parent = ClearButton
+
 -- Credits Section
 local CreditsSection = Instance.new("Frame")
 CreditsSection.Name = "CreditsSection"
-CreditsSection.Size = UDim2.new(1, 0, 0, 170)
-CreditsSection.Position = UDim2.new(0, 0, 0, 220)
+CreditsSection.Size = UDim2.new(1, 0, 0, 90)
+CreditsSection.Position = UDim2.new(0, 0, 0, 430)
 CreditsSection.BackgroundColor3 = Color3.fromRGB(25, 25, 40)
 CreditsSection.BorderSizePixel = 0
 CreditsSection.Parent = ContentFrame
@@ -345,23 +487,23 @@ CreditsSectionStroke.Thickness = 1
 CreditsSectionStroke.Parent = CreditsSection
 
 local CreditsTitle = Instance.new("TextLabel")
-CreditsTitle.Size = UDim2.new(1, -20, 0, 30)
-CreditsTitle.Position = UDim2.new(0, 10, 0, 10)
+CreditsTitle.Size = UDim2.new(1, -20, 0, 25)
+CreditsTitle.Position = UDim2.new(0, 10, 0, 5)
 CreditsTitle.BackgroundTransparency = 1
 CreditsTitle.Text = "Credits"
 CreditsTitle.TextColor3 = Color3.fromRGB(100, 200, 255)
-CreditsTitle.TextSize = 16
+CreditsTitle.TextSize = 14
 CreditsTitle.Font = Enum.Font.GothamBold
 CreditsTitle.TextXAlignment = Enum.TextXAlignment.Left
 CreditsTitle.Parent = CreditsSection
 
 local CreditsText = Instance.new("TextLabel")
-CreditsText.Size = UDim2.new(1, -20, 0, 120)
-CreditsText.Position = UDim2.new(0, 10, 0, 45)
+CreditsText.Size = UDim2.new(1, -20, 0, 55)
+CreditsText.Position = UDim2.new(0, 10, 0, 30)
 CreditsText.BackgroundTransparency = 1
-CreditsText.Text = "Original: RapipppXD\n\nEdited By: Rapipp\n\nGUI Design: RapipppXD\n\nVersion: V1.0"
+CreditsText.Text = "Original: RapipppXD\nEdited By: Rapipp\nVersion: V1.0"
 CreditsText.TextColor3 = Color3.fromRGB(180, 180, 200)
-CreditsText.TextSize = 13
+CreditsText.TextSize = 12
 CreditsText.Font = Enum.Font.Gotham
 CreditsText.TextXAlignment = Enum.TextXAlignment.Left
 CreditsText.TextYAlignment = Enum.TextYAlignment.Top
@@ -377,6 +519,216 @@ Watermark.TextColor3 = Color3.fromRGB(100, 150, 255)
 Watermark.TextSize = 12
 Watermark.Font = Enum.Font.GothamBold
 Watermark.Parent = MainFrame
+
+-- Auto Walk Functions
+local function UpdateMapStatus()
+    local mapName = GetCurrentMapName()
+    local hasData = HasRecording()
+    MapStatusLabel.Text = "Map: " .. mapName .. (hasData and " ✓" or " ✗")
+    MapStatusLabel.TextColor3 = hasData and Color3.fromRGB(100, 255, 100) or Color3.fromRGB(150, 150, 150)
+end
+
+local function StartRecording()
+    recordedPath = {}
+    isRecording = true
+    isPlaying = false
+    
+    if playbackConnection then
+        playbackConnection:Disconnect()
+        playbackConnection = nil
+    end
+    
+    RecordButton.Text = "⏹ Stop Recording"
+    RecordButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+    playSound("12221967")
+    
+    recordingConnection = RunService.Heartbeat:Connect(function()
+        local char = LocalPlayer.Character
+        if char and char:FindFirstChild("HumanoidRootPart") then
+            table.insert(recordedPath, {
+                Position = char.HumanoidRootPart.Position,
+                CFrame = char.HumanoidRootPart.CFrame
+            })
+        end
+    end)
+end
+
+local function StopRecording()
+    isRecording = false
+    if recordingConnection then
+        recordingConnection:Disconnect()
+        recordingConnection = nil
+    end
+    RecordButton.Text = "🔴 Start Recording"
+    RecordButton.BackgroundColor3 = Color3.fromRGB(255, 100, 100)
+    playSound("12221967")
+    
+    -- Auto save ke database
+    if #recordedPath > 0 then
+        SaveRecording(recordedPath)
+        UpdateMapStatus()
+    end
+    
+    StarterGui:SetCore("SendNotification", {
+        Title = "Recording Stopped",
+        Text = "Recorded " .. #recordedPath .. " waypoints and saved!",
+        Duration = 4
+    })
+end
+
+local function LoadSavedRecording()
+    local loaded = LoadRecording()
+    if #loaded > 0 then
+        recordedPath = loaded
+        playSound("12221967")
+        
+        StarterGui:SetCore("SendNotification", {
+            Title = "Recording Loaded",
+            Text = "Loaded " .. #recordedPath .. " waypoints!",
+            Duration = 3
+        })
+    else
+        playSound("12221967")
+        
+        StarterGui:SetCore("SendNotification", {
+            Title = "No Recording Found",
+            Text = "No saved recording for this map!",
+            Duration = 3
+        })
+    end
+end
+
+local function PlayRecording()
+    if #recordedPath == 0 then
+        StarterGui:SetCore("SendNotification", {
+            Title = "No Recording",
+            Text = "Please record or load a path first!",
+            Duration = 3
+        })
+        return
+    end
+    
+    if isRecording then
+        StopRecording()
+    end
+    
+    isPlaying = true
+    PlayButton.Text = "⏸ Stop"
+    PlayButton.BackgroundColor3 = Color3.fromRGB(200, 100, 0)
+    playSound("12221967")
+    
+    local currentIndex = 1
+    
+    playbackConnection = RunService.Heartbeat:Connect(function()
+        if not isPlaying then
+            if playbackConnection then
+                playbackConnection:Disconnect()
+                playbackConnection = nil
+            end
+            return
+        end
+        
+        local char = LocalPlayer.Character
+        if char and char:FindFirstChild("HumanoidRootPart") and char:FindFirstChild("Humanoid") then
+            local hrp = char.HumanoidRootPart
+            local humanoid = char.Humanoid
+            
+            if currentIndex <= #recordedPath then
+                local targetData = recordedPath[currentIndex]
+                local distance = (hrp.Position - targetData.Position).Magnitude
+                
+                if distance < 3 then
+                    currentIndex = currentIndex + 1
+                else
+                    humanoid:MoveTo(targetData.Position)
+                end
+            else
+                -- Loop kembali ke awal
+                currentIndex = 1
+                StarterGui:SetCore("SendNotification", {
+                    Title = "Path Complete",
+                    Text = "Looping back to start...",
+                    Duration = 2
+                })
+            end
+        end
+    end)
+end
+
+local function StopPlayback()
+    isPlaying = false
+    PlayButton.Text = "▶ Play"
+    PlayButton.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
+    playSound("12221967")
+    
+    if playbackConnection then
+        playbackConnection:Disconnect()
+        playbackConnection = nil
+    end
+    
+    local char = LocalPlayer.Character
+    if char and char:FindFirstChild("Humanoid") then
+        char.Humanoid:MoveTo(char.HumanoidRootPart.Position)
+    end
+end
+
+local function ClearRecording()
+    recordedPath = {}
+    isRecording = false
+    isPlaying = false
+    
+    if recordingConnection then
+        recordingConnection:Disconnect()
+        recordingConnection = nil
+    end
+    
+    if playbackConnection then
+        playbackConnection:Disconnect()
+        playbackConnection = nil
+    end
+    
+    -- Hapus dari database
+    local mapName = GetCurrentMapName()
+    getgenv().RapipppXD_Database[mapName] = nil
+    UpdateMapStatus()
+    
+    RecordButton.Text = "🔴 Start Recording"
+    RecordButton.BackgroundColor3 = Color3.fromRGB(255, 100, 100)
+    PlayButton.Text = "▶ Play"
+    PlayButton.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
+    playSound("12221967")
+    
+    StarterGui:SetCore("SendNotification", {
+        Title = "Recording Cleared",
+        Text = "All waypoints deleted from database!",
+        Duration = 3
+    })
+end
+
+-- Auto Walk Button Events
+RecordButton.MouseButton1Click:Connect(function()
+    if isRecording then
+        StopRecording()
+    else
+        StartRecording()
+    end
+end)
+
+PlayButton.MouseButton1Click:Connect(function()
+    if isPlaying then
+        StopPlayback()
+    else
+        PlayRecording()
+    end
+end)
+
+LoadButton.MouseButton1Click:Connect(function()
+    LoadSavedRecording()
+end)
+
+ClearButton.MouseButton1Click:Connect(function()
+    ClearRecording()
+end)
 
 -- Ring Parts Logic
 local radius = 50
@@ -579,6 +931,34 @@ UserInputService.InputChanged:Connect(function(input)
     end
 end)
 
+-- Character Respawn Handler
+LocalPlayer.CharacterAdded:Connect(function(newCharacter)
+    character = newCharacter
+    humanoidRootPart = newCharacter:WaitForChild("HumanoidRootPart")
+    
+    -- Reset auto walk state jika karakter respawn
+    if isPlaying then
+        StopPlayback()
+    end
+    if isRecording then
+        StopRecording()
+    end
+end)
+
+-- Auto load recording saat GUI dibuka
+task.spawn(function()
+    wait(1)
+    UpdateMapStatus()
+    
+    if HasRecording() then
+        StarterGui:SetCore("SendNotification", {
+            Title = "Recording Found!",
+            Text = "Click 'Load' to use saved path!",
+            Duration = 4
+        })
+    end
+end)
+
 -- Notifications
 local userId = Players:GetUserIdFromNameAsync("RobloxRapippgames")
 local thumbType = Enum.ThumbnailType.HeadShot
@@ -606,6 +986,13 @@ StarterGui:SetCore("SendNotification", {
     Duration = 5
 })
 
+StarterGui:SetCore("SendNotification", {
+    Title = "Auto Walk Feature",
+    Text = "Record your path and it saves automatically!",
+    Icon = content,
+    Duration = 5
+})
+
 -- Chat Message
 local function SendChatMessage(message)
     if TextChatService.ChatVersion == Enum.ChatVersion.TextChatService then
@@ -619,3 +1006,5 @@ end
 SendChatMessage("RapipppXD V1.0 By Rapipp loaded!")
 
 print("RapipppXD V1.0 - RapipppXD loaded successfully!")
+print("Auto Walk Database System Active!")
+print("Current Map: " .. GetCurrentMapName())
