@@ -18,38 +18,111 @@ Part.Anchored = true
 Part.CanCollide = false
 Part.Transparency = 1
 
--- Database untuk menyimpan recordings per map
-if not getgenv().RapipppXD_Database then
-    getgenv().RapipppXD_Database = {}
-end
+-- =========================================================================================
+-- !!! PENTING: KONFIGURASI GITHUB UNTUK PENYIMPANAN DATA PERSISTEN !!!
+-- GANTI DENGAN DATA ANDA. SANGAT TIDAK AMAN JIKA SKRIP INI PUBLIK.
+-- =========================================================================================
+local GIST_ID = "e8c666a5a6d56b61695305d700a11d4c" -- ID Gist yang sudah Anda buat
+local GITHUB_TOKEN = "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" -- Token dengan scope 'gist'
+local FILE_NAME_IN_GIST = "autowalk_paths.json"
+
+local BASE_URL = "https://api.github.com/gists/" .. GIST_ID
+local HEADERS = {
+    ["Authorization"] = "token " .. GITHUB_TOKEN,
+    ["Content-Type"] = "application/json",
+    ["Accept"] = "application/vnd.github.v3+json"
+}
 
 -- Fungsi untuk mendapatkan nama map saat ini
 local function GetCurrentMapName()
     return game.PlaceId .. "_" .. (Workspace:FindFirstChild("Map") and Workspace.Map.Name or "DefaultMap")
 end
 
--- Fungsi untuk save recording ke database
-local function SaveRecording(path)
-    local mapName = GetCurrentMapName()
-    getgenv().RapipppXD_Database[mapName] = path
+-- Fungsi internal untuk mengambil SELURUH konten Gist (sebagai tabel)
+local function FetchAllData()
+    if GIST_ID == "GANTI_DENGAN_GIST_ID_ANDA" or GITHUB_TOKEN == "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" then
+        warn("GITHUB TOKEN/ID BELUM DIISI. Penyimpanan data Gagal.")
+        return {}
+    end
     
-    StarterGui:SetCore("SendNotification", {
-        Title = "Recording Saved",
-        Text = "Saved to map: " .. mapName,
-        Duration = 4
-    })
+    local success, response = pcall(function()
+        return HttpService:RequestAsync({
+            Url = BASE_URL,
+            Method = "GET",
+            Headers = HEADERS
+        })
+    end)
+
+    if success and response.Success and response.StatusCode == 200 then
+        local data = HttpService:JSONDecode(response.Body)
+        local fileInfo = data.files[FILE_NAME_IN_GIST]
+        
+        if fileInfo and fileInfo.content then
+            local successDecode, savedTable = pcall(function()
+                return HttpService:JSONDecode(fileInfo.content)
+            end)
+            return successDecode and savedTable or {}
+        end
+    end
+    return {}
 end
 
--- Fungsi untuk load recording dari database
+-- Fungsi untuk save recording ke database (GIST)
+local function SaveRecording(path)
+    local mapName = GetCurrentMapName()
+    local existingData = FetchAllData() -- Ambil data lama dari Gist
+    
+    existingData[mapName] = path -- Update data untuk map saat ini
+
+    local newFileContent = HttpService:JSONEncode(existingData)
+    local body = {
+        description = "Update RapipppXD Autowalk Data",
+        files = {
+            [FILE_NAME_IN_GIST] = {
+                content = newFileContent
+            }
+        }
+    }
+    
+    local success, response = pcall(function()
+        return HttpService:RequestAsync({
+            Url = BASE_URL,
+            Method = "PATCH", -- Gunakan PATCH untuk update konten file
+            Headers = HEADERS,
+            Body = HttpService:JSONEncode(body)
+        })
+    end)
+
+    if success and response.Success and (response.StatusCode == 200 or response.StatusCode == 201) then
+        StarterGui:SetCore("SendNotification", {
+            Title = "Recording Saved (GitHub)",
+            Text = "Successfully saved to Gist.",
+            Duration = 4
+        })
+        return true
+    else
+        warn("Failed to write Gist data. Status:", response and response.StatusCode)
+        StarterGui:SetCore("SendNotification", {
+            Title = "SAVE ERROR",
+            Text = "Failed to save to GitHub Gist! Cek GIST ID/Token.",
+            Duration = 5
+        })
+        return false
+    end
+end
+
+-- Fungsi untuk load recording dari database (GIST)
 local function LoadRecording()
     local mapName = GetCurrentMapName()
-    return getgenv().RapipppXD_Database[mapName] or {}
+    local allData = FetchAllData()
+    return allData[mapName] or {}
 end
 
 -- Fungsi untuk check apakah ada recording untuk map ini
 local function HasRecording()
     local mapName = GetCurrentMapName()
-    return getgenv().RapipppXD_Database[mapName] ~= nil and #getgenv().RapipppXD_Database[mapName] > 0
+    local loadedData = LoadRecording()
+    return type(loadedData) == "table" and #loadedData > 0
 end
 
 if not getgenv().Network then
@@ -252,6 +325,20 @@ CloseButton.Parent = Header
 local CloseCorner = Instance.new("UICorner")
 CloseCorner.CornerRadius = UDim.new(0, 5)
 CloseCorner.Parent = CloseButton
+
+-- Resize Handle (Untuk membuat GUI bisa diubah ukurannya)
+local ResizeHandle = Instance.new("Frame")
+ResizeHandle.Name = "ResizeHandle"
+ResizeHandle.Size = UDim2.new(0, 15, 0, 15)
+ResizeHandle.Position = UDim2.new(1, -15, 1, -15)
+ResizeHandle.BackgroundColor3 = Color3.fromRGB(0, 150, 255)
+ResizeHandle.BorderSizePixel = 0
+ResizeHandle.ZIndex = 2
+ResizeHandle.Parent = MainFrame
+
+local ResizeCorner = Instance.new("UICorner")
+ResizeCorner.CornerRadius = UDim.new(0, 3)
+ResizeCorner.Parent = ResizeHandle
 
 -- Scrolling Frame for Content
 local ScrollFrame = Instance.new("ScrollingFrame")
@@ -582,7 +669,7 @@ local function StopRecording()
     RecordButton.BackgroundColor3 = Color3.fromRGB(255, 100, 100)
     playSound("12221967")
     
-    -- Auto save ke database
+    -- Auto save ke database (GITHUB)
     if #recordedPath > 0 then
         SaveRecording(recordedPath)
         UpdateMapStatus()
@@ -701,9 +788,8 @@ local function ClearRecording()
         playbackConnection = nil
     end
     
-    -- Hapus dari database
-    local mapName = GetCurrentMapName()
-    getgenv().RapipppXD_Database[mapName] = nil
+    -- Hapus dari database (Simpan data yang direset/kosong ke Gist)
+    SaveRecording({})
     UpdateMapStatus()
     
     RecordButton.Text = "🔴 Record"
@@ -841,7 +927,7 @@ end)
 
 -- Minimize Functionality
 local minimized = false
-local originalSize = MainFrame.Size
+local originalSize = MainFrame.Size -- Akan diupdate saat resizing selesai
 MinimizeButton.MouseButton1Click:Connect(function()
     minimized = not minimized
     if minimized then
@@ -942,6 +1028,55 @@ UserInputService.InputChanged:Connect(function(input)
         updateLogo(input)
     end
 end)
+
+-- Make GUI Resizable (Logic Baru)
+local resizing = false
+local resizeStartInput
+local resizeStartSize
+local minimumSize = Vector2.new(280, 250) -- Ukuran minimum agar GUI tidak terlalu kecil
+
+local function updateResize(input)
+    local delta = input.Position - resizeStartInput.Position
+    local newSize = resizeStartSize + delta
+    
+    -- Pastikan ukuran tidak kurang dari minimum
+    newSize = Vector2.new(math.max(minimumSize.X, newSize.X), math.max(minimumSize.Y, newSize.Y))
+    
+    -- Ubah ukuran MainFrame
+    MainFrame.Size = UDim2.new(0, newSize.X, 0, newSize.Y)
+    
+    -- Atur ulang ukuran ScrollFrame agar konten tetap memenuhi bingkai
+    ScrollFrame.Size = UDim2.new(1, -10, 1, -55) 
+end
+
+ResizeHandle.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        resizing = true
+        resizeStartInput = input
+        resizeStartSize = Vector2.new(MainFrame.Size.X.Offset, MainFrame.Size.Y.Offset)
+        
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                resizing = false
+            end
+        end)
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if resizing then
+        updateResize(input)
+    end
+end)
+
+UserInputService.InputEnded:Connect(function(input)
+    if resizing and (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) then
+        resizing = false
+        -- Perbarui originalSize agar fitur minimize/maximize menggunakan ukuran terbaru
+        originalSize = MainFrame.Size 
+    end
+end)
+
 
 -- Character Respawn Handler
 LocalPlayer.CharacterAdded:Connect(function(newCharacter)
