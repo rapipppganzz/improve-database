@@ -1,4 +1,3 @@
-
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
@@ -142,8 +141,8 @@ ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 -- Floating Logo (initially hidden)
 local FloatingLogo = Instance.new("ImageButton")
 FloatingLogo.Name = "FloatingLogo"
-FloatingLogo.Size = UDim2.new(0, 60, 0, 60)
-FloatingLogo.Position = UDim2.new(0, 20, 0, 20)
+FloatingLogo.Size = UDim2.new(0, 50, 0, 50)
+FloatingLogo.Position = UDim2.new(0, 10, 0, 10)
 FloatingLogo.BackgroundColor3 = Color3.fromRGB(20, 40, 80)
 FloatingLogo.BorderSizePixel = 0
 FloatingLogo.Image = "https://files.catbox.moe/x4pj6l.jpg"
@@ -159,24 +158,24 @@ LogoStroke.Color = Color3.fromRGB(0, 150, 255)
 LogoStroke.Thickness = 2
 LogoStroke.Parent = FloatingLogo
 
--- Main Frame
+-- Main Frame (Optimized for mobile)
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
-MainFrame.Size = UDim2.new(0, 300, 0, 610)
-MainFrame.Position = UDim2.new(0.5, -150, 0.5, -305)
+MainFrame.Size = UDim2.new(0, 280, 0, 400)
+MainFrame.Position = UDim2.new(0.5, -140, 0.5, -200)
 MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 25)
 MainFrame.BorderSizePixel = 0
 MainFrame.Parent = ScreenGui
 
 local MainCorner = Instance.new("UICorner")
-MainCorner.CornerRadius = UDim.new(0, 12)
+MainCorner.CornerRadius = UDim.new(0, 10)
 MainCorner.Parent = MainFrame
 
 -- Glow Effect
 local Glow = Instance.new("ImageLabel")
 Glow.Name = "Glow"
-Glow.Size = UDim2.new(1, 30, 1, 30)
-Glow.Position = UDim2.new(0, -15, 0, -15)
+Glow.Size = UDim2.new(1, 20, 1, 20)
+Glow.Position = UDim2.new(0, -10, 0, -10)
 Glow.BackgroundTransparency = 1
 Glow.Image = "rbxasset://textures/ui/GuiImagePlaceholder.png"
 Glow.ImageColor3 = Color3.fromRGB(0, 150, 255)
@@ -193,13 +192,13 @@ MainStroke.Parent = MainFrame
 -- Header
 local Header = Instance.new("Frame")
 Header.Name = "Header"
-Header.Size = UDim2.new(1, 0, 0, 50)
+Header.Size = UDim2.new(1, 0, 0, 45)
 Header.BackgroundColor3 = Color3.fromRGB(20, 40, 80)
 Header.BorderSizePixel = 0
 Header.Parent = MainFrame
 
 local HeaderCorner = Instance.new("UICorner")
-HeaderCorner.CornerRadius = UDim.new(0, 12)
+HeaderCorner.CornerRadius = UDim.new(0, 10)
 HeaderCorner.Parent = Header
 
 local HeaderGradient = Instance.new("UIGradient")
@@ -212,12 +211,12 @@ HeaderGradient.Parent = Header
 
 local HeaderTitle = Instance.new("TextLabel")
 HeaderTitle.Name = "Title"
-HeaderTitle.Size = UDim2.new(1, -100, 1, 0)
-HeaderTitle.Position = UDim2.new(0, 15, 0, 0)
+HeaderTitle.Size = UDim2.new(1, -80, 1, 0)
+HeaderTitle.Position = UDim2.new(0, 10, 0, 0)
 HeaderTitle.BackgroundTransparency = 1
 HeaderTitle.Text = "RapipppXD V1.0"
 HeaderTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
-HeaderTitle.TextSize = 20
+HeaderTitle.TextSize = 16
 HeaderTitle.Font = Enum.Font.GothamBold
 HeaderTitle.TextXAlignment = Enum.TextXAlignment.Left
 HeaderTitle.Parent = Header
@@ -225,47 +224,59 @@ HeaderTitle.Parent = Header
 -- Minimize Button
 local MinimizeButton = Instance.new("TextButton")
 MinimizeButton.Name = "MinimizeButton"
-MinimizeButton.Size = UDim2.new(0, 35, 0, 35)
-MinimizeButton.Position = UDim2.new(1, -80, 0, 7.5)
+MinimizeButton.Size = UDim2.new(0, 30, 0, 30)
+MinimizeButton.Position = UDim2.new(1, -70, 0, 7.5)
 MinimizeButton.BackgroundColor3 = Color3.fromRGB(255, 200, 0)
 MinimizeButton.Text = "─"
 MinimizeButton.TextColor3 = Color3.fromRGB(0, 0, 0)
-MinimizeButton.TextSize = 18
+MinimizeButton.TextSize = 16
 MinimizeButton.Font = Enum.Font.GothamBold
 MinimizeButton.Parent = Header
 
 local MinimizeCorner = Instance.new("UICorner")
-MinimizeCorner.CornerRadius = UDim.new(0, 6)
+MinimizeCorner.CornerRadius = UDim.new(0, 5)
 MinimizeCorner.Parent = MinimizeButton
 
 -- Close Button
 local CloseButton = Instance.new("TextButton")
 CloseButton.Name = "CloseButton"
-CloseButton.Size = UDim2.new(0, 35, 0, 35)
-CloseButton.Position = UDim2.new(1, -40, 0, 7.5)
+CloseButton.Size = UDim2.new(0, 30, 0, 30)
+CloseButton.Position = UDim2.new(1, -35, 0, 7.5)
 CloseButton.BackgroundColor3 = Color3.fromRGB(230, 50, 50)
 CloseButton.Text = "X"
 CloseButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-CloseButton.TextSize = 18
+CloseButton.TextSize = 16
 CloseButton.Font = Enum.Font.GothamBold
 CloseButton.Parent = Header
 
 local CloseCorner = Instance.new("UICorner")
-CloseCorner.CornerRadius = UDim.new(0, 6)
+CloseCorner.CornerRadius = UDim.new(0, 5)
 CloseCorner.Parent = CloseButton
 
--- Content Frame
+-- Scrolling Frame for Content
+local ScrollFrame = Instance.new("ScrollingFrame")
+ScrollFrame.Name = "ScrollFrame"
+ScrollFrame.Size = UDim2.new(1, -10, 1, -55)
+ScrollFrame.Position = UDim2.new(0, 5, 0, 50)
+ScrollFrame.BackgroundTransparency = 1
+ScrollFrame.BorderSizePixel = 0
+ScrollFrame.ScrollBarThickness = 4
+ScrollFrame.ScrollBarImageColor3 = Color3.fromRGB(0, 150, 255)
+ScrollFrame.CanvasSize = UDim2.new(0, 0, 0, 700)
+ScrollFrame.Parent = MainFrame
+
+-- Content Frame inside ScrollFrame
 local ContentFrame = Instance.new("Frame")
 ContentFrame.Name = "ContentFrame"
-ContentFrame.Size = UDim2.new(1, -30, 1, -80)
-ContentFrame.Position = UDim2.new(0, 15, 0, 65)
+ContentFrame.Size = UDim2.new(1, -10, 0, 700)
+ContentFrame.Position = UDim2.new(0, 5, 0, 0)
 ContentFrame.BackgroundTransparency = 1
-ContentFrame.Parent = MainFrame
+ContentFrame.Parent = ScrollFrame
 
 -- Ring Parts Section
 local RingSection = Instance.new("Frame")
 RingSection.Name = "RingSection"
-RingSection.Size = UDim2.new(1, 0, 0, 200)
+RingSection.Size = UDim2.new(1, 0, 0, 180)
 RingSection.BackgroundColor3 = Color3.fromRGB(25, 25, 40)
 RingSection.BorderSizePixel = 0
 RingSection.Parent = ContentFrame
@@ -280,12 +291,12 @@ RingSectionStroke.Thickness = 1
 RingSectionStroke.Parent = RingSection
 
 local SectionTitle = Instance.new("TextLabel")
-SectionTitle.Size = UDim2.new(1, -20, 0, 30)
-SectionTitle.Position = UDim2.new(0, 10, 0, 10)
+SectionTitle.Size = UDim2.new(1, -20, 0, 25)
+SectionTitle.Position = UDim2.new(0, 10, 0, 5)
 SectionTitle.BackgroundTransparency = 1
-SectionTitle.Text = "RapipppXD"
+SectionTitle.Text = "Ring Parts"
 SectionTitle.TextColor3 = Color3.fromRGB(100, 200, 255)
-SectionTitle.TextSize = 16
+SectionTitle.TextSize = 14
 SectionTitle.Font = Enum.Font.GothamBold
 SectionTitle.TextXAlignment = Enum.TextXAlignment.Left
 SectionTitle.Parent = RingSection
@@ -293,17 +304,17 @@ SectionTitle.Parent = RingSection
 -- Toggle Button
 local ToggleButton = Instance.new("TextButton")
 ToggleButton.Name = "ToggleButton"
-ToggleButton.Size = UDim2.new(1, -20, 0, 40)
-ToggleButton.Position = UDim2.new(0, 10, 0, 50)
+ToggleButton.Size = UDim2.new(1, -20, 0, 35)
+ToggleButton.Position = UDim2.new(0, 10, 0, 35)
 ToggleButton.BackgroundColor3 = Color3.fromRGB(230, 50, 50)
 ToggleButton.Text = "Ring Parts: OFF"
 ToggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-ToggleButton.TextSize = 16
+ToggleButton.TextSize = 13
 ToggleButton.Font = Enum.Font.GothamBold
 ToggleButton.Parent = RingSection
 
 local ToggleCorner = Instance.new("UICorner")
-ToggleCorner.CornerRadius = UDim.new(0, 8)
+ToggleCorner.CornerRadius = UDim.new(0, 6)
 ToggleCorner.Parent = ToggleButton
 
 local ToggleGradient = Instance.new("UIGradient")
@@ -316,62 +327,68 @@ ToggleGradient.Parent = ToggleButton
 
 -- Radius Controls
 local RadiusLabel = Instance.new("TextLabel")
-RadiusLabel.Size = UDim2.new(1, -20, 0, 25)
-RadiusLabel.Position = UDim2.new(0, 10, 0, 105)
+RadiusLabel.Size = UDim2.new(1, -20, 0, 20)
+RadiusLabel.Position = UDim2.new(0, 10, 0, 80)
 RadiusLabel.BackgroundTransparency = 1
 RadiusLabel.Text = "Radius: 50"
 RadiusLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
-RadiusLabel.TextSize = 14
+RadiusLabel.TextSize = 12
 RadiusLabel.Font = Enum.Font.Gotham
 RadiusLabel.Parent = RingSection
 
 local DecreaseRadius = Instance.new("TextButton")
-DecreaseRadius.Size = UDim2.new(0.2, -5, 0, 35)
-DecreaseRadius.Position = UDim2.new(0, 10, 0, 140)
+DecreaseRadius.Size = UDim2.new(0.2, -5, 0, 30)
+DecreaseRadius.Position = UDim2.new(0, 10, 0, 110)
 DecreaseRadius.BackgroundColor3 = Color3.fromRGB(0, 120, 255)
 DecreaseRadius.Text = "◀"
 DecreaseRadius.TextColor3 = Color3.fromRGB(255, 255, 255)
-DecreaseRadius.TextSize = 16
+DecreaseRadius.TextSize = 14
 DecreaseRadius.Font = Enum.Font.GothamBold
 DecreaseRadius.Parent = RingSection
 
 local DecreaseCorner = Instance.new("UICorner")
-DecreaseCorner.CornerRadius = UDim.new(0, 6)
+DecreaseCorner.CornerRadius = UDim.new(0, 5)
 DecreaseCorner.Parent = DecreaseRadius
 
 local RadiusDisplay = Instance.new("TextLabel")
-RadiusDisplay.Size = UDim2.new(0.6, -10, 0, 35)
-RadiusDisplay.Position = UDim2.new(0.2, 5, 0, 140)
+RadiusDisplay.Size = UDim2.new(0.6, -10, 0, 30)
+RadiusDisplay.Position = UDim2.new(0.2, 5, 0, 110)
 RadiusDisplay.BackgroundColor3 = Color3.fromRGB(35, 35, 50)
 RadiusDisplay.Text = "50"
 RadiusDisplay.TextColor3 = Color3.fromRGB(100, 200, 255)
-RadiusDisplay.TextSize = 18
+RadiusDisplay.TextSize = 16
 RadiusDisplay.Font = Enum.Font.GothamBold
 RadiusDisplay.Parent = RingSection
 
 local DisplayCorner = Instance.new("UICorner")
-DisplayCorner.CornerRadius = UDim.new(0, 6)
+DisplayCorner.CornerRadius = UDim.new(0, 5)
 DisplayCorner.Parent = RadiusDisplay
 
 local IncreaseRadius = Instance.new("TextButton")
-IncreaseRadius.Size = UDim2.new(0.2, -5, 0, 35)
-IncreaseRadius.Position = UDim2.new(0.8, 5, 0, 140)
+IncreaseRadius.Size = UDim2.new(0.2, -5, 0, 30)
+IncreaseRadius.Position = UDim2.new(0.8, 5, 0, 110)
 IncreaseRadius.BackgroundColor3 = Color3.fromRGB(0, 120, 255)
 IncreaseRadius.Text = "▶"
 IncreaseRadius.TextColor3 = Color3.fromRGB(255, 255, 255)
-IncreaseRadius.TextSize = 16
+IncreaseRadius.TextSize = 14
 IncreaseRadius.Font = Enum.Font.GothamBold
 IncreaseRadius.Parent = RingSection
 
 local IncreaseCorner = Instance.new("UICorner")
-IncreaseCorner.CornerRadius = UDim.new(0, 6)
+IncreaseCorner.CornerRadius = UDim.new(0, 5)
 IncreaseCorner.Parent = IncreaseRadius
+
+local RingSpacer = Instance.new("Frame")
+RingSpacer.Size = UDim2.new(1, 0, 0, 30)
+RingSpacer.Position = UDim2.new(0, 0, 0, 150)
+RingSpacer.BackgroundTransparency = 1
+RingSpacer.Parent = RingSection
 
 -- Auto Walk Section
 local AutoWalkSection = Instance.new("Frame")
 AutoWalkSection.Name = "AutoWalkSection"
-AutoWalkSection.Size = UDim2.new(1, 0, 0, 190)
-AutoWalkSection.Position = UDim2.new(0, 0, 0, 220)
+AutoWalkSection.Size = UDim2.new(1, 0, 0, 175)
+AutoWalkSection.Position = UDim2.new(0, 0, 0, 190)
 AutoWalkSection.BackgroundColor3 = Color3.fromRGB(25, 25, 40)
 AutoWalkSection.BorderSizePixel = 0
 AutoWalkSection.Parent = ContentFrame
@@ -386,36 +403,37 @@ AutoWalkStroke.Thickness = 1
 AutoWalkStroke.Parent = AutoWalkSection
 
 local AutoWalkTitle = Instance.new("TextLabel")
-AutoWalkTitle.Size = UDim2.new(1, -20, 0, 30)
-AutoWalkTitle.Position = UDim2.new(0, 10, 0, 10)
+AutoWalkTitle.Size = UDim2.new(1, -20, 0, 25)
+AutoWalkTitle.Position = UDim2.new(0, 10, 0, 5)
 AutoWalkTitle.BackgroundTransparency = 1
 AutoWalkTitle.Text = "Auto Walk"
 AutoWalkTitle.TextColor3 = Color3.fromRGB(100, 200, 255)
-AutoWalkTitle.TextSize = 16
+AutoWalkTitle.TextSize = 14
 AutoWalkTitle.Font = Enum.Font.GothamBold
 AutoWalkTitle.TextXAlignment = Enum.TextXAlignment.Left
 AutoWalkTitle.Parent = AutoWalkSection
 
 -- Map Status Label
 local MapStatusLabel = Instance.new("TextLabel")
-MapStatusLabel.Size = UDim2.new(1, -20, 0, 20)
-MapStatusLabel.Position = UDim2.new(0, 10, 0, 45)
+MapStatusLabel.Size = UDim2.new(1, -20, 0, 15)
+MapStatusLabel.Position = UDim2.new(0, 10, 0, 32)
 MapStatusLabel.BackgroundTransparency = 1
 MapStatusLabel.Text = "Map: " .. GetCurrentMapName()
 MapStatusLabel.TextColor3 = Color3.fromRGB(150, 150, 150)
-MapStatusLabel.TextSize = 10
+MapStatusLabel.TextSize = 9
 MapStatusLabel.Font = Enum.Font.Gotham
 MapStatusLabel.TextXAlignment = Enum.TextXAlignment.Left
+MapStatusLabel.TextTruncate = Enum.TextTruncate.AtEnd
 MapStatusLabel.Parent = AutoWalkSection
 
 local RecordButton = Instance.new("TextButton")
 RecordButton.Name = "RecordButton"
-RecordButton.Size = UDim2.new(1, -20, 0, 35)
-RecordButton.Position = UDim2.new(0, 10, 0, 70)
+RecordButton.Size = UDim2.new(1, -20, 0, 32)
+RecordButton.Position = UDim2.new(0, 10, 0, 52)
 RecordButton.BackgroundColor3 = Color3.fromRGB(255, 100, 100)
-RecordButton.Text = "🔴 Start Recording"
+RecordButton.Text = "🔴 Record"
 RecordButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-RecordButton.TextSize = 14
+RecordButton.TextSize = 13
 RecordButton.Font = Enum.Font.GothamBold
 RecordButton.Parent = AutoWalkSection
 
@@ -425,12 +443,12 @@ RecordCorner.Parent = RecordButton
 
 local PlayButton = Instance.new("TextButton")
 PlayButton.Name = "PlayButton"
-PlayButton.Size = UDim2.new(0.48, -5, 0, 35)
-PlayButton.Position = UDim2.new(0, 10, 0, 115)
+PlayButton.Size = UDim2.new(0.48, -5, 0, 32)
+PlayButton.Position = UDim2.new(0, 10, 0, 92)
 PlayButton.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
 PlayButton.Text = "▶ Play"
 PlayButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-PlayButton.TextSize = 14
+PlayButton.TextSize = 13
 PlayButton.Font = Enum.Font.GothamBold
 PlayButton.Parent = AutoWalkSection
 
@@ -440,12 +458,12 @@ PlayCorner.Parent = PlayButton
 
 local LoadButton = Instance.new("TextButton")
 LoadButton.Name = "LoadButton"
-LoadButton.Size = UDim2.new(0.48, -5, 0, 35)
-LoadButton.Position = UDim2.new(0.52, 5, 0, 115)
+LoadButton.Size = UDim2.new(0.48, -5, 0, 32)
+LoadButton.Position = UDim2.new(0.52, 5, 0, 92)
 LoadButton.BackgroundColor3 = Color3.fromRGB(100, 150, 255)
 LoadButton.Text = "📂 Load"
 LoadButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-LoadButton.TextSize = 14
+LoadButton.TextSize = 13
 LoadButton.Font = Enum.Font.GothamBold
 LoadButton.Parent = AutoWalkSection
 
@@ -455,12 +473,12 @@ LoadCorner.Parent = LoadButton
 
 local ClearButton = Instance.new("TextButton")
 ClearButton.Name = "ClearButton"
-ClearButton.Size = UDim2.new(1, -20, 0, 35)
-ClearButton.Position = UDim2.new(0, 10, 0, 155)
+ClearButton.Size = UDim2.new(1, -20, 0, 32)
+ClearButton.Position = UDim2.new(0, 10, 0, 132)
 ClearButton.BackgroundColor3 = Color3.fromRGB(200, 100, 0)
-ClearButton.Text = "🗑 Clear Recording"
+ClearButton.Text = "🗑 Clear"
 ClearButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-ClearButton.TextSize = 14
+ClearButton.TextSize = 13
 ClearButton.Font = Enum.Font.GothamBold
 ClearButton.Parent = AutoWalkSection
 
@@ -471,8 +489,8 @@ ClearCorner.Parent = ClearButton
 -- Credits Section
 local CreditsSection = Instance.new("Frame")
 CreditsSection.Name = "CreditsSection"
-CreditsSection.Size = UDim2.new(1, 0, 0, 90)
-CreditsSection.Position = UDim2.new(0, 0, 0, 430)
+CreditsSection.Size = UDim2.new(1, 0, 0, 80)
+CreditsSection.Position = UDim2.new(0, 0, 0, 375)
 CreditsSection.BackgroundColor3 = Color3.fromRGB(25, 25, 40)
 CreditsSection.BorderSizePixel = 0
 CreditsSection.Parent = ContentFrame
@@ -487,23 +505,23 @@ CreditsSectionStroke.Thickness = 1
 CreditsSectionStroke.Parent = CreditsSection
 
 local CreditsTitle = Instance.new("TextLabel")
-CreditsTitle.Size = UDim2.new(1, -20, 0, 25)
+CreditsTitle.Size = UDim2.new(1, -20, 0, 20)
 CreditsTitle.Position = UDim2.new(0, 10, 0, 5)
 CreditsTitle.BackgroundTransparency = 1
 CreditsTitle.Text = "Credits"
 CreditsTitle.TextColor3 = Color3.fromRGB(100, 200, 255)
-CreditsTitle.TextSize = 14
+CreditsTitle.TextSize = 13
 CreditsTitle.Font = Enum.Font.GothamBold
 CreditsTitle.TextXAlignment = Enum.TextXAlignment.Left
 CreditsTitle.Parent = CreditsSection
 
 local CreditsText = Instance.new("TextLabel")
-CreditsText.Size = UDim2.new(1, -20, 0, 55)
-CreditsText.Position = UDim2.new(0, 10, 0, 30)
+CreditsText.Size = UDim2.new(1, -20, 0, 50)
+CreditsText.Position = UDim2.new(0, 10, 0, 27)
 CreditsText.BackgroundTransparency = 1
 CreditsText.Text = "Original: RapipppXD\nEdited By: Rapipp\nVersion: V1.0"
 CreditsText.TextColor3 = Color3.fromRGB(180, 180, 200)
-CreditsText.TextSize = 12
+CreditsText.TextSize = 11
 CreditsText.Font = Enum.Font.Gotham
 CreditsText.TextXAlignment = Enum.TextXAlignment.Left
 CreditsText.TextYAlignment = Enum.TextYAlignment.Top
@@ -511,14 +529,15 @@ CreditsText.Parent = CreditsSection
 
 -- Watermark
 local Watermark = Instance.new("TextLabel")
-Watermark.Size = UDim2.new(1, 0, 0, 20)
-Watermark.Position = UDim2.new(0, 0, 1, -25)
+Watermark.Size = UDim2.new(1, 0, 0, 465)
+Watermark.Position = UDim2.new(0, 0, 0, 0)
 Watermark.BackgroundTransparency = 1
-Watermark.Text = "RapipppXD V1.0 by Rapipp!"
+Watermark.Text = "RapipppXD by Rapipp!"
 Watermark.TextColor3 = Color3.fromRGB(100, 150, 255)
-Watermark.TextSize = 12
+Watermark.TextSize = 10
 Watermark.Font = Enum.Font.GothamBold
-Watermark.Parent = MainFrame
+Watermark.TextYAlignment = Enum.TextYAlignment.Bottom
+Watermark.Parent = ContentFrame
 
 -- Auto Walk Functions
 local function UpdateMapStatus()
@@ -538,7 +557,7 @@ local function StartRecording()
         playbackConnection = nil
     end
     
-    RecordButton.Text = "⏹ Stop Recording"
+    RecordButton.Text = "⏹ Stop"
     RecordButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
     playSound("12221967")
     
@@ -559,7 +578,7 @@ local function StopRecording()
         recordingConnection:Disconnect()
         recordingConnection = nil
     end
-    RecordButton.Text = "🔴 Start Recording"
+    RecordButton.Text = "🔴 Record"
     RecordButton.BackgroundColor3 = Color3.fromRGB(255, 100, 100)
     playSound("12221967")
     
@@ -571,8 +590,8 @@ local function StopRecording()
     
     StarterGui:SetCore("SendNotification", {
         Title = "Recording Stopped",
-        Text = "Recorded " .. #recordedPath .. " waypoints and saved!",
-        Duration = 4
+        Text = "Recorded " .. #recordedPath .. " waypoints!",
+        Duration = 3
     })
 end
 
@@ -591,7 +610,7 @@ local function LoadSavedRecording()
         playSound("12221967")
         
         StarterGui:SetCore("SendNotification", {
-            Title = "No Recording Found",
+            Title = "No Recording",
             Text = "No saved recording for this map!",
             Duration = 3
         })
@@ -645,11 +664,6 @@ local function PlayRecording()
             else
                 -- Loop kembali ke awal
                 currentIndex = 1
-                StarterGui:SetCore("SendNotification", {
-                    Title = "Path Complete",
-                    Text = "Looping back to start...",
-                    Duration = 2
-                })
             end
         end
     end)
@@ -692,7 +706,7 @@ local function ClearRecording()
     getgenv().RapipppXD_Database[mapName] = nil
     UpdateMapStatus()
     
-    RecordButton.Text = "🔴 Start Recording"
+    RecordButton.Text = "🔴 Record"
     RecordButton.BackgroundColor3 = Color3.fromRGB(255, 100, 100)
     PlayButton.Text = "▶ Play"
     PlayButton.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
@@ -700,7 +714,7 @@ local function ClearRecording()
     
     StarterGui:SetCore("SendNotification", {
         Title = "Recording Cleared",
-        Text = "All waypoints deleted from database!",
+        Text = "All waypoints deleted!",
         Duration = 3
     })
 end
@@ -831,15 +845,13 @@ local originalSize = MainFrame.Size
 MinimizeButton.MouseButton1Click:Connect(function()
     minimized = not minimized
     if minimized then
-        MainFrame:TweenSize(UDim2.new(0, 300, 0, 50), "Out", "Quad", 0.3, true)
+        MainFrame:TweenSize(UDim2.new(0, 280, 0, 45), "Out", "Quad", 0.3, true)
         MinimizeButton.Text = "+"
-        ContentFrame.Visible = false
-        Watermark.Visible = false
+        ScrollFrame.Visible = false
     else
         MainFrame:TweenSize(originalSize, "Out", "Quad", 0.3, true)
         MinimizeButton.Text = "─"
-        ContentFrame.Visible = true
-        Watermark.Visible = true
+        ScrollFrame.Visible = true
     end
     playSound("12221967")
 end)
@@ -967,30 +979,16 @@ local content, isReady = Players:GetUserThumbnailAsync(userId, thumbType, thumbS
 
 StarterGui:SetCore("SendNotification", {
     Title = "RapipppXD V1.0",
-    Text = "RapipppXD loaded!",
+    Text = "Loaded successfully!",
     Icon = content,
     Duration = 5
 })
 
 StarterGui:SetCore("SendNotification", {
-    Title = "Credits",
-    Text = "Original By RapipppXD",
+    Title = "Mobile Optimized",
+    Text = "Swipe to scroll content!",
     Icon = content,
-    Duration = 5
-})
-
-StarterGui:SetCore("SendNotification", {
-    Title = "Credits",
-    Text = "Edited By Rapipp",
-    Icon = content,
-    Duration = 5
-})
-
-StarterGui:SetCore("SendNotification", {
-    Title = "Auto Walk Feature",
-    Text = "Record your path and it saves automatically!",
-    Icon = content,
-    Duration = 5
+    Duration = 4
 })
 
 -- Chat Message
@@ -1005,6 +1003,6 @@ end
 
 SendChatMessage("RapipppXD V1.0 By Rapipp loaded!")
 
-print("RapipppXD V1.0 - RapipppXD loaded successfully!")
+print("RapipppXD V1.0 - Mobile Optimized loaded successfully!")
 print("Auto Walk Database System Active!")
 print("Current Map: " .. GetCurrentMapName())
