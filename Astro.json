@@ -2,8 +2,8 @@
   {
     "username": "rapip",
     "password": "666666",
-    "role": "admin",
-    "expired": "",
+    "role": "Developer",
+    "expired": "2026-12-31",
     "createdAt": "2024-01-01T00:00:00.000Z",
     "createdBy": "system"
   },
@@ -123,6 +123,6 @@
     "username": "hao",
     "password": "123",
     "role": "UserVIP",
-    "expired": "2026-01-14"
+    "expired": "2026-12-31"
   }
 ]
