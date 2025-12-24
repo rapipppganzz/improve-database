@@ -2,7 +2,7 @@
   {
     "username": "rapip",
     "password": "666666",
-    "role": "owner",
+    "role": "admin",
     "expired": "",
     "createdAt": "2024-01-01T00:00:00.000Z",
     "createdBy": "system"
