@@ -178,5 +178,11 @@
     "password": "02",
     "role": "Owner",
     "expired": null
+  },
+  {
+    "username": "Rahmat",
+    "password": "kikir anj",
+    "role": "Admin VIP",
+    "expired": null
   }
 ]
