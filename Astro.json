@@ -130,5 +130,11 @@
     "password": "1",
     "role": "Owner",
     "expired": "2026-01-08"
+  },
+  {
+    "username": "lyrax",
+    "password": "01",
+    "role": "Mods",
+    "expired": "2026-01-06"
   }
 ]
