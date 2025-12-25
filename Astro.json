@@ -112,5 +112,11 @@
     "password": "0909",
     "role": "Reseller",
     "expired": "2026-01-31"
+  },
+  {
+    "username": "dzzz",
+    "password": "0928",
+    "role": "Owner",
+    "expired": "2026-01-31"
   }
 ]
