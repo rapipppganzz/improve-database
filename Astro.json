@@ -136,5 +136,11 @@
     "password": "01",
     "role": "Mods",
     "expired": "2026-01-06"
+  },
+  {
+    "username": "tiriz",
+    "password": "02",
+    "role": "Mods",
+    "expired": "2026-01-06"
   }
 ]
