@@ -148,5 +148,11 @@
     "password": "RaflyShop02",
     "role": "Admin VIP",
     "expired": null
+  },
+  {
+    "username": "asep",
+    "password": "70",
+    "role": "Mods",
+    "expired": "2026-01-06"
   }
 ]
