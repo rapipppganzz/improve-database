@@ -184,5 +184,11 @@
     "password": "02",
     "role": "Owner",
     "expired": "2027-09-03"
+  },
+  {
+    "username": "Putxz",
+    "password": "03",
+    "role": "Admin",
+    "expired": "2027-06-25"
   }
 ]
