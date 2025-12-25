@@ -184,5 +184,11 @@
     "password": "kikir anj",
     "role": "Admin VIP",
     "expired": "2027-07-01"
+  },
+  {
+    "username": "Koiri",
+    "password": "02",
+    "role": "Owner",
+    "expired": "2027-09-03"
   }
 ]
