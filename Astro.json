@@ -172,5 +172,11 @@
     "password": "01",
     "role": "Owner",
     "expired": null
+  },
+  {
+    "username": "Koiri",
+    "password": "02",
+    "role": "Owner",
+    "expired": null
   }
 ]
