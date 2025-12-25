@@ -106,5 +106,11 @@
     "password": "0909",
     "role": "Mods",
     "expired": "2026-01-31"
+  },
+  {
+    "username": "fatir",
+    "password": "0909",
+    "role": "Reseller",
+    "expired": "2026-01-31"
   }
 ]
