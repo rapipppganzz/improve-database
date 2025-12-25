@@ -94,5 +94,11 @@
     "password": "002",
     "role": "Owner",
     "expired": "2026-01-30"
+  },
+  {
+    "username": "fanzkikif",
+    "password": "0101",
+    "role": "Mods",
+    "expired": "2026-01-30"
   }
 ]
