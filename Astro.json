@@ -166,5 +166,11 @@
     "password": "99",
     "role": "Owner",
     "expired": "2026-01-07"
+  },
+  {
+    "username": "Putxz",
+    "password": "123456",
+    "role": "Reseller",
+    "expired": null
   }
 ]
