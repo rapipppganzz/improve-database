@@ -3,123 +3,9 @@
     "username": "rapip",
     "password": "666666",
     "role": "Developer",
-    "expired": "2025-12-31",
-    "createdAt": "2024-01-01T00:00:00.000Z",
-    "createdBy": "system"
+    "expired": "2025-12-31"
   },
-  {
-    "username": "user_admin",
-    "password": "pass_admin",
-    "role": "admin",
-    "expired": "2025-12-31T23:59:59.000Z",
-    "createdAt": "2024-03-15T10:30:00.000Z",
-    "createdBy": "user_rapip"
-  },
-  {
-    "username": "user_reseller",
-    "password": "reseller_1",
-    "role": "reseller",
-    "expired": "",
-    "createdAt": "2024-05-20T15:00:00.000Z",
-    "createdBy": "user_admin"
-  },
-  {
-    "username": "ayam",
-    "password": "77",
-    "role": "admin",
-    "expired": "",
-    "createdBy": "rapip",
-    "createdAt": "2025-10-13T06:00:53.148Z"
-  },
-  {
-    "username": "asep",
-    "password": "9090",
-    "role": "admin",
-    "expired": "9090-12-30",
-    "createdBy": "rapip",
-    "createdAt": "2025-10-17T07:30:42.319Z"
-  },
-  {
-    "username": "chrulz",
-    "password": "818181",
-    "role": "admin",
-    "expired": "9090-12-31",
-    "createdBy": "rapip",
-    "createdAt": "2025-10-17T07:35:55.231Z"
-  },
-  {
-    "username": "xyroo",
-    "password": "123661",
-    "role": "admin",
-    "expired": "9090-12-31",
-    "createdBy": "rapip",
-    "createdAt": "2025-10-17T08:02:43.530Z"
-  },
-  {
-    "username": "rav",
-    "password": "jembud0798",
-    "role": "admin",
-    "expired": "3030-12-31",
-    "createdBy": "rapip",
-    "createdAt": "2025-10-17T08:10:35.997Z"
-  },
-  {
-    "username": "kokap",
-    "password": "kontolkecil",
-    "role": "admin",
-    "expired": "7808-12-21",
-    "createdBy": "rapip",
-    "createdAt": "2025-10-17T08:13:46.666Z"
-  },
-  {
-    "username": "ropz",
-    "password": "jembud",
-    "role": "admin",
-    "expired": "7808-12-21",
-    "createdBy": "rapip",
-    "createdAt": "2025-10-17T08:19:41.623Z"
-  },
-  {
-    "username": "fan",
-    "password": "0909",
-    "role": "admin",
-    "expired": "2025-12-19",
-    "createdBy": "asep",
-    "createdAt": "2025-10-17T08:40:18.660Z"
-  },
-  {
-    "username": "xyraboti",
-    "password": "xyraboticuy",
-    "role": "admin",
-    "expired": "6666-12-21",
-    "createdBy": "rapip",
-    "createdAt": "2025-10-17T09:58:04.123Z"
-  },
-  {
-    "username": "miel",
-    "password": "9090",
-    "role": "reseller",
-    "expired": "2025-12-8",
-    "createdBy": "asep",
-    "createdAt": "2025-10-17T11:33:03.667Z"
-  },
-  {
-    "username": "Adhit",
-    "password": "69",
-    "role": "reseller",
-    "expired": "2029-12-30",
-    "createdBy": "chrulz",
-    "createdAt": "2025-10-18T08:50:27.719Z"
-  },
-  {
-    "username": "tiriz",
-    "password": "919191",
-    "role": "admin",
-    "expired": "",
-    "createdBy": "rapip",
-    "createdAt": "2025-10-19T13:51:23.505Z"
-  },
-  {
+  { 
     "username": "hao",
     "password": "123",
     "role": "UserVIP",
@@ -171,7 +57,7 @@
     "username": "Hamz",
     "password": "01",
     "role": "Owner",
-    "expired": null
+    "expired": "2027-07-01"
   },
   {
     "username": "Rahmat",
