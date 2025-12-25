@@ -88,5 +88,11 @@
     "password": "002",
     "role": "Owner",
     "expired": "2026-01-22"
+  },
+  {
+    "username": "danzai",
+    "password": "002",
+    "role": "Owner",
+    "expired": "2026-01-30"
   }
 ]
