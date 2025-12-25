@@ -172,11 +172,5 @@
     "password": "123",
     "role": "Admin",
     "expired": "2027-12-01"
-  },
-  {
-    "username": "hamz",
-    "password": "jembud",
-    "role": "Owner",
-    "expired": "2027-10-07"
   }
 ]
