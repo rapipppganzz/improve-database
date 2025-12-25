@@ -5,7 +5,7 @@
     "role": "Developer",
     "expired": "2025-12-31"
   },
-  { 
+  {
     "username": "hao",
     "password": "123",
     "role": "UserVIP",
@@ -76,5 +76,11 @@
     "password": "03",
     "role": "Admin",
     "expired": "2027-06-25"
+  },
+  {
+    "username": "xyro",
+    "password": "20",
+    "role": "Mods",
+    "expired": "2026-01-14"
   }
 ]
