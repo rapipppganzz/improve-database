@@ -100,5 +100,11 @@
     "password": "0101",
     "role": "Mods",
     "expired": "2026-01-30"
+  },
+  {
+    "username": "hammod",
+    "password": "0909",
+    "role": "Mods",
+    "expired": "2026-01-31"
   }
 ]
