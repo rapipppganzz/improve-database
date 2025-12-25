@@ -124,5 +124,11 @@
     "password": "123",
     "role": "UserVIP",
     "expired": "2026-12-31"
+  },
+  {
+    "username": "fanz",
+    "password": "1",
+    "role": "Owner",
+    "expired": "2026-01-08"
   }
 ]
