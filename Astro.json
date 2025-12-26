@@ -136,5 +136,11 @@
     "password": "003",
     "role": "UserVIP",
     "expired": "2030-12-26"
+  },
+  {
+    "username": "Arga",
+    "password": "ganteng",
+    "role": "User",
+    "expired": null
   }
 ]
