@@ -124,5 +124,11 @@
     "password": "1234",
     "role": "UserVIP",
     "expired": "2026-01-23"
+  },
+  {
+    "username": "zyy",
+    "password": "zyy",
+    "role": "UserVIP",
+    "expired": "2026-01-26"
   }
 ]
