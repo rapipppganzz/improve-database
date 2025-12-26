@@ -130,5 +130,11 @@
     "password": "zyy",
     "role": "UserVIP",
     "expired": "2026-01-26"
+  },
+  {
+    "username": "SAYP",
+    "password": "FFBOT",
+    "role": "User",
+    "expired": null
   }
 ]
