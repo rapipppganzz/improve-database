@@ -136,11 +136,5 @@
     "password": "Hama tolol",
     "role": "User",
     "expired": null
-  },
-  {
-    "username": "Alpin",
-    "password": "123",
-    "role": "UserVIP",
-    "expired": "2033-12-26"
   }
 ]
