@@ -118,5 +118,11 @@
     "password": "0928",
     "role": "Owner",
     "expired": "2026-01-31"
+  },
+  {
+    "username": "xenn",
+    "password": "1234",
+    "role": "UserVIP",
+    "expired": "2026-01-23"
   }
 ]
