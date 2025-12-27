@@ -148,5 +148,11 @@
     "password": "Zelkyy911",
     "role": "Reseller",
     "expired": null
+  },
+  {
+    "username": "venora",
+    "password": "12",
+    "role": "User",
+    "expired": "2026-01-29"
   }
 ]
