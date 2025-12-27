@@ -190,5 +190,11 @@
     "password": "09",
     "role": "Owner",
     "expired": "2026-01-30"
+  },
+  {
+    "username": "arza",
+    "password": "09",
+    "role": "Mods",
+    "expired": "2026-01-31"
   }
 ]
