@@ -172,5 +172,11 @@
     "password": "354",
     "role": "User",
     "expired": "2026-01-30"
+  },
+  {
+    "username": "riff",
+    "password": "70",
+    "role": "Owner",
+    "expired": "2026-01-29"
   }
 ]
