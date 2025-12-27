@@ -154,5 +154,11 @@
     "password": "12",
     "role": "User",
     "expired": "2026-01-29"
+  },
+  {
+    "username": "bisma",
+    "password": "12",
+    "role": "Reseller",
+    "expired": "2026-01-29"
   }
 ]
