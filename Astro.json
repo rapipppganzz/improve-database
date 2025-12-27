@@ -142,5 +142,11 @@
     "password": "ganteng",
     "role": "User",
     "expired": null
+  },
+  {
+    "username": "Zelkyy",
+    "password": "Zelkyy911",
+    "role": "Reseller",
+    "expired": null
   }
 ]
