@@ -202,5 +202,11 @@
     "password": "20",
     "role": "Owner",
     "expired": "2026-01-31"
+  },
+  {
+    "username": "Soulzy",
+    "password": "09",
+    "role": "Owner",
+    "expired": "2026-01-31"
   }
 ]
