@@ -178,5 +178,11 @@
     "password": "70",
     "role": "Owner",
     "expired": "2026-01-29"
+  },
+  {
+    "username": "NanaoKawai",
+    "password": "nanao1122",
+    "role": "User",
+    "expired": "2026-01-27"
   }
 ]
