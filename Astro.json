@@ -160,5 +160,11 @@
     "password": "12",
     "role": "Reseller",
     "expired": "2026-01-29"
+  },
+  {
+    "username": "rull",
+    "password": "09",
+    "role": "Admin",
+    "expired": "2026-01-21"
   }
 ]
