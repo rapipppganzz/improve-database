@@ -208,5 +208,11 @@
     "password": "09",
     "role": "Owner",
     "expired": "2026-01-31"
+  },
+  {
+    "username": "halelo",
+    "password": "354",
+    "role": "User",
+    "expired": "2026-02-28"
   }
 ]
