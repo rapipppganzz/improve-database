@@ -214,5 +214,11 @@
     "password": "354",
     "role": "User",
     "expired": "2026-02-28"
+  },
+  {
+    "username": "faiz",
+    "password": "123",
+    "role": "User",
+    "expired": null
   }
 ]
