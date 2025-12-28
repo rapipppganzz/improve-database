@@ -244,5 +244,11 @@
     "password": "02",
     "role": "Owner",
     "expired": null
+  },
+  {
+    "username": "zakss",
+    "password": "autoc1",
+    "role": "UserVIP",
+    "expired": "2026-04-25"
   }
 ]
