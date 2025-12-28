@@ -220,5 +220,11 @@
     "password": "12",
     "role": "Reseller",
     "expired": null
+  },
+  {
+    "username": "ditzy",
+    "password": "354",
+    "role": "UserVIP",
+    "expired": "2026-02-28"
   }
 ]
