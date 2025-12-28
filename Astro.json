@@ -226,5 +226,11 @@
     "password": "354",
     "role": "UserVIP",
     "expired": "2026-02-28"
+  },
+  {
+    "username": "egiiv2",
+    "password": "02",
+    "role": "UserVIP",
+    "expired": "2030-01-31"
   }
 ]
