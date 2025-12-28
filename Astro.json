@@ -232,5 +232,11 @@
     "password": "02",
     "role": "UserVIP",
     "expired": "2030-01-31"
+  },
+  {
+    "username": "joehanz88",
+    "password": "Joe23",
+    "role": "User",
+    "expired": "2026-01-28"
   }
 ]
