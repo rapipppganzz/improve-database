@@ -238,5 +238,11 @@
     "password": "Joe23",
     "role": "User",
     "expired": "2026-01-28"
+  },
+  {
+    "username": "hanz",
+    "password": "02",
+    "role": "Owner",
+    "expired": null
   }
 ]
