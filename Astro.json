@@ -250,5 +250,11 @@
     "password": "autoc1",
     "role": "UserVIP",
     "expired": "2026-04-25"
+  },
+  {
+    "username": "faiq",
+    "password": "124",
+    "role": "User",
+    "expired": null
   }
 ]
