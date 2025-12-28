@@ -256,5 +256,11 @@
     "password": "124",
     "role": "User",
     "expired": null
+  },
+  {
+    "username": "hanz",
+    "password": "02",
+    "role": "Reseller VIP",
+    "expired": "2025-12-29"
   }
 ]
