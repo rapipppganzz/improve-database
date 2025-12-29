@@ -268,5 +268,11 @@
     "password": "0102",
     "role": "User",
     "expired": "2026-01-31"
+  },
+  {
+    "username": "yan",
+    "password": "0909",
+    "role": "User",
+    "expired": "2026-01-31"
   }
 ]
