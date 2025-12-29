@@ -262,5 +262,11 @@
     "password": "02",
     "role": "Reseller VIP",
     "expired": "2025-12-29"
+  },
+  {
+    "username": "Haen",
+    "password": "0102",
+    "role": "User",
+    "expired": "2026-01-31"
   }
 ]
