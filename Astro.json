@@ -274,5 +274,11 @@
     "password": "354",
     "role": "UserVIP",
     "expired": "2026-02-28"
+  },
+  {
+    "username": "putzx",
+    "password": "putzxekek",
+    "role": "User",
+    "expired": null
   }
 ]
