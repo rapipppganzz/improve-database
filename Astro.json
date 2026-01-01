@@ -280,5 +280,11 @@
     "password": "putzxekek",
     "role": "User",
     "expired": null
+  },
+  {
+    "username": "cavu",
+    "password": "333",
+    "role": "User",
+    "expired": "2026-02-01"
   }
 ]
