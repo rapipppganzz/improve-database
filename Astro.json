@@ -286,5 +286,11 @@
     "password": "333",
     "role": "User",
     "expired": "2026-02-01"
+  },
+  {
+    "username": "dazai",
+    "password": "2103",
+    "role": "Owner",
+    "expired": null
   }
 ]
