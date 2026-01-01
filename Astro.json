@@ -292,5 +292,11 @@
     "password": "2103",
     "role": "Owner",
     "expired": null
+  },
+  {
+    "username": "hamofc",
+    "password": "56",
+    "role": "Mods",
+    "expired": null
   }
 ]
