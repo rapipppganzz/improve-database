@@ -304,5 +304,11 @@
     "password": "123",
     "role": "User",
     "expired": "2026-01-02"
+  },
+  {
+    "username": "riki",
+    "password": "001",
+    "role": "User",
+    "expired": "2026-02-02"
   }
 ]
