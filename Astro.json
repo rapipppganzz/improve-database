@@ -322,5 +322,11 @@
     "password": "Ralisya01",
     "role": "Owner",
     "expired": "2027-01-01"
+  },
+  {
+    "username": "Fizzo",
+    "password": "1234",
+    "role": "User",
+    "expired": "2026-02-02"
   }
 ]
