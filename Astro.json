@@ -298,11 +298,5 @@
     "password": "56",
     "role": "Mods",
     "expired": null
-  },
-  {
-    "username": "Vemz",
-    "password": "123",
-    "role": "User",
-    "expired": "2026-01-02"
   }
 ]
