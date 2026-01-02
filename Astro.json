@@ -310,5 +310,11 @@
     "password": "001",
     "role": "User",
     "expired": "2026-02-02"
+  },
+  {
+    "username": "codot",
+    "password": "555",
+    "role": "User",
+    "expired": "2026-02-03"
   }
 ]
