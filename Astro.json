@@ -316,5 +316,11 @@
     "password": "555",
     "role": "User",
     "expired": "2026-02-03"
+  },
+  {
+    "username": "zar",
+    "password": "12",
+    "role": "User",
+    "expired": "2028-09-21"
   }
 ]
