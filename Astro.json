@@ -328,5 +328,11 @@
     "password": "01",
     "role": "Admin VIP",
     "expired": null
+  },
+  {
+    "username": "putzx",
+    "password": "sopiaaa",
+    "role": "User",
+    "expired": null
   }
 ]
