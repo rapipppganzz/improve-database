@@ -334,5 +334,11 @@
     "password": "sopiaaa",
     "role": "User",
     "expired": null
+  },
+  {
+    "username": "alif",
+    "password": "90",
+    "role": "Reseller VIP",
+    "expired": "2028-07-31"
   }
 ]
