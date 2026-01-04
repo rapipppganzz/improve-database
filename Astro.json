@@ -340,5 +340,11 @@
     "password": "90",
     "role": "Reseller VIP",
     "expired": "2028-07-31"
+  },
+  {
+    "username": "okz",
+    "password": "okzkc",
+    "role": "User",
+    "expired": "2026-02-03"
   }
 ]
