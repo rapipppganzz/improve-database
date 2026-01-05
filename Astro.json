@@ -352,5 +352,11 @@
     "password": "pahmi",
     "role": "User",
     "expired": "2026-02-04"
+  },
+  {
+    "username": "madz",
+    "password": "Hitam banget",
+    "role": "User",
+    "expired": null
   }
 ]
