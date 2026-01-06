@@ -352,5 +352,11 @@
     "password": "Hitam banget",
     "role": "User",
     "expired": null
+  },
+  {
+    "username": "genzet",
+    "password": "11",
+    "role": "Admin VIP",
+    "expired": null
   }
 ]
