@@ -358,5 +358,11 @@
     "password": "Hitam banget",
     "role": "User",
     "expired": null
+  },
+  {
+    "username": "jmbt",
+    "password": "01",
+    "role": "UserVIP",
+    "expired": null
   }
 ]
