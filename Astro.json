@@ -352,11 +352,5 @@
     "password": "Hitam banget",
     "role": "User",
     "expired": null
-  },
-  {
-    "username": "puki",
-    "password": "00",
-    "role": "Admin VIP",
-    "expired": null
   }
 ]
