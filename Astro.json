@@ -358,5 +358,11 @@
     "password": "01",
     "role": "UserVIP",
     "expired": null
+  },
+  {
+    "username": "zee",
+    "password": "zee01",
+    "role": "Reseller VIP",
+    "expired": null
   }
 ]
