@@ -364,5 +364,11 @@
     "password": "09",
     "role": "Reseller VIP",
     "expired": null
+  },
+  {
+    "username": "Bimz",
+    "password": "999o",
+    "role": "User",
+    "expired": "2026-01-31"
   }
 ]
